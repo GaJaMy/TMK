@@ -1,5 +1,16 @@
 변경된 파일을 분석하여 컨벤션에 맞는 Git 커밋을 생성합니다.
 
+## 실행 원칙
+
+아래 git 명령어는 사용자 확인 없이 바로 실행하세요:
+- 조회: `git status`, `git diff`, `git log`
+- 스테이징: `git add`
+- 커밋: `git commit`
+
+확인이 필요한 경우 (실행 전 반드시 사용자에게 물어보세요):
+- 삭제/되돌리기: `git rm`, `git reset`, `git restore`, `git clean`
+- 원격 반영: `git push`, `git push --force`
+
 ## 1. 현재 상태 파악
 
 다음 명령어를 병렬로 실행하세요:
