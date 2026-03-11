@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### OMC ###
+.omc/
+
 ### macOS ###
 .DS_Store
 .AppleDouble
