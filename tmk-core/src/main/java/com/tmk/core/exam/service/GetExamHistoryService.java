@@ -1,7 +1,7 @@
 package com.tmk.core.exam.service;
 
 import com.tmk.core.exam.entity.Exam;
-import com.tmk.core.exam.repository.ExamRepository;
+import com.tmk.core.port.out.ExamPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +11,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetExamHistoryService {
 
-    private final ExamRepository examRepository;
+    private final ExamPort examPort;
 
     public List<Exam> getHistory(Long userId, int page, int size) {
-        // TODO
-        return List.of();
+        List<Exam> all = examPort.findByUserIdOrderByCreatedAtDesc(userId);
+        int start = page * size;
+        if (start >= all.size()) return List.of();
+        int end = Math.min(start + size, all.size());
+        return all.subList(start, end);
+    }
+
+    public long count(Long userId) {
+        return examPort.findByUserIdOrderByCreatedAtDesc(userId).size();
     }
 }

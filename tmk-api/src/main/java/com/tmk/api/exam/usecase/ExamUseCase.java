@@ -1,12 +1,19 @@
 package com.tmk.api.exam.usecase;
 
 import com.tmk.api.exam.dto.*;
-import com.tmk.core.exam.service.*;
+import com.tmk.api.question.dto.OptionResult;
 import com.tmk.core.exam.entity.Exam;
+import com.tmk.core.exam.entity.ExamQuestion;
+import com.tmk.core.exam.service.*;
+import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.question.entity.Question;
+import com.tmk.core.question.entity.QuestionOption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -19,44 +26,176 @@ public class ExamUseCase {
     private final GetExamResultService getExamResultService;
     private final GetExamHistoryService getExamHistoryService;
     private final GetExamHistoryDetailService getExamHistoryDetailService;
+    private final QuestionPort questionPort;
 
     public ExamResult create(Long userId) {
-        createExamService.create(userId);
-        // TODO: convert Exam to ExamResult
-        return null;
+        Exam exam = createExamService.create(userId);
+        return new ExamResult(
+                exam.getId(),
+                exam.getTotalQuestions(),
+                exam.getTimeLimit(),
+                exam.getStartedAt().toString(),
+                exam.getExpiredAt().toString(),
+                exam.getStatus().name()
+        );
     }
 
     public ExamDetailResult getExam(Long examId, Long userId) {
-        getExamService.getExam(examId, userId);
-        // TODO: convert Exam to ExamDetailResult
-        return null;
+        Exam exam = getExamService.getExam(examId, userId);
+
+        // Load question details for each exam question
+        List<Long> questionIds = exam.getExamQuestions().stream()
+                .map(ExamQuestion::getQuestionId)
+                .collect(Collectors.toList());
+        Map<Long, Question> questionMap = questionIds.stream()
+                .map(id -> questionPort.findById(id).orElseThrow())
+                .collect(Collectors.toMap(Question::getId, q -> q));
+
+        List<ExamQuestionResult> questions = exam.getExamQuestions().stream()
+                .map(eq -> {
+                    Question q = questionMap.get(eq.getQuestionId());
+                    List<OptionResult> options = q.getOptions().stream()
+                            .map(opt -> new OptionResult(opt.getOptionNumber(), opt.getContent()))
+                            .collect(Collectors.toList());
+                    return new ExamQuestionResult(
+                            q.getId(),
+                            eq.getOrderNum(),
+                            q.getContent(),
+                            q.getType().name(),
+                            q.getDifficulty().name(),
+                            options,
+                            eq.getMyAnswer()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new ExamDetailResult(
+                exam.getId(),
+                exam.getStatus().name(),
+                exam.getExpiredAt().toString(),
+                questions
+        );
     }
 
     public void saveAnswers(Long examId, Long userId, List<AnswerCommand> answers) {
-        // TODO: convert AnswerCommand list to Map<Long, String>
+        Map<Long, String> answerMap = answers.stream()
+                .collect(Collectors.toMap(
+                        AnswerCommand::getQuestionId,
+                        AnswerCommand::getAnswer
+                ));
+        saveAnswerService.saveAnswers(examId, userId, answerMap);
     }
 
     public SubmitResult submit(Long examId, Long userId) {
-        submitExamService.submit(examId, userId);
-        // TODO: build SubmitResult
-        return null;
+        Exam exam = submitExamService.submit(examId, userId);
+        int correctCount = (int) exam.getExamQuestions().stream()
+                .filter(eq -> Boolean.TRUE.equals(eq.getIsCorrect()))
+                .count();
+        int total = exam.getTotalQuestions();
+        double score = total > 0 ? (double) correctCount / total * 100 : 0;
+        boolean passed = score >= 50.0;
+
+        return new SubmitResult(
+                exam.getId(),
+                total,
+                correctCount,
+                score,
+                passed,
+                exam.getSubmittedAt() != null ? exam.getSubmittedAt().toString() : null
+        );
     }
 
     public ExamResultData getResult(Long examId, Long userId) {
-        getExamResultService.getResult(examId, userId);
-        // TODO: convert Exam to ExamResultData
-        return null;
+        Exam exam = getExamResultService.getResult(examId, userId);
+        int correctCount = (int) exam.getExamQuestions().stream()
+                .filter(eq -> Boolean.TRUE.equals(eq.getIsCorrect()))
+                .count();
+        int total = exam.getTotalQuestions();
+        double score = total > 0 ? (double) correctCount / total * 100 : 0;
+        boolean passed = score >= 50.0;
+
+        return new ExamResultData(
+                exam.getId(),
+                total,
+                correctCount,
+                score,
+                passed,
+                exam.getSubmittedAt() != null ? exam.getSubmittedAt().toString() : null
+        );
     }
 
     public HistoryListResult getHistory(Long userId, int page, int size) {
-        getExamHistoryService.getHistory(userId, page, size);
-        // TODO: convert List<Exam> to HistoryListResult
-        return null;
+        List<Exam> exams = getExamHistoryService.getHistory(userId, page, size);
+        long total = getExamHistoryService.count(userId);
+        int totalPages = size > 0 ? (int) Math.ceil((double) total / size) : 0;
+
+        List<HistorySummary> summaries = exams.stream()
+                .map(exam -> {
+                    int correctCount = (int) exam.getExamQuestions().stream()
+                            .filter(eq -> Boolean.TRUE.equals(eq.getIsCorrect()))
+                            .count();
+                    int totalQ = exam.getTotalQuestions();
+                    double score = totalQ > 0 ? (double) correctCount / totalQ * 100 : 0;
+                    return new HistorySummary(
+                            exam.getId(),
+                            totalQ,
+                            correctCount,
+                            score,
+                            score >= 50.0,
+                            exam.getSubmittedAt() != null ? exam.getSubmittedAt().toString() : null
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new HistoryListResult(summaries, page, size, total, totalPages);
     }
 
     public HistoryDetailResult getHistoryDetail(Long examId, Long userId) {
-        getExamHistoryDetailService.getHistoryDetail(examId, userId);
-        // TODO: convert Exam to HistoryDetailResult
-        return null;
+        Exam exam = getExamHistoryDetailService.getHistoryDetail(examId, userId);
+
+        // Load question details
+        List<Long> questionIds = exam.getExamQuestions().stream()
+                .map(ExamQuestion::getQuestionId)
+                .collect(Collectors.toList());
+        Map<Long, Question> questionMap = questionIds.stream()
+                .map(id -> questionPort.findById(id).orElseThrow())
+                .collect(Collectors.toMap(Question::getId, q -> q));
+
+        int correctCount = (int) exam.getExamQuestions().stream()
+                .filter(eq -> Boolean.TRUE.equals(eq.getIsCorrect()))
+                .count();
+        int total = exam.getTotalQuestions();
+        double score = total > 0 ? (double) correctCount / total * 100 : 0;
+
+        List<HistoryQuestionResult> questions = exam.getExamQuestions().stream()
+                .map(eq -> {
+                    Question q = questionMap.get(eq.getQuestionId());
+                    List<OptionResult> options = q.getOptions().stream()
+                            .map(opt -> new OptionResult(opt.getOptionNumber(), opt.getContent()))
+                            .collect(Collectors.toList());
+                    return new HistoryQuestionResult(
+                            q.getId(),
+                            eq.getOrderNum(),
+                            q.getContent(),
+                            q.getType().name(),
+                            q.getDifficulty().name(),
+                            options,
+                            eq.getMyAnswer(),
+                            q.getAnswer(),
+                            q.getExplanation(),
+                            Boolean.TRUE.equals(eq.getIsCorrect())
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new HistoryDetailResult(
+                exam.getId(),
+                total,
+                correctCount,
+                score,
+                score >= 50.0,
+                exam.getSubmittedAt() != null ? exam.getSubmittedAt().toString() : null,
+                questions
+        );
     }
 }

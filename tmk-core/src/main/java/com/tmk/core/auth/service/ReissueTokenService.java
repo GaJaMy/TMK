@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 public class ReissueTokenService {
 
     public String reissue(String refreshToken) {
-        // TODO
+        // Redis validation is handled in AuthUseCase
         return null;
     }
 }

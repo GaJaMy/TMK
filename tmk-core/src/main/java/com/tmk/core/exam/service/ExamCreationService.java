@@ -5,7 +5,7 @@ import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
-import com.tmk.core.question.repository.QuestionRepository;
+import com.tmk.core.port.out.QuestionPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +23,10 @@ public class ExamCreationService {
     private static final int MIN_QUESTIONS = 10;
     private static final short DEFAULT_TIME_LIMIT = 30;
 
-    private final QuestionRepository questionRepository;
+    private final QuestionPort questionPort;
 
     public Exam createExam(Long userId) {
-        Map<Difficulty, List<Question>> grouped = questionRepository.findGroupedByDifficulty();
+        Map<Difficulty, List<Question>> grouped = questionPort.findGroupedByDifficulty();
 
         List<Long> selected = new ArrayList<>();
         for (Difficulty difficulty : Difficulty.values()) {

@@ -1,7 +1,7 @@
 package com.tmk.core.auth.service;
 
+import com.tmk.core.port.out.UserPort;
 import com.tmk.core.user.entity.User;
-import com.tmk.core.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,10 +9,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SocialLoginService {
 
-    private final UserRepository userRepository;
+    private final UserPort userPort;
 
     public User socialLogin(String provider, String code) {
-        // TODO
-        return null;
+        throw new UnsupportedOperationException("Social login not implemented");
     }
 }

@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface ExamRepository extends JpaRepository<Exam, Long> {
+public interface ExamRepository extends JpaRepository<Exam, Long>, com.tmk.core.port.out.ExamPort {
 
     Optional<Exam> findByIdAndUserId(Long id, Long userId);
 

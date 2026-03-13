@@ -8,6 +8,6 @@ import org.springframework.stereotype.Service;
 public class LogoutService {
 
     public void logout(String accessToken) {
-        // TODO
+        // Redis blacklist registration is handled in AuthUseCase
     }
 }
