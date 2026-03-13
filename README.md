@@ -157,7 +157,9 @@ Base URL: `/api/v1`
 
 | 문서 | 설명 |
 |------|------|
-| [`docs/API 명세서.md`](docs/API%20명세서.md) | 전체 API 엔드포인트 명세 |
+| [`docs/TMK(Test My Knowledge).md`](docs/TMK(Test%20My%20Knowledge).md) | 프로젝트 개요, 요구사항, 구현 현황 |
+| [`docs/기술 스택.md`](docs/기술%20스택.md) | 기술 선택 이유, 개발 환경 설정, 환경 변수 |
 | [`docs/도메인 모델 설계.md`](docs/도메인%20모델%20설계.md) | 도메인 모델 및 비즈니스 규칙 |
+| [`docs/API 명세서.md`](docs/API%20명세서.md) | 전체 API 엔드포인트 명세 |
 | [`docs/ERD 설계.md`](docs/ERD%20설계.md) | 데이터베이스 ERD |
 | [`docs/ddl.sql`](docs/ddl.sql) | 테이블 DDL |
