@@ -1,4 +1,4 @@
-package com.tmk.core.jwt;
+package com.tmk.api.security.jwt;
 
 import lombok.Getter;
 import lombok.Setter;

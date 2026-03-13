@@ -16,23 +16,12 @@ public class GetQuestionListService {
     private final QuestionPort questionPort;
 
     public List<Question> getList(QuestionType type, Difficulty difficulty, int page, int size) {
-        List<Question> all;
-        if (type != null && difficulty != null) {
-            all = questionPort.findByTypeAndDifficulty(type, difficulty);
-        } else {
-            all = questionPort.findAll();
-        }
-
-        int start = page * size;
-        if (start >= all.size()) return List.of();
-        int end = Math.min(start + size, all.size());
-        return all.subList(start, end);
+        // TODO
+        return null;
     }
 
     public long count(QuestionType type, Difficulty difficulty) {
-        if (type != null && difficulty != null) {
-            return questionPort.findByTypeAndDifficulty(type, difficulty).size();
-        }
-        return questionPort.findAll().size();
+        // TODO
+        return 0;
     }
 }

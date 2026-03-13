@@ -2,7 +2,6 @@ package com.tmk.batch.job;
 
 import com.tmk.core.emailverification.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -13,9 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.time.OffsetDateTime;
-
-@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class ExpiredVerificationCleanJob {
@@ -33,10 +29,7 @@ public class ExpiredVerificationCleanJob {
     public Step expiredVerificationCleanStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("expiredVerificationCleanStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    OffsetDateTime now = OffsetDateTime.now();
-                    log.info("Cleaning expired email verification codes before {}", now);
-                    emailVerificationRepository.deleteByExpiredAtBefore(now);
-                    log.info("Expired verification codes cleanup completed");
+                    // TODO: 만료된 이메일 인증코드 삭제
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();

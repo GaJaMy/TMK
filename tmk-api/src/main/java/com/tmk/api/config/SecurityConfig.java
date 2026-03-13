@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tmk.api.security.handler.JwtAccessDeniedHandler;
 import com.tmk.api.security.handler.JwtAuthenticationEntryPoint;
 import com.tmk.api.security.jwt.JwtAuthenticationFilter;
-import com.tmk.core.jwt.JwtProvider;
+import com.tmk.api.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

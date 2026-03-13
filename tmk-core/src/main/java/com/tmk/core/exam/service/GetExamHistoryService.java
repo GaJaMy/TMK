@@ -14,14 +14,12 @@ public class GetExamHistoryService {
     private final ExamPort examPort;
 
     public List<Exam> getHistory(Long userId, int page, int size) {
-        List<Exam> all = examPort.findByUserIdOrderByCreatedAtDesc(userId);
-        int start = page * size;
-        if (start >= all.size()) return List.of();
-        int end = Math.min(start + size, all.size());
-        return all.subList(start, end);
+        // TODO
+        return null;
     }
 
     public long count(Long userId) {
-        return examPort.findByUserIdOrderByCreatedAtDesc(userId).size();
+        // TODO
+        return 0;
     }
 }

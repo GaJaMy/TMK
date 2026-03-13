@@ -1,4 +1,4 @@
-package com.tmk.core.jwt;
+package com.tmk.api.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

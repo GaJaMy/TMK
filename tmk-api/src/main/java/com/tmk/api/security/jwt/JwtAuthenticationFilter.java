@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tmk.api.common.SecurityResponseWriter;
 import com.tmk.api.security.CustomUserDetails;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.jwt.JwtProvider;
+import com.tmk.api.security.jwt.JwtProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
