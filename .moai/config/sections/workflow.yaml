@@ -1,4 +1,6 @@
 workflow:
+    # [HARD] Always run plan phase before implementation
+    force_spec_before_run: true
     auto_clear:
         after_plan: true
         after_run: false
