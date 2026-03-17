@@ -18,7 +18,7 @@ public class SendEmailVerificationService {
     public void sendVerification(String email) {
         emailVerificationPort.deleteByEmail(email);
 
-        String code = generateCode();
+        String code = "123456"; // TODO: SMTP 연동 시 generateCode()로 교체
         OffsetDateTime now = OffsetDateTime.now();
 
         EmailVerification verification = EmailVerification.builder()
@@ -33,6 +33,7 @@ public class SendEmailVerificationService {
         // TODO: SMTP 연동 시 여기서 이메일 발송
     }
 
+    @SuppressWarnings("unused") // TODO: SMTP 연동 시 호출 위치(sendVerification)에서 사용
     private String generateCode() {
         return String.format("%06d", new java.util.Random().nextInt(1_000_000));
     }
