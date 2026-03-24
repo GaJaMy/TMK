@@ -66,7 +66,7 @@ public class AuthUseCase {
                 "refresh_token:" + userDetails.getUserId(),
                 refreshToken,
                 refreshTtlSeconds,
-                java.util.concurrent.TimeUnit.SECONDS
+                TimeUnit.SECONDS
         );
         return new LoginResult(accessToken, refreshToken, jwtProperties.getAccessTokenExpiry());
     }
