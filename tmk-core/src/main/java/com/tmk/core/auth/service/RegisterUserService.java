@@ -14,7 +14,8 @@ public class RegisterUserService {
     private final PasswordEncoderPort passwordEncoder;
 
     public User register(String email, String rawPassword) {
-        // TODO
-        return null;
+        User user = User.create(email, passwordEncoder.encode(rawPassword));
+
+        return userPort.save(user);
     }
 }

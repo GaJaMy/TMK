@@ -14,7 +14,15 @@ public class LoginService {
     private final PasswordEncoderPort passwordEncoder;
 
     public User login(String email, String rawPassword) {
-        // TODO
-        return null;
+        User user = userPort.findByEmail(email)
+                .orElseThrow(() -> new com.tmk.core.exception.BusinessException(
+                        com.tmk.core.exception.ErrorCode.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new com.tmk.core.exception.BusinessException(
+                    com.tmk.core.exception.ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        return user;
     }
 }

@@ -40,20 +40,53 @@ public class AuthUseCase {
     }
 
     public LoginResult login(String email, String rawPassword) {
-        loginService.login(email, rawPassword);
-        // TODO: build LoginResult from user + token
-        return null;
+        com.tmk.core.user.entity.User user = loginService.login(email, rawPassword);
+        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
+        long refreshTtlSeconds = jwtProperties.getRefreshTokenExpiry() / 1000;
+        redisTemplate.opsForValue().set(
+                "refresh_token:" + user.getId(),
+                refreshToken,
+                refreshTtlSeconds,
+                java.util.concurrent.TimeUnit.SECONDS
+        );
+        return new LoginResult(accessToken, refreshToken, jwtProperties.getAccessTokenExpiry());
     }
 
     public void logout(String accessToken) {
-        logoutService.logout(accessToken);
-        // TODO: Redis blacklist
+        io.jsonwebtoken.Claims claims = jwtProvider.parseClaims(accessToken);
+        Long userId = claims.get("userId", Long.class);
+        java.util.Date expiration = claims.getExpiration();
+        long remainingMs = expiration.getTime() - System.currentTimeMillis();
+        if (remainingMs > 0) {
+            long remainingSeconds = remainingMs / 1000;
+            redisTemplate.opsForValue().set(
+                    "token_blacklist:" + accessToken,
+                    "true",
+                    remainingSeconds,
+                    java.util.concurrent.TimeUnit.SECONDS
+            );
+        }
+        redisTemplate.delete("refresh_token:" + userId);
     }
 
     public ReissueResult reissue(String refreshToken) {
-        reissueTokenService.reissue(refreshToken);
-        // TODO: build ReissueResult
-        return null;
+        if (!jwtProvider.validateToken(refreshToken)) {
+            throw new com.tmk.core.exception.BusinessException(
+                    com.tmk.core.exception.ErrorCode.REFRESH_TOKEN_INVALID);
+        }
+        io.jsonwebtoken.Claims claims = jwtProvider.parseClaims(refreshToken);
+        Long userId = Long.parseLong(claims.getSubject());
+        String stored = redisTemplate.opsForValue().get("refresh_token:" + userId);
+        if (stored == null || !stored.equals(refreshToken)) {
+            throw new com.tmk.core.exception.BusinessException(
+                    com.tmk.core.exception.ErrorCode.REFRESH_TOKEN_INVALID);
+        }
+        com.tmk.core.user.entity.User user = userPort.findById(userId)
+                .orElseThrow(() -> new com.tmk.core.exception.BusinessException(
+                        com.tmk.core.exception.ErrorCode.REFRESH_TOKEN_INVALID));
+        String newAccessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        return new ReissueResult(newAccessToken, jwtProperties.getAccessTokenExpiry());
     }
 
     public SocialLoginResult socialLogin(String provider, String code) {

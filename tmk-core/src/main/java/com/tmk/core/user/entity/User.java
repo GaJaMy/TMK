@@ -8,8 +8,6 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "\"user\"")
 @Getter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
@@ -39,4 +37,28 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    // 로컬 회원가입
+    public static User create(String email, String encodePassword) {
+        User user = new User();
+        user.email = email;
+        user.password = encodePassword;
+        user.provider = Provider.LOCAL;
+        user.role = UserRole.USER;
+        user.createdAt = OffsetDateTime.now();
+        user.updatedAt = OffsetDateTime.now();
+        return user;
+    }
+
+    // 소셜 로그인
+    public static User createSocial(String email, Provider provider, String providerId) {
+        User user = new User();
+        user.email = email;
+        user.provider = provider;
+        user.providerId = providerId;
+        user.role = UserRole.USER;
+        user.createdAt = OffsetDateTime.now();
+        user.updatedAt = OffsetDateTime.now();
+        return user;
+    }
 }

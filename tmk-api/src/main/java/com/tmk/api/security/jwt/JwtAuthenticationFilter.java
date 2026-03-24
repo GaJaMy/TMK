@@ -12,6 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -24,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,6 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             var claims = jwtProvider.parseClaims(token);
+
+            // Check blacklist
+            String blacklistKey = "token_blacklist:" + token;
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey))) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String role = claims.get("role", String.class);
             Long userId = claims.get("userId", Long.class);
             String email = claims.getSubject();
