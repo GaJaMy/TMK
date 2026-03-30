@@ -16,12 +16,11 @@ public class GetQuestionListService {
     private final QuestionPort questionPort;
 
     public List<Question> getList(QuestionType type, Difficulty difficulty, int page, int size) {
-        // TODO
-        return null;
+        int offset = page * size;
+        return questionPort.findByFilters(type, difficulty, offset, size);
     }
 
     public long count(QuestionType type, Difficulty difficulty) {
-        // TODO
-        return 0;
+        return questionPort.countByFilters(type, difficulty);
     }
 }

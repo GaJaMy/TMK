@@ -9,4 +9,6 @@ public interface DocumentChunkPort {
     List<DocumentChunk> findByDocumentId(Long documentId);
 
     List<DocumentChunk> saveAll(List<DocumentChunk> chunks);
+
+    long countByDocumentId(Long documentId);
 }

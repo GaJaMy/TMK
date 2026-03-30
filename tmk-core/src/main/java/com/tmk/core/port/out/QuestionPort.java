@@ -21,6 +21,12 @@ public interface QuestionPort {
 
     Question save(Question question);
 
+    List<Question> findByFilters(QuestionType type, Difficulty difficulty, int offset, int limit);
+
+    long countByFilters(QuestionType type, Difficulty difficulty);
+
+    long countByDocumentId(Long documentId);
+
     // @MX:ANCHOR: [AUTO] Called by ExamCreationService; provides difficulty-grouped question map for exam creation
     // @MX:REASON: fan_in >= 1, critical business logic depends on this method
     default Map<Difficulty, List<Question>> findGroupedByDifficulty() {

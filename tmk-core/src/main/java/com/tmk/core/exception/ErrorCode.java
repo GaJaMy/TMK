@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     // Document
     DOCUMENT_NOT_FOUND("DOCUMENT_001", "문서를 찾을 수 없습니다.", 404),
+    DOCUMENT_PROCESSING_FAILED("DOCUMENT_002", "문서 처리 중 오류가 발생했습니다.", 500),
 
     // Question
     QUESTION_NOT_FOUND("QUESTION_001", "문제를 찾을 수 없습니다.", 404),

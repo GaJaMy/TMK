@@ -9,4 +9,6 @@ import java.util.List;
 public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Long>, DocumentChunkPort {
 
     List<DocumentChunk> findByDocumentId(Long documentId);
+
+    long countByDocumentId(Long documentId);
 }
