@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: tmk-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: tmk
+      POSTGRES_USER: tmk
+      POSTGRES_PASSWORD: tmk
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tmk -d tmk"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tmk-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tmk-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tmk-network
+
+  tmk-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: tmk-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tmk
+      DB_USERNAME: tmk
+      DB_PASSWORD: tmk
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_SECRET: tmk-secret-key-must-be-at-least-256-bits-long-for-hs256
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - tmk-network
+
+  tmk-batch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: batch
+    container_name: tmk-batch
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tmk
+      DB_USERNAME: tmk
+      DB_PASSWORD: tmk
+    networks:
+      - tmk-network
+
+networks:
+  tmk-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
