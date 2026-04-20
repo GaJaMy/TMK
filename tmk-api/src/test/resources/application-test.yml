@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tmk_test
+    username: ${DB_USERNAME:tmk}
+    password: ${DB_PASSWORD:tmk}
+
+  jpa:
+    hibernate:
+      ddl-auto: update

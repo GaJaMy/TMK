@@ -4,11 +4,13 @@ import com.tmk.core.document.vo.GeneratedQuestion;
 import com.tmk.core.port.out.QuestionGenerationPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.QuestionType;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@Profile({"local", "test"})
 public class StubQuestionGenerationAdapter implements QuestionGenerationPort {
 
     @Override

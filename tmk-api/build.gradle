@@ -20,6 +20,9 @@ dependencies {
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 
+    implementation 'com.openai:openai-java:0.39.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.4'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

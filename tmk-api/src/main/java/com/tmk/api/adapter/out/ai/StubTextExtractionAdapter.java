@@ -1,9 +1,11 @@
 package com.tmk.api.adapter.out.ai;
 
 import com.tmk.core.port.out.TextExtractionPort;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile({"local", "test"})
 public class StubTextExtractionAdapter implements TextExtractionPort {
 
     @Override
