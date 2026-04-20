@@ -1,0 +1,63 @@
+package com.tmk.core.document.service;
+
+import com.tmk.core.document.entity.Document;
+import com.tmk.core.document.entity.DocumentStatus;
+import com.tmk.core.port.out.DocumentPort;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class RegisterDocumentServiceTest {
+
+    @Mock
+    private DocumentPort documentPort;
+
+    @InjectMocks
+    private RegisterDocumentService registerDocumentService;
+
+    @Test
+    void register_validInput_savesDocumentWithPendingStatus() {
+        // Arrange
+        String title = "Test Document";
+        String source = "/test.pdf";
+        when(documentPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
+
+        // Act
+        registerDocumentService.register(title, source);
+
+        // Assert
+        verify(documentPort).save(captor.capture());
+        Document saved = captor.getValue();
+        assertThat(saved.getTitle()).isEqualTo(title);
+        assertThat(saved.getSource()).isEqualTo(source);
+        assertThat(saved.getStatus()).isEqualTo(DocumentStatus.PENDING);
+        assertThat(saved.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void register_validInput_returnsDocument() {
+        // Arrange
+        String title = "Test Document";
+        String source = "/test.pdf";
+        when(documentPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Document result = registerDocumentService.register(title, source);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getTitle()).isEqualTo(title);
+        assertThat(result.getSource()).isEqualTo(source);
+        assertThat(result.getStatus()).isEqualTo(DocumentStatus.PENDING);
+    }
+}
