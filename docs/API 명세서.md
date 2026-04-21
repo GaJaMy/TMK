@@ -104,7 +104,7 @@ Authorization: Bearer {accessToken}
 
 ### 1.1 이메일 인증 코드 발송
 
-**POST** `/api/v1/auth/send-verification`
+**POST** `/api/v1/auth/verification/send`
 
 회원가입 전 이메일 인증 코드를 발송합니다. 인증 코드는 5분간 유효하며, 동일 이메일로 재발송 시 기존 코드는 덮어씁니다.
 
@@ -134,7 +134,7 @@ Authorization: Bearer {accessToken}
 
 ### 1.2 이메일 인증 코드 확인
 
-**POST** `/api/v1/auth/verify`
+**POST** `/api/v1/auth/verification/verify`
 
 이메일로 수신한 인증 코드를 검증합니다. 인증 성공 시 해당 이메일은 회원가입 가능 상태가 됩니다.
 
@@ -243,7 +243,6 @@ Authorization: Bearer {accessToken}
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenType": "Bearer",
     "expiresIn": 1800
   }
 }
@@ -253,7 +252,6 @@ Authorization: Bearer {accessToken}
 |------|------|------|
 | accessToken | String | JWT 액세스 토큰 |
 | refreshToken | String | JWT 리프레시 토큰 |
-| tokenType | String | 토큰 타입 (항상 `Bearer`) |
 | expiresIn | Integer | 액세스 토큰 만료 시간 (초) |
 
 **Error Response**
@@ -290,7 +288,6 @@ Authorization: Bearer {accessToken}
   "msg": "ok",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenType": "Bearer",
     "expiresIn": 1800
   }
 }
@@ -333,9 +330,9 @@ Authorization: Bearer {accessToken}
 
 ### 1.7 소셜 로그인
 
-**GET** `/api/v1/auth/social/{provider}`
+**POST** `/api/v1/auth/social/{provider}`
 
-소셜 로그인 페이지로 리다이렉트합니다.
+소셜 로그인 제공자에서 받은 인가 코드를 전달하여 로그인합니다.
 
 **Path Variable**
 
@@ -343,7 +340,15 @@ Authorization: Bearer {accessToken}
 |----------|------|
 | provider | 소셜 로그인 제공자 (`google`, `kakao`, `naver`) |
 
-**Response** (리다이렉트 후 콜백)
+**Request Body**
+
+```json
+{
+  "code": "authorization-code"
+}
+```
+
+**Response**
 
 ```json
 {
@@ -352,7 +357,6 @@ Authorization: Bearer {accessToken}
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenType": "Bearer",
     "expiresIn": 1800
   }
 }
@@ -729,7 +733,7 @@ Authorization: Bearer {accessToken}
 
 ### 4.2 시험 히스토리 상세 조회
 
-**GET** `/api/v1/exams/{examId}/history`
+**GET** `/api/v1/exams/history/{examId}`
 🔒 인증 필요
 
 특정 시험의 상세 결과를 조회합니다. 각 문제별 내 답안, 정답, 해설이 포함됩니다.
@@ -795,12 +799,36 @@ Authorization: Bearer {accessToken}
 
 **POST** `/internal/v1/documents`
 
-PDF 문서를 등록하고 문제 생성 파이프라인을 실행합니다.
+서버가 접근 가능한 파일 경로를 전달하여 문서를 등록하고 문제 생성 파이프라인을 실행합니다.
 등록 후 아래 파이프라인이 비동기로 실행됩니다.
 
 ```
 PDF 수신 → 텍스트 파싱 → 청킹 → OpenAI 임베딩 → pgvector 저장 → LLM 문제 생성
 ```
+
+**Request Body** (`application/json`)
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| title | String | Y | 문서 제목 |
+| source | String | Y | 서버 로컬 PDF 절대 경로 |
+
+**Example**
+
+```json
+{
+  "title": "Spring Boot 완전 정복",
+  "source": "/absolute/path/spring-boot.pdf"
+}
+```
+
+---
+
+### 5.2 파일 업로드 등록
+
+**POST** `/internal/v1/documents/upload`
+
+PDF 파일을 업로드한 뒤 저장 경로를 기준으로 문서를 등록합니다.
 
 **Request** (`multipart/form-data`)
 
@@ -833,9 +861,9 @@ PDF 수신 → 텍스트 파싱 → 청킹 → OpenAI 임베딩 → pgvector 저
 
 ---
 
-### 5.2 문서 처리 상태 조회
+### 5.3 문서 처리 상태 조회
 
-**GET** `/internal/v1/documents/{documentId}`
+**GET** `/internal/v1/documents/{documentId}/status`
 
 문서 파이프라인 처리 상태를 확인합니다.
 
@@ -874,26 +902,42 @@ PDF 수신 → 텍스트 파싱 → 청킹 → OpenAI 임베딩 → pgvector 저
 
 | 번호 | Method | URL | 설명 | 인증 |
 |------|--------|-----|------|------|
-| 1 | POST | `/api/v1/auth/send-verification` | 이메일 인증 코드 발송 | ❌ |
-| 2 | POST | `/api/v1/auth/verify` | 이메일 인증 코드 확인 | ❌ |
+| 1 | POST | `/api/v1/auth/verification/send` | 이메일 인증 코드 발송 | ❌ |
+| 2 | POST | `/api/v1/auth/verification/verify` | 이메일 인증 코드 확인 | ❌ |
 | 3 | POST | `/api/v1/auth/register` | 회원가입 (인증 완료 후 가능) | ❌ |
 | 4 | POST | `/api/v1/auth/login` | 로그인 | ❌ |
 | 5 | POST | `/api/v1/auth/reissue` | 토큰 재발급 | ❌ |
 | 6 | POST | `/api/v1/auth/logout` | 로그아웃 | ✅ |
-| 7 | GET | `/api/v1/auth/social/{provider}` | 소셜 로그인 | ❌ |
+| 7 | POST | `/api/v1/auth/social/{provider}` | 소셜 로그인 | ❌ |
 | 8 | GET | `/api/v1/questions` | 문제 목록 조회 | ✅ |
 | 9 | GET | `/api/v1/questions/{questionId}` | 문제 상세 조회 | ✅ |
 | 10 | POST | `/api/v1/exams` | 시험 생성 | ✅ |
 | 11 | GET | `/api/v1/exams/{examId}` | 시험 문제 목록 조회 | ✅ |
-| 12 | PATCH | `/api/v1/exams/{examId}/answers` | 답안 저장/수정 | ✅ |
+| 12 | PUT | `/api/v1/exams/{examId}/answers` | 답안 저장/수정 | ✅ |
 | 13 | POST | `/api/v1/exams/{examId}/submit` | 시험 제출 | ✅ |
 | 14 | GET | `/api/v1/exams/{examId}/result` | 시험 결과 조회 | ✅ |
 | 15 | GET | `/api/v1/exams/history` | 시험 히스토리 목록 | ✅ |
-| 16 | GET | `/api/v1/exams/{examId}/history` | 시험 히스토리 상세 | ✅ |
+| 16 | GET | `/api/v1/exams/history/{examId}` | 시험 히스토리 상세 | ✅ |
+| 17 | POST | `/admin/v1/questions` | 관리자 공용 문제 직접 등록 | ✅ (ADMIN) |
 
 > **내부 API (Internal) - 외부 공개 불가**
 
 | 번호 | Method | URL | 설명 | 인증 |
 |------|--------|-----|------|------|
-| I-1 | POST | `/internal/v1/documents` | 문서 등록 및 문제 생성 트리거 | 내부 |
-| I-2 | GET | `/internal/v1/documents/{documentId}` | 문서 처리 상태 조회 | 내부 |
+| I-1 | POST | `/internal/v1/documents` | 경로 기반 문서 등록 및 문제 생성 트리거 | 내부 |
+| I-2 | POST | `/internal/v1/documents/upload` | 파일 업로드 기반 문서 등록 | 내부 |
+| I-3 | GET | `/internal/v1/documents/{documentId}/status` | 문서 처리 상태 조회 | 내부 |
+
+---
+
+## 웹 UI 진입점
+
+현재 `tmk-api`에는 정적 웹 UI가 포함되어 있으며 기본 진입점은 다음과 같습니다.
+
+| 페이지 | URL | 설명 |
+|------|-----|------|
+| 홈 | `/index.html` | 비로그인 시 로그인 화면, 로그인 후 제품 홈 |
+| 시험 보기 | `/exams.html` | 실제 시험 응시 형태의 문제 풀이 UI |
+| 문서 | `/documents.html` | 내부 문서 등록 및 상태 확인 |
+| 문항 | `/questions.html` | 문제 목록/상세 탐색 |
+| 인증 센터 | `/auth.html` | 이메일 인증, 회원가입, 재발급 |

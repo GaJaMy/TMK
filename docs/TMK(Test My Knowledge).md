@@ -7,6 +7,8 @@
 
 PDF 문서를 등록하면 OpenAI를 통해 자동으로 시험 문제를 생성하고, 사용자가 시험을 응시하여 학습 이해도를 확인할 수 있는 AI 기반 문제은행 플랫폼입니다.
 
+현재 `tmk-api`에는 정적 웹 UI가 포함되어 있으며, `http://localhost:8080/index.html` 접속 시 비로그인 상태에서는 로그인 진입 화면이, 로그인 후에는 제품 홈 화면이 표시됩니다. 시험 화면은 단순 API 테스트 폼이 아니라 실제 응시 흐름에 가깝게 문제/보기/답안 저장/제출 UI를 제공합니다.
+
 ### 핵심 기술 특징
 
 - **RAG 기반 문제 생성**: 문서를 청킹 → OpenAI 임베딩(1536차원) → pgvector ANN 검색 → LLM 문제 생성
@@ -59,12 +61,17 @@ PDF 문서를 등록하면 OpenAI를 통해 자동으로 시험 문제를 생성
 
 ```
 tmk-parent/
-├── tmk-core/     # 순수 도메인. Spring/JPA 등 외부 프레임워크 미의존
-├── tmk-api/      # REST API, Spring Security, JWT, JPA 구현체
+├── tmk-core/     # 도메인 엔티티, 애플리케이션 서비스, outbound port
+├── tmk-infra/    # Spring Data JPA repository + persistence adapter
+├── tmk-api/      # REST API, Spring Security, JWT, AI/Redis adapter, static web UI
 └── tmk-batch/    # Spring Batch (만료 시험 자동 제출, 인증코드 정리)
 ```
 
-**의존성 방향**: `tmk-api` → `tmk-core` ← `tmk-batch` (core는 외부에 의존하지 않음)
+**의존성 방향**: `tmk-api` → `tmk-core`, `tmk-infra` / `tmk-batch` → `tmk-core`, `tmk-infra`
+
+**구조 원칙**: 코어 서비스는 JPA repository를 직접 참조하지 않고 `Port`에만 의존합니다. DB 접근은 `tmk-infra`의 adapter가 담당합니다.
+
+**포트 분류**: `tmk-core`의 outbound port는 역할별로 `port.out.persistence`, `port.out.ai`, `port.out.cache`, `port.out.security`로 분리합니다.
 
 > 패키지 구조 및 도메인 설계는 [도메인 모델 설계.md](./도메인 모델 설계.md) 참고
 
@@ -83,6 +90,14 @@ ANN 검색 (코사인 유사도) → LLM 문제 생성
   ↓
 QUESTION 테이블 저장
 ```
+
+### 웹 UI 구성
+
+- `index.html`: 로그인 화면 + 로그인 후 홈 대시보드
+- `exams.html`: 시험 시작, 문항 이동, 보기 선택, 임시 저장, 제출, 결과 조회
+- `documents.html`: 경로 기반 등록, 파일 업로드 등록, 처리 상태 조회
+- `questions.html`: 문제 목록 필터링 및 상세 확인
+- `auth.html`: 이메일 인증, 회원가입, 로그인, 토큰 재발급
 
 ### 시스템 아키텍처 다이어그램
 
@@ -131,6 +146,7 @@ M --> User
 ### 2. 문제 생성
 
 - 내부 API를 통해 PDF 문서 등록 (MVP에서 사용자 직접 등록 불가)
+- 등록 방식: 파일 업로드(`POST /internal/v1/documents/upload`) 또는 서버 파일 경로 전달(`POST /internal/v1/documents`)
 - AI 자동 문제 생성 (문서당 최소 2개)
 - 문제 유형: 객관식(5지선다), 단답형, 참/거짓
 - 난이도: 쉬움 / 보통 / 어려움
@@ -178,20 +194,21 @@ M --> User
 
 ---
 
-## 구현 현황 (MVP 기준)
+## 구현 현황 (현재 코드 기준)
 
 | 영역 | 상태 | 비고 |
 |------|------|------|
 | 도메인 엔티티 (User, Document, Question, Exam) | ✅ 완료 | |
 | JWT 생성 / 검증 | ✅ 완료 | |
 | Spring Security 설정 | ✅ 완료 | |
-| ExamCreationService (문제 선택 알고리즘) | ✅ 완료 | |
-| ExamGradingService (채점 로직) | ✅ 완료 | |
-| 인증 서비스 (7개) | ⚠️ 구현 중 | 서비스 클래스 존재, 로직 작성 중 |
-| API 컨트롤러 메서드 | ⚠️ 구현 중 | 매핑만 존재 |
-| Spring Batch 잡 | ⚠️ 구현 중 | 잡 클래스 존재, 스텝 작성 중 |
-| OpenAI 통합 | ❌ 미구현 | 임베딩 + 문제 생성 연동 필요 |
-| 테스트 코드 | ❌ 미구현 | 컨텍스트 로드 테스트 1개만 존재 |
+| 시험 생성/채점/이력 서비스 | ✅ 완료 | 생성, 저장, 제출, 결과/이력 조회 포함 |
+| 인증 서비스 | ✅ 완료 | 이메일 인증, 회원가입, 로그인, 로그아웃, 재발급 |
+| API 컨트롤러 | ✅ 완료 | 현재 문서의 경로 기준 |
+| 내부 문서 등록 API | ✅ 완료 | 파일 업로드 + 경로 기반 등록 지원 |
+| Spring Batch 잡 | ✅ 완료 | 만료 시험 자동 제출, 인증코드 정리 |
+| 정적 웹 UI | ✅ 완료 | 제품형 로그인 홈 + 시험 응시 화면 포함 |
+| OpenAI 통합 | ✅ 완료 | 운영 환경에서는 OpenAI API billing/quota 설정 필요 |
+| 테스트 코드 | ✅ 작성됨 | 모듈별 단위/통합 테스트 존재 |
 
 ---
 

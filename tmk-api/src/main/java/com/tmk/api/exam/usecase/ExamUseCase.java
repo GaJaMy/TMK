@@ -1,13 +1,16 @@
 package com.tmk.api.exam.usecase;
 
 import com.tmk.api.exam.dto.*;
+import com.tmk.api.exam.request.CreateExamRequest;
 import com.tmk.api.question.dto.OptionResult;
+import com.tmk.core.common.ContentScope;
+import com.tmk.core.common.Topic;
 import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.service.*;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Question;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,8 +32,10 @@ public class ExamUseCase {
     private final GetExamHistoryDetailService getExamHistoryDetailService;
     private final QuestionPort questionPort;
 
-    public ExamResult create(Long userId) {
-        Exam exam = createExamService.create(userId);
+    public ExamResult create(Long userId, String scope, String topic) {
+        ContentScope selectedScope = (scope != null && !scope.isBlank()) ? ContentScope.valueOf(scope.toUpperCase()) : ContentScope.PUBLIC;
+        Topic selectedTopic = (topic != null && !topic.isBlank()) ? Topic.valueOf(topic.toUpperCase()) : null;
+        Exam exam = createExamService.create(userId, selectedScope, selectedTopic);
         return new ExamResult(
                 exam.getId(),
                 exam.getTotalQuestions(),
@@ -58,6 +63,8 @@ public class ExamUseCase {
                             q.getContent(),
                             q.getType().name(),
                             q.getDifficulty().name(),
+                            q.getTopic().name(),
+                            q.getScope().name(),
                             options,
                             eq.getMyAnswer()
                     );

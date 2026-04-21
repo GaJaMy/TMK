@@ -39,14 +39,29 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/send-verification",
-                                "/api/v1/auth/verify",
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/admin.html",
+                                "/auth.html",
+                                "/documents.html",
+                                "/questions.html",
+                                "/exams.html",
+                                "/ui.js",
+                                "/styles.css",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api/v1/my/documents/*/events",
+                                "/admin/v1/documents/*/events",
+                                "/api/v1/auth/verification/send",
+                                "/api/v1/auth/verification/verify",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue",
-                                "/api/v1/auth/social/**",
-                                "/internal/**"
+                                "/api/v1/auth/social/**"
                         ).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

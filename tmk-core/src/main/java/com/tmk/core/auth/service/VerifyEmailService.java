@@ -3,7 +3,7 @@ package com.tmk.core.auth.service;
 import com.tmk.core.emailverification.entity.EmailVerification;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.EmailVerificationPort;
+import com.tmk.core.port.out.persistence.EmailVerificationPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

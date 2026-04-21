@@ -1,20 +1,19 @@
 package com.tmk.core.document.service;
 
+import com.tmk.core.common.Topic;
+import com.tmk.core.common.ContentScope;
 import com.tmk.core.document.entity.Document;
-import com.tmk.core.document.entity.DocumentChunk;
 import com.tmk.core.document.entity.DocumentStatus;
 import com.tmk.core.document.vo.GeneratedQuestion;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.DocumentChunkPort;
-import com.tmk.core.port.out.DocumentPort;
-import com.tmk.core.port.out.EmbeddingPort;
-import com.tmk.core.port.out.QuestionGenerationPort;
-import com.tmk.core.port.out.QuestionPort;
-import com.tmk.core.port.out.TextExtractionPort;
+import com.tmk.core.port.out.ai.EmbeddingPort;
+import com.tmk.core.port.out.ai.QuestionGenerationPort;
+import com.tmk.core.port.out.ai.TextExtractionPort;
+import com.tmk.core.port.out.persistence.DocumentChunkPort;
+import com.tmk.core.port.out.persistence.DocumentPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
-import com.tmk.core.question.entity.Question;
-import com.tmk.core.question.entity.QuestionOption;
 import com.tmk.core.question.entity.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +60,9 @@ class DocumentProcessingServiceTest {
         return Document.builder()
                 .title("test")
                 .source("/test.pdf")
+                .ownerUserId(1L)
+                .scope(ContentScope.PRIVATE)
+                .topic(Topic.SPRING)
                 .status(status)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -84,7 +86,7 @@ class DocumentProcessingServiceTest {
         when(documentPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(textExtractionPort.extract("/test.pdf")).thenReturn("test text content for processing");
         when(embeddingPort.embed(any())).thenReturn(new float[1536]);
-        when(questionGenerationPort.generateQuestions(any(), any())).thenReturn(List.of(generatedQuestion));
+        when(questionGenerationPort.generateQuestions(any(), any(), any())).thenReturn(List.of(generatedQuestion));
         when(questionPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Act

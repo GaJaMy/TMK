@@ -2,7 +2,7 @@ package com.tmk.api.adapter.out.ai;
 
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.TextExtractionPort;
+import com.tmk.core.port.out.ai.TextExtractionPort;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;

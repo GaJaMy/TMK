@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Home</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="home">
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <strong>TMK</strong>
+            <span>Test My Knowledge</span>
+        </div>
+        <nav class="nav">
+            <a class="nav-link active" href="/index.html">홈</a>
+            <a class="nav-link" href="/documents.html">내 문서</a>
+            <a class="nav-link" href="/questions.html">문항 탐색</a>
+            <a class="nav-link" href="/exams.html">시험 보기</a>
+            <a class="nav-link" href="/login.html">계정</a>
+        </nav>
+        <div class="status-card">
+            <h3>내 세션</h3>
+            <div class="meta-list">
+                <div class="meta-row"><span>상태</span><strong data-auth-summary>로그인됨</strong></div>
+                <div class="meta-row"><span>이메일</span><strong data-user-email>-</strong></div>
+                <div class="meta-row"><span>최근 시험</span><strong id="dashboardExamId">-</strong></div>
+                <div class="meta-row"><span>이력 수</span><strong id="dashboardHistoryCount">-</strong></div>
+            </div>
+            <div class="button-row" style="margin-top: 14px;">
+                <a href="/exams.html" class="button-link primary">시험 보기</a>
+                <button id="logoutBtn" type="button" class="secondary">로그아웃</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <section class="topbar">
+            <div>
+                <h1 class="page-title">학습 홈</h1>
+                <p class="subtitle">로그인 이후 진입하는 홈 화면입니다. 개인 문서 기반 학습과 TMK 공용 문제 풀이를 이곳에서 시작합니다.</p>
+            </div>
+            <span class="pill">Home</span>
+        </section>
+
+        <section class="home-hero">
+            <article class="product-panel home-hero-panel">
+                <span class="badge">오늘의 흐름</span>
+                <h2>문서를 올리고, 문제를 풀고, 시험 결과까지 이어서 확인합니다.</h2>
+                <p>구현된 API를 기준으로 실제 사용 흐름처럼 홈을 구성했습니다. 관리자 화면은 별도 URL로만 접근하며 이 홈에서는 일반 사용자 학습 동선에 집중합니다.</p>
+                <div class="hero-actions">
+                    <button id="quickCreateExamBtn" type="button">공용 시험 시작</button>
+                    <button id="quickPrivateExamBtn" type="button" class="secondary">내 문서 시험 시작</button>
+                    <a href="/documents.html" class="button-link ghost">문서 업로드</a>
+                </div>
+            </article>
+
+            <article class="home-side-stack">
+                <div class="metric-card">
+                    <h3>인증 상태</h3>
+                    <div id="dashboardAuthState" class="metric-value">-</div>
+                </div>
+                <div class="metric-card">
+                    <h3>토큰 상태</h3>
+                    <div id="dashboardTokenState" class="metric-value">-</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="grid three">
+            <article class="feature-card">
+                <h3>내 문서 학습</h3>
+                <p>업로드한 PDF를 분석해 개인 문제를 만들고, 개인 범위 시험으로 이어집니다.</p>
+                <a href="/documents.html" class="button-link secondary">내 문서 열기</a>
+            </article>
+            <article class="feature-card">
+                <h3>문항 탐색</h3>
+                <p>주제, 난이도, 범위를 기준으로 문항을 찾고 상세 해설까지 바로 확인합니다.</p>
+                <a href="/questions.html" class="button-link secondary">문항 보러가기</a>
+            </article>
+            <article class="feature-card">
+                <h3>실전 시험</h3>
+                <p>객관식과 주관식을 섞어 실제 응시 화면처럼 풀이할 수 있습니다.</p>
+                <a href="/exams.html" class="button-link secondary">시험실 입장</a>
+            </article>
+        </section>
+
+        <section class="grid two">
+            <article class="panel">
+                <div class="inline-actions" style="justify-content: space-between;">
+                    <h2>빠른 작업</h2>
+                    <button id="quickHistoryBtn" type="button" class="secondary">시험 이력 새로고침</button>
+                </div>
+                <div class="quick-action-list">
+                    <a href="/documents.html" class="quick-action-card">
+                        <strong>개인 문서 등록</strong>
+                        <span>사용자 업로드 문서로 문제 생성</span>
+                    </a>
+                    <a href="/questions.html" class="quick-action-card">
+                        <strong>공용/개인 문제 탐색</strong>
+                        <span>범위별 목록 및 상세 확인</span>
+                    </a>
+                    <a href="/exams.html" class="quick-action-card">
+                        <strong>시험 결과 조회</strong>
+                        <span>이력 및 상세 채점 결과 확인</span>
+                    </a>
+                </div>
+            </article>
+
+            <article class="log-card">
+                <h3>최근 API 호출</h3>
+                <div id="requestLogs" class="logs"></div>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="inline-actions" style="justify-content: space-between;">
+                <h2>응답 상세</h2>
+                <button id="clearResponseBtn" type="button" class="secondary">지우기</button>
+            </div>
+            <pre id="responseView" class="response-box">요청 결과가 여기에 표시됩니다.</pre>
+        </section>
+    </main>
+</div>
+<script src="/ui.js"></script>
+</body>
+</html>

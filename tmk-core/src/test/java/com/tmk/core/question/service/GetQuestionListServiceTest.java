@@ -1,8 +1,11 @@
 package com.tmk.core.question.service;
 
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.common.Topic;
+import com.tmk.core.common.ContentScope;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
+import com.tmk.core.question.entity.QuestionSourceType;
 import com.tmk.core.question.entity.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +32,12 @@ class GetQuestionListServiceTest {
         OffsetDateTime now = OffsetDateTime.now();
         return Question.builder()
                 .documentId(1L)
+                .scope(ContentScope.PUBLIC)
+                .sourceType(QuestionSourceType.PUBLIC_DOCUMENT_GENERATED)
                 .content("Test question?")
                 .type(type)
                 .difficulty(difficulty)
+                .topic(Topic.SPRING)
                 .answer("A")
                 .explanation("Because...")
                 .createdAt(now)
@@ -47,10 +53,10 @@ class GetQuestionListServiceTest {
         int page = 0;
         int size = 10;
         List<Question> expected = List.of(buildQuestion(type, difficulty));
-        when(questionPort.findByFilters(type, difficulty, 0, size)).thenReturn(expected);
+        when(questionPort.findByFilters(type, difficulty, null, ContentScope.PUBLIC, null, 0, size)).thenReturn(expected);
 
         // Act
-        List<Question> result = getQuestionListService.getList(type, difficulty, page, size);
+        List<Question> result = getQuestionListService.getList(type, difficulty, null, ContentScope.PUBLIC, null, page, size);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -67,10 +73,10 @@ class GetQuestionListServiceTest {
                 buildQuestion(QuestionType.MULTIPLE_CHOICE, Difficulty.EASY),
                 buildQuestion(QuestionType.SHORT_ANSWER, Difficulty.HARD)
         );
-        when(questionPort.findByFilters(null, null, 0, size)).thenReturn(expected);
+        when(questionPort.findByFilters(null, null, null, ContentScope.PUBLIC, null, 0, size)).thenReturn(expected);
 
         // Act
-        List<Question> result = getQuestionListService.getList(null, null, page, size);
+        List<Question> result = getQuestionListService.getList(null, null, null, ContentScope.PUBLIC, null, page, size);
 
         // Assert
         assertThat(result).hasSize(2);
@@ -83,10 +89,10 @@ class GetQuestionListServiceTest {
         int size = 10;
         int expectedOffset = 20;
         List<Question> expected = List.of(buildQuestion(QuestionType.MULTIPLE_CHOICE, Difficulty.MEDIUM));
-        when(questionPort.findByFilters(null, null, expectedOffset, size)).thenReturn(expected);
+        when(questionPort.findByFilters(null, null, null, ContentScope.PUBLIC, null, expectedOffset, size)).thenReturn(expected);
 
         // Act
-        List<Question> result = getQuestionListService.getList(null, null, page, size);
+        List<Question> result = getQuestionListService.getList(null, null, null, ContentScope.PUBLIC, null, page, size);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -97,10 +103,10 @@ class GetQuestionListServiceTest {
         // Arrange
         QuestionType type = QuestionType.MULTIPLE_CHOICE;
         Difficulty difficulty = Difficulty.EASY;
-        when(questionPort.countByFilters(type, difficulty)).thenReturn(5L);
+        when(questionPort.countByFilters(type, difficulty, null, ContentScope.PUBLIC, null)).thenReturn(5L);
 
         // Act
-        long result = getQuestionListService.count(type, difficulty);
+        long result = getQuestionListService.count(type, difficulty, null, ContentScope.PUBLIC, null);
 
         // Assert
         assertThat(result).isEqualTo(5L);
@@ -109,10 +115,10 @@ class GetQuestionListServiceTest {
     @Test
     void count_withNoFilters_returnsTotal() {
         // Arrange
-        when(questionPort.countByFilters(null, null)).thenReturn(42L);
+        when(questionPort.countByFilters(null, null, null, ContentScope.PUBLIC, null)).thenReturn(42L);
 
         // Act
-        long result = getQuestionListService.count(null, null);
+        long result = getQuestionListService.count(null, null, null, ContentScope.PUBLIC, null);
 
         // Assert
         assertThat(result).isEqualTo(42L);

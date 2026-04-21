@@ -1,13 +1,16 @@
 package com.tmk.api.exam.usecase;
 
 import com.tmk.api.exam.dto.*;
+import com.tmk.core.common.ContentScope;
+import com.tmk.core.common.Topic;
 import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.exam.service.*;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
+import com.tmk.core.question.entity.QuestionSourceType;
 import com.tmk.core.question.entity.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,9 +96,13 @@ class ExamUseCaseTest {
         OffsetDateTime now = OffsetDateTime.now();
         return Question.builder()
                 .documentId(1L)
+                .ownerUserId(null)
+                .scope(ContentScope.PUBLIC)
+                .sourceType(QuestionSourceType.PUBLIC_DOCUMENT_GENERATED)
                 .content("Sample question?")
                 .type(QuestionType.SHORT_ANSWER)
                 .difficulty(Difficulty.EASY)
+                .topic(Topic.SPRING)
                 .answer("answer")
                 .explanation("explanation here")
                 .createdAt(now)
@@ -107,10 +114,10 @@ class ExamUseCaseTest {
     void create_returnsExamResult() {
         // Arrange
         Exam exam = buildExam(ExamStatus.IN_PROGRESS);
-        when(createExamService.create(100L)).thenReturn(exam);
+        when(createExamService.create(100L, ContentScope.PUBLIC, null)).thenReturn(exam);
 
         // Act
-        ExamResult result = examUseCase.create(100L);
+        ExamResult result = examUseCase.create(100L, null, null);
 
         // Assert
         assertThat(result).isNotNull();

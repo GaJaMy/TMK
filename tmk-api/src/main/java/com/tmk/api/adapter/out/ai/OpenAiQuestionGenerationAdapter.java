@@ -12,7 +12,7 @@ import com.tmk.api.config.OpenAiProperties;
 import com.tmk.core.document.vo.GeneratedQuestion;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.QuestionGenerationPort;
+import com.tmk.core.port.out.ai.QuestionGenerationPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.QuestionType;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +31,13 @@ public class OpenAiQuestionGenerationAdapter implements QuestionGenerationPort {
     private final OpenAIClient openAIClient;
     private final OpenAiProperties openAiProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final int TARGET_QUESTION_COUNT = 12;
 
     @Override
-    public List<GeneratedQuestion> generateQuestions(Long documentId, String context) {
+    public List<GeneratedQuestion> generateQuestions(Long documentId, String topic, String context) {
         try {
             String systemPrompt = buildSystemPrompt();
-            String userPrompt = buildUserPrompt(context);
+            String userPrompt = buildUserPrompt(topic, context);
 
             ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
                     .model(ChatModel.of(openAiProperties.getChat().getModel()))
@@ -92,7 +93,7 @@ public class OpenAiQuestionGenerationAdapter implements QuestionGenerationPort {
                 You MUST respond with valid JSON only.
 
                 Rules:
-                1. Generate at least 3 questions with a mix of types and difficulties.
+                1. Generate exactly %d questions with a mix of types and difficulties.
                 2. Question types: MULTIPLE_CHOICE, SHORT_ANSWER, TRUE_FALSE
                 3. Difficulty levels: EASY, MEDIUM, HARD
                 4. For MULTIPLE_CHOICE: provide exactly 5 options. The answer must be the option number (1-5).
@@ -100,7 +101,9 @@ public class OpenAiQuestionGenerationAdapter implements QuestionGenerationPort {
                 6. For SHORT_ANSWER: provide a concise but complete answer.
                 7. Always include a clear explanation for each question.
                 8. Questions should test understanding, not just memorization.
-                9. Ensure at least one question of each difficulty level.
+                9. Include at least 4 EASY, 4 MEDIUM, and 4 HARD questions.
+                10. Cover the document broadly. Do not generate duplicate or near-duplicate questions.
+                11. If the document is short, still produce %d valid questions by varying angle, depth, and format.
 
                 Response format:
                 {
@@ -115,11 +118,14 @@ public class OpenAiQuestionGenerationAdapter implements QuestionGenerationPort {
                     }
                   ]
                 }
-                """;
+                """.formatted(TARGET_QUESTION_COUNT, TARGET_QUESTION_COUNT);
     }
 
-    private String buildUserPrompt(String context) {
+    private String buildUserPrompt(String topic, String context) {
         return """
+                Topic:
+                %s
+
                 Based on the following document content, generate exam questions.
 
                 Document Content:
@@ -127,8 +133,8 @@ public class OpenAiQuestionGenerationAdapter implements QuestionGenerationPort {
                 %s
                 ---
 
-                Generate a diverse set of questions covering the key concepts in this document.
-                """.formatted(context);
+                Generate exactly %d questions covering the key concepts in this document.
+                """.formatted(topic, context, TARGET_QUESTION_COUNT);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

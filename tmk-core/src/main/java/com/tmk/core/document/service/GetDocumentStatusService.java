@@ -4,9 +4,9 @@ import com.tmk.core.document.entity.Document;
 import com.tmk.core.document.vo.DocumentStatusInfo;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.DocumentChunkPort;
-import com.tmk.core.port.out.DocumentPort;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.DocumentChunkPort;
+import com.tmk.core.port.out.persistence.DocumentPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

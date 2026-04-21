@@ -1,7 +1,7 @@
 package com.tmk.core.auth.service;
 
-import com.tmk.core.port.out.PasswordEncoderPort;
-import com.tmk.core.port.out.UserPort;
+import com.tmk.core.port.out.security.PasswordEncoderPort;
+import com.tmk.core.port.out.persistence.UserPort;
 import com.tmk.core.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 public class RegisterUserService {
 
     private final UserPort userPort;
-    private final PasswordEncoderPort passwordEncoder;
+    private final PasswordEncoderPort passwordEncoderPort;
 
     public User register(String email, String rawPassword) {
-        User user = User.create(email, passwordEncoder.encode(rawPassword));
+        User user = User.create(email, passwordEncoderPort.encode(rawPassword));
 
         return userPort.save(user);
     }

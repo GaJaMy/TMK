@@ -1,5 +1,7 @@
 package com.tmk.core.question.entity;
 
+import com.tmk.core.common.ContentScope;
+import com.tmk.core.common.Topic;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,8 +21,19 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "document_id", nullable = false)
+    @Column(name = "document_id")
     private Long documentId;
+
+    @Column(name = "owner_user_id")
+    private Long ownerUserId;
+
+    @Column(nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private ContentScope scope;
+
+    @Column(name = "source_type", nullable = false, length = 40)
+    @Enumerated(EnumType.STRING)
+    private QuestionSourceType sourceType;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -32,6 +45,10 @@ public class Question {
     @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
+
+    @Column(nullable = false, length = 30)
+    @Enumerated(EnumType.STRING)
+    private Topic topic;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String answer;

@@ -33,7 +33,7 @@ class OpenAiQuestionGenerationAdapterTest {
     void generateQuestions_throwsBusinessException_whenApiFails() {
         when(openAIClient.chat()).thenThrow(new RuntimeException("API error"));
 
-        assertThatThrownBy(() -> adapter.generateQuestions(1L, "test context"))
+        assertThatThrownBy(() -> adapter.generateQuestions(1L, "SPRING", "test context"))
                 .isInstanceOf(BusinessException.class);
     }
 

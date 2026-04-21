@@ -1,28 +1,24 @@
 spring:
   application:
     name: tmk-api
-
+  profiles:
+    default: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/tmk
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tmk}
     username: ${DB_USERNAME:tmk}
     password: ${DB_PASSWORD:tmk}
     driver-class-name: org.postgresql.Driver
-
   jpa:
-    hibernate:
-      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
-
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -35,30 +31,23 @@ spring:
           starttls:
             enable: true
 
+server:
+  port: ${SERVER_PORT:8080}
+
 openai:
   api-key: ${OPENAI_API_KEY:}
   embedding:
-    model: text-embedding-3-small
+    model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
   chat:
-    model: gpt-4o-mini
-    temperature: 0.7
-    max-tokens: 4096
+    model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+    temperature: ${OPENAI_CHAT_TEMPERATURE:0.7}
+    max-tokens: ${OPENAI_CHAT_MAX_TOKENS:4096}
 
-server:
-  port: 8080
+app:
+  document:
+    storage-dir: ${DOCUMENT_STORAGE_DIR:./tmk-api/uploads}
 
 jwt:
-  secret: ${JWT_SECRET:tmk-secret-key-must-be-at-least-256-bits-long-for-hs256}
-  access-token-expiry: 1800000    # 30분 (ms)
-  refresh-token-expiry: 604800000 # 7일 (ms)
-
----
-spring:
-  config:
-    activate:
-      on-profile: local
-
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
+  secret: ${JWT_SECRET}
+  access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY:1800000}
+  refresh-token-expiry: ${JWT_REFRESH_TOKEN_EXPIRY:604800000}

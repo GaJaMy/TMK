@@ -1,6 +1,6 @@
 package com.tmk.api.adapter.out.redis;
 
-import com.tmk.core.port.out.TokenBlacklistPort;
+import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;

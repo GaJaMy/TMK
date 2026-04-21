@@ -1,14 +1,17 @@
 package com.tmk.core.exam.service;
 
+import com.tmk.core.common.Topic;
+import com.tmk.core.common.ContentScope;
 import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.ExamPort;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.ExamPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
+import com.tmk.core.question.entity.QuestionSourceType;
 import com.tmk.core.question.entity.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,9 +69,13 @@ class SubmitExamServiceTest {
     private Question buildQuestion(Long id) {
         return Question.builder()
                 .documentId(1L)
+                .ownerUserId(null)
+                .scope(ContentScope.PUBLIC)
+                .sourceType(QuestionSourceType.PUBLIC_DOCUMENT_GENERATED)
                 .content("What is 1+1?")
                 .type(QuestionType.SHORT_ANSWER)
                 .difficulty(Difficulty.EASY)
+                .topic(Topic.SPRING)
                 .answer("2")
                 .explanation("Basic arithmetic")
                 .createdAt(OffsetDateTime.now())
@@ -86,7 +92,7 @@ class SubmitExamServiceTest {
         Question question = buildQuestion(1L);
 
         when(getExamService.getExam(examId, userId)).thenReturn(exam);
-        when(questionPort.findById(1L)).thenReturn(Optional.of(question));
+        when(questionPort.findAllByIds(List.of(1L))).thenReturn(List.of(question));
         when(examGradingService.grade(any(), any())).thenReturn(1);
         when(examPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

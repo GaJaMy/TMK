@@ -1,7 +1,7 @@
 package com.tmk.core.auth.service;
 
 import com.tmk.core.emailverification.entity.EmailVerification;
-import com.tmk.core.port.out.EmailVerificationPort;
+import com.tmk.core.port.out.persistence.EmailVerificationPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -12,14 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.temporal.ChronoUnit;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SendEmailVerificationServiceTest {

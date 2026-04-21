@@ -8,6 +8,7 @@ import com.tmk.api.exam.dto.ExamResultData;
 import com.tmk.api.exam.dto.HistoryDetailResult;
 import com.tmk.api.exam.dto.HistoryListResult;
 import com.tmk.api.exam.dto.SubmitResult;
+import com.tmk.api.exam.request.CreateExamRequest;
 import com.tmk.api.exam.usecase.ExamUseCase;
 import com.tmk.api.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +35,14 @@ public class ExamController implements ExamControllerDocs {
     @PostMapping
     @Override
     public ResponseEntity<ApiResponse<ExamResult>> createExam(
+            @RequestBody(required = false) CreateExamRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        ExamResult result = examUseCase.create(userDetails.getUserId());
+        ExamResult result = examUseCase.create(
+                userDetails.getUserId(),
+                request != null ? request.getScope() : null,
+                request != null ? request.getTopic() : null
+        );
         return ApiResponse.ok(result);
     }
 

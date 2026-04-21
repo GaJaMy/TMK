@@ -1,6 +1,6 @@
 package com.tmk.api.adapter.out.ai;
 
-import com.tmk.core.port.out.TextExtractionPort;
+import com.tmk.core.port.out.ai.TextExtractionPort;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

@@ -1,6 +1,8 @@
 package com.tmk.core.question.service;
 
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.common.ContentScope;
+import com.tmk.core.common.Topic;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
 import com.tmk.core.question.entity.QuestionType;
@@ -15,12 +17,12 @@ public class GetQuestionListService {
 
     private final QuestionPort questionPort;
 
-    public List<Question> getList(QuestionType type, Difficulty difficulty, int page, int size) {
+    public List<Question> getList(QuestionType type, Difficulty difficulty, Topic topic, ContentScope scope, Long ownerUserId, int page, int size) {
         int offset = page * size;
-        return questionPort.findByFilters(type, difficulty, offset, size);
+        return questionPort.findByFilters(type, difficulty, topic, scope, ownerUserId, offset, size);
     }
 
-    public long count(QuestionType type, Difficulty difficulty) {
-        return questionPort.countByFilters(type, difficulty);
+    public long count(QuestionType type, Difficulty difficulty, Topic topic, ContentScope scope, Long ownerUserId) {
+        return questionPort.countByFilters(type, difficulty, topic, scope, ownerUserId);
     }
 }

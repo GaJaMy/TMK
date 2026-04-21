@@ -1,10 +1,13 @@
 package com.tmk.core.question.service;
 
+import com.tmk.core.common.Topic;
+import com.tmk.core.common.ContentScope;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.Question;
+import com.tmk.core.question.entity.QuestionSourceType;
 import com.tmk.core.question.entity.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,8 +36,12 @@ class GetQuestionDetailServiceTest {
         return Question.builder()
                 .documentId(1L)
                 .content("Test question?")
+                .ownerUserId(null)
+                .scope(ContentScope.PUBLIC)
+                .sourceType(QuestionSourceType.PUBLIC_DOCUMENT_GENERATED)
                 .type(QuestionType.MULTIPLE_CHOICE)
                 .difficulty(Difficulty.EASY)
+                .topic(Topic.SPRING)
                 .answer("A")
                 .explanation("Because...")
                 .createdAt(now)

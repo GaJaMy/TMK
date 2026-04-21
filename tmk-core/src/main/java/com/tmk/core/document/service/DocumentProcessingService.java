@@ -1,19 +1,21 @@
 package com.tmk.core.document.service;
 
+import com.tmk.core.common.ContentScope;
 import com.tmk.core.document.entity.Document;
 import com.tmk.core.document.entity.DocumentChunk;
 import com.tmk.core.document.entity.DocumentStatus;
 import com.tmk.core.document.vo.GeneratedQuestion;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.DocumentChunkPort;
-import com.tmk.core.port.out.DocumentPort;
-import com.tmk.core.port.out.EmbeddingPort;
-import com.tmk.core.port.out.QuestionGenerationPort;
-import com.tmk.core.port.out.QuestionPort;
-import com.tmk.core.port.out.TextExtractionPort;
+import com.tmk.core.port.out.persistence.DocumentChunkPort;
+import com.tmk.core.port.out.persistence.DocumentPort;
+import com.tmk.core.port.out.ai.EmbeddingPort;
+import com.tmk.core.port.out.ai.QuestionGenerationPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
+import com.tmk.core.port.out.ai.TextExtractionPort;
 import com.tmk.core.question.entity.Question;
 import com.tmk.core.question.entity.QuestionOption;
+import com.tmk.core.question.entity.QuestionSourceType;
 import com.tmk.core.question.entity.QuestionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -53,25 +55,31 @@ public class DocumentProcessingService {
             for (int i = 0; i < chunks.size(); i++) {
                 float[] embedding = embeddingPort.embed(chunks.get(i));
                 documentChunks.add(DocumentChunk.builder()
-                        .documentId(documentId)
+                                .documentId(documentId)
                         .chunkIndex((short) i)
                         .content(chunks.get(i))
-                        .embedding(embeddingToString(embedding))
+                        .embedding(embedding)
                         .createdAt(OffsetDateTime.now())
                         .build());
             }
             documentChunkPort.saveAll(documentChunks);
 
             String context = String.join("\n\n", chunks);
-            List<GeneratedQuestion> generatedQuestions = questionGenerationPort.generateQuestions(documentId, context);
+            List<GeneratedQuestion> generatedQuestions = questionGenerationPort.generateQuestions(documentId, document.getTopic().name(), context);
 
             for (GeneratedQuestion gq : generatedQuestions) {
                 OffsetDateTime now = OffsetDateTime.now();
                 Question question = Question.builder()
                         .documentId(documentId)
+                        .ownerUserId(document.getOwnerUserId())
+                        .scope(document.getScope())
+                        .sourceType(document.getScope() == ContentScope.PUBLIC
+                                ? QuestionSourceType.PUBLIC_DOCUMENT_GENERATED
+                                : QuestionSourceType.PRIVATE_DOCUMENT_GENERATED)
                         .content(gq.content())
                         .type(gq.type())
                         .difficulty(gq.difficulty())
+                        .topic(document.getTopic())
                         .answer(gq.answer())
                         .explanation(gq.explanation())
                         .createdAt(now)
@@ -119,13 +127,4 @@ public class DocumentProcessingService {
         return chunks;
     }
 
-    private String embeddingToString(float[] embedding) {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < embedding.length; i++) {
-            sb.append(embedding[i]);
-            if (i < embedding.length - 1) sb.append(",");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
 }

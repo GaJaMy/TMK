@@ -4,7 +4,7 @@ import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.ExamPort;
+import com.tmk.core.port.out.persistence.ExamPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 public class GetExamHistoryDetailService {
 
     private final GetExamService getExamService;
-    private final ExamPort examPort;
 
     public Exam getHistoryDetail(Long examId, Long userId) {
         Exam exam = getExamService.getExam(examId, userId);

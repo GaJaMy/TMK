@@ -1,7 +1,7 @@
 package com.tmk.core.exam.service;
 
 import com.tmk.core.exam.entity.Exam;
-import com.tmk.core.port.out.ExamPort;
+import com.tmk.core.port.out.persistence.ExamPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

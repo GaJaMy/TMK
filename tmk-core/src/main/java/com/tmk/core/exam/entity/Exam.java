@@ -48,6 +48,11 @@ public class Exam {
     @Builder.Default
     private List<ExamQuestion> examQuestions = new ArrayList<>();
 
+    public void addQuestion(ExamQuestion examQuestion) {
+        examQuestion.assignExam(this);
+        this.examQuestions.add(examQuestion);
+    }
+
     public boolean isExpired() {
         return OffsetDateTime.now().isAfter(expiredAt);
     }

@@ -21,10 +21,15 @@ public interface QuestionControllerDocs {
             String type,
             @Parameter(description = "난이도 (예: EASY, MEDIUM, HARD)")
             String difficulty,
+            @Parameter(description = "주제 (예: SPRING, JAVA, DATABASE)")
+            String topic,
+            @Parameter(description = "문제 범위 (PUBLIC 또는 PRIVATE)")
+            String scope,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             int page,
             @Parameter(description = "페이지 크기", example = "20")
-            int size
+            int size,
+            @Parameter(hidden = true) com.tmk.api.security.CustomUserDetails userDetails
     );
 
     @Operation(summary = "문제 상세 조회", description = "단일 문제의 상세 정보(선택지, 정답, 해설 포함)를 조회합니다.")
@@ -33,7 +38,7 @@ public interface QuestionControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
     ResponseEntity<ApiResponse<QuestionDetailResult>> getDetail(
-            @Parameter(description = "조회할 문제 ID", required = true)
-            Long questionId
+            @Parameter(description = "조회할 문제 ID", required = true) Long questionId,
+            @Parameter(hidden = true) com.tmk.api.security.CustomUserDetails userDetails
     );
 }

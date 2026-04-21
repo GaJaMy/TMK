@@ -1,6 +1,6 @@
 package com.tmk.core.auth.service;
 
-import com.tmk.core.port.out.UserPort;
+import com.tmk.core.port.out.persistence.UserPort;
 import com.tmk.core.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

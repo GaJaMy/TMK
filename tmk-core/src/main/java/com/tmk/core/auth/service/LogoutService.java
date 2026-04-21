@@ -1,7 +1,7 @@
 package com.tmk.core.auth.service;
 
-import com.tmk.core.port.out.RefreshTokenPort;
-import com.tmk.core.port.out.TokenBlacklistPort;
+import com.tmk.core.port.out.cache.RefreshTokenPort;
+import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

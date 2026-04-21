@@ -1,35 +1,21 @@
 spring:
   application:
     name: tmk-batch
-
+  profiles:
+    default: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/tmk
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tmk}
     username: ${DB_USERNAME:tmk}
     password: ${DB_PASSWORD:tmk}
     driver-class-name: org.postgresql.Driver
-
   jpa:
-    hibernate:
-      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
-
   batch:
     job:
-      enabled: false  # 애플리케이션 시작 시 자동 실행 방지 (스케줄러로 실행)
+      enabled: ${BATCH_JOB_ENABLED:false}
     jdbc:
-      initialize-schema: always  # Spring Batch 메타 테이블 자동 생성
-
----
-spring:
-  config:
-    activate:
-      on-profile: local
-
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
+      initialize-schema: ${BATCH_INITIALIZE_SCHEMA:always}

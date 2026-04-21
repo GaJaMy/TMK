@@ -31,6 +31,10 @@ public class ExamQuestion {
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
+    public void assignExam(Exam exam) {
+        this.exam = exam;
+    }
+
     public void saveAnswer(String answer) {
         this.myAnswer = answer;
     }

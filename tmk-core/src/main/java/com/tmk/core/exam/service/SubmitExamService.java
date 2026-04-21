@@ -4,8 +4,8 @@ import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.ExamPort;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.ExamPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Question;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,10 +34,10 @@ public class SubmitExamService {
         List<Long> questionIds = exam.getExamQuestions().stream()
                 .map(eq -> eq.getQuestionId())
                 .toList();
-        List<Question> questions = questionIds.stream()
-                .map(qid -> questionPort.findById(qid)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.QUESTION_NOT_FOUND)))
-                .toList();
+        List<Question> questions = questionPort.findAllByIds(questionIds);
+        if (questions.size() != questionIds.size()) {
+            throw new BusinessException(ErrorCode.QUESTION_NOT_FOUND);
+        }
 
         examGradingService.grade(exam, questions);
         exam.submit();

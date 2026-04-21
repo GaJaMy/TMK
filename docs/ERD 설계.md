@@ -49,10 +49,11 @@ erDiagram
 
     QUESTION {
         bigserial id PK
-        bigint document_id FK "NOT NULL"
+        bigint document_id FK "NULL (관리자 수동 등록 문제는 NULL)"
         text content "NOT NULL"
         varchar(30) type "NOT NULL (MULTIPLE_CHOICE, FILL_IN_BLANK, IMPLEMENTATION)"
         varchar(10) difficulty "NOT NULL (EASY, NORMAL, HARD)"
+        varchar(40) source_type "NOT NULL (ADMIN_MANUAL, PUBLIC_DOCUMENT_GENERATED, PRIVATE_DOCUMENT_GENERATED)"
         text answer "NOT NULL"
         text explanation "NOT NULL"
         timestamptz created_at "NOT NULL"
@@ -90,7 +91,7 @@ erDiagram
     USER ||--o{ EXAM : "응시한다"
     USER ||--o| EMAIL_VERIFICATION : "인증한다"
     DOCUMENT ||--|{ DOCUMENT_CHUNK : "청킹된다"
-    DOCUMENT ||--o{ QUESTION : "기반으로 생성된다"
+    DOCUMENT ||--o{ QUESTION : "문서 기반 문제일 때만 생성된다"
     QUESTION ||--o{ QUESTION_OPTION : "선택지를 가진다"
     EXAM ||--|{ EXAM_QUESTION : "포함한다"
     QUESTION ||--o{ EXAM_QUESTION : "출제된다"
@@ -163,15 +164,16 @@ erDiagram
 
 ### QUESTION (문제)
 
-AI가 문서를 기반으로 생성한 문제입니다.
+문제는 문서 기반 자동 생성 또는 관리자 수동 등록으로 생성됩니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
-| document_id | BIGINT | NOT NULL | FK → DOCUMENT.id |
+| document_id | BIGINT | NULL | FK → DOCUMENT.id, 관리자 수동 등록 문제는 NULL |
 | content | TEXT | NOT NULL | 문제 내용 |
 | type | VARCHAR(30) | NOT NULL | 문제 유형 (`MULTIPLE_CHOICE`, `FILL_IN_BLANK`, `IMPLEMENTATION`) |
 | difficulty | VARCHAR(10) | NOT NULL | 난이도 (`EASY`, `NORMAL`, `HARD`) |
+| source_type | VARCHAR(40) | NOT NULL | 문제 출처 (`ADMIN_MANUAL`, `PUBLIC_DOCUMENT_GENERATED`, `PRIVATE_DOCUMENT_GENERATED`) |
 | answer | TEXT | NOT NULL | 정답 |
 | explanation | TEXT | NOT NULL | 해설 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
@@ -232,7 +234,7 @@ AI가 문서를 기반으로 생성한 문제입니다.
 | USER : EXAM | 1:N — 한 사용자는 여러 시험을 응시할 수 있다 |
 | USER : EMAIL_VERIFICATION | 1:1 — 한 사용자는 하나의 인증 정보를 가진다 |
 | DOCUMENT : DOCUMENT_CHUNK | 1:N — 하나의 문서는 여러 청크로 분할된다 |
-| DOCUMENT : QUESTION | 1:N — 하나의 문서에서 여러 문제가 생성된다 (최소 2개) |
+| DOCUMENT : QUESTION | 1:N — 문서 기반 생성 문제에만 적용된다 |
 | QUESTION : QUESTION_OPTION | 1:N — 객관식 문제는 5개의 선택지를 가진다 |
 | EXAM : EXAM_QUESTION | 1:N — 하나의 시험은 여러 시험 문제를 포함한다 (최소 10개) |
 | QUESTION : EXAM_QUESTION | 1:N — 하나의 문제는 여러 시험에 출제될 수 있다 |

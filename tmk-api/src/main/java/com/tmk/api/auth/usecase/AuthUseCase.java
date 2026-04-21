@@ -9,18 +9,21 @@ import com.tmk.api.security.jwt.JwtProvider;
 import com.tmk.core.auth.service.*;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.RefreshTokenPort;
+import com.tmk.core.port.out.cache.RefreshTokenPort;
 import com.tmk.core.user.entity.User;
 import io.jsonwebtoken.Claims;
 
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthUseCase {
@@ -55,6 +58,7 @@ public class AuthUseCase {
                     new UsernamePasswordAuthenticationToken(email, rawPassword)
             );
         } catch (AuthenticationException e) {
+            log.error("Authentication failed. email={}, exception={}", email, e.getClass().getName(), e);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

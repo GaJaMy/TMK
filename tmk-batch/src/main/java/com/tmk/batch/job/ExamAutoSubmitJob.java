@@ -2,8 +2,8 @@ package com.tmk.batch.job;
 
 import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.service.ExamGradingService;
-import com.tmk.core.port.out.ExamPort;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.ExamPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import com.tmk.core.question.entity.Question;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

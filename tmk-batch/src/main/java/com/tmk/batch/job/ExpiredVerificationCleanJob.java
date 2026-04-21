@@ -1,6 +1,6 @@
 package com.tmk.batch.job;
 
-import com.tmk.core.emailverification.repository.EmailVerificationRepository;
+import com.tmk.core.port.out.persistence.EmailVerificationPort;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public class ExpiredVerificationCleanJob {
 
     private static final Logger log = LoggerFactory.getLogger(ExpiredVerificationCleanJob.class);
 
-    private final EmailVerificationRepository emailVerificationRepository;
+    private final EmailVerificationPort emailVerificationPort;
 
     @Bean
     public Job expiredVerificationCleanJob(JobRepository jobRepository, Step expiredVerificationCleanStep) {
@@ -35,7 +35,7 @@ public class ExpiredVerificationCleanJob {
     public Step expiredVerificationCleanStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("expiredVerificationCleanStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    emailVerificationRepository.deleteByExpiredAtBefore(OffsetDateTime.now());
+                    emailVerificationPort.deleteExpiredBefore(OffsetDateTime.now());
                     log.info("ExpiredVerificationCleanJob completed: deleted expired email verification codes");
                     return RepeatStatus.FINISHED;
                 }, transactionManager)

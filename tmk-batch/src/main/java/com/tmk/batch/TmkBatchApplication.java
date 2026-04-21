@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.tmk")
 @EnableScheduling
-@EnableJpaRepositories(basePackages = "com.tmk.core")
+@EnableJpaRepositories(basePackages = "com.tmk.infra.jpa")
 @EntityScan(basePackages = "com.tmk.core")
 public class TmkBatchApplication {
     public static void main(String[] args) {

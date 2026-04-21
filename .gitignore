@@ -36,6 +36,13 @@ out/
 ### VS Code ###
 .vscode/
 
+### Environment files ###
+.env
+.env.*
+!.env.dev.example
+!.env.staging.example
+!.env.prod.example
+
 ### OMC ###
 .omc/
 
@@ -57,3 +64,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+.moai/state/
+tmk-api/uploads/

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Exam Room</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="exams">
+<div class="shell exam-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <strong>TMK</strong>
+            <span>Exam Room</span>
+        </div>
+        <nav class="nav">
+            <a class="nav-link" href="/index.html">홈</a>
+            <a class="nav-link" href="/documents.html">문서</a>
+            <a class="nav-link" href="/questions.html">문항</a>
+            <a class="nav-link active" href="/exams.html">시험 보기</a>
+            <a class="nav-link" href="/login.html">계정</a>
+        </nav>
+
+        <div class="status-card">
+            <h3>시험 상태</h3>
+            <div class="meta-list">
+                <div class="meta-row"><span>시험 ID</span><strong id="activeExamId">-</strong></div>
+                <div class="meta-row"><span>로그인</span><strong data-auth-summary>비로그인</strong></div>
+                <div class="meta-row"><span>사용자</span><strong data-user-email>-</strong></div>
+                <div class="meta-row"><span>응답 수</span><strong id="answeredCount">0</strong></div>
+            </div>
+            <div class="button-row" style="margin-top: 14px;">
+                <button id="saveAnswersBtn" type="button" class="secondary">임시 저장</button>
+                <button id="submitExamBtn" type="button">최종 제출</button>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h3>문항 이동</h3>
+            <div id="examQuestionNav" class="question-nav"></div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <section class="topbar">
+            <div>
+                <h1 class="page-title">시험 보기</h1>
+                <p class="subtitle">시험을 시작하면 문제와 보기가 실제 응시 화면처럼 표시됩니다. 주관식은 긴 답안을 입력할 수 있는 textarea 로 제공됩니다.</p>
+                <label style="margin-top: 12px; max-width: 220px;">주제 선택
+                    <select id="examTopic">
+                        <option value="">전체</option>
+                        <option value="SPRING">Spring</option>
+                        <option value="JAVA">Java</option>
+                        <option value="JPA">JPA</option>
+                        <option value="DATABASE">Database</option>
+                        <option value="NETWORK">Network</option>
+                        <option value="SECURITY">Security</option>
+                        <option value="ALGORITHM">Algorithm</option>
+                        <option value="ETC">기타</option>
+                    </select>
+                </label>
+                <label style="margin-top: 12px; max-width: 220px;">문제 범위
+                    <select id="examScope">
+                        <option value="PUBLIC">TMK 제공 문제</option>
+                        <option value="PRIVATE">내 문서 문제</option>
+                    </select>
+                </label>
+            </div>
+            <div class="hero-actions">
+                <form id="createExamForm">
+                    <button type="submit">새 시험 시작</button>
+                </form>
+                <form id="getExamForm" class="inline-form">
+                    <input name="examId" type="number" placeholder="시험 ID" required>
+                    <button type="submit" class="secondary">불러오기</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="exam-layout">
+            <article class="exam-main-card">
+                <div id="examOverview" class="exam-summary"></div>
+                <div id="examQuestions" class="exam-question-stack"></div>
+            </article>
+
+            <aside class="exam-side-card">
+                <div class="panel compact-panel">
+                    <h2>결과 확인</h2>
+                    <button id="examResultBtn" type="button" class="secondary">현재 시험 결과 조회</button>
+                    <div id="examResultPanel" style="margin-top: 16px;"></div>
+                </div>
+
+                <div class="panel compact-panel">
+                    <h2>시험 이력</h2>
+                    <form id="examHistoryForm" class="stack">
+                        <div class="split">
+                            <label>페이지
+                                <input name="page" type="number" value="0">
+                            </label>
+                            <label>사이즈
+                                <input name="size" type="number" value="10">
+                            </label>
+                        </div>
+                        <button type="submit" class="ghost">이력 조회</button>
+                    </form>
+                    <div id="examHistoryList" class="list" style="margin-top: 16px;"></div>
+                </div>
+
+                <div class="panel compact-panel">
+                    <h2>이력 상세</h2>
+                    <form id="examHistoryDetailForm" class="stack">
+                        <label>시험 ID
+                            <input name="examId" type="number" placeholder="예: 1" required>
+                        </label>
+                        <button type="submit" class="ghost">상세 조회</button>
+                    </form>
+                    <div id="examHistoryDetail" class="list" style="margin-top: 16px;"></div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="grid two">
+            <article class="log-card">
+                <h3>최근 API 호출</h3>
+                <div id="requestLogs" class="logs"></div>
+            </article>
+            <article class="panel">
+                <div class="inline-actions" style="justify-content: space-between;">
+                    <h2>응답 상세</h2>
+                    <button id="clearResponseBtn" type="button" class="secondary">지우기</button>
+                </div>
+                <pre id="responseView" class="response-box">요청 결과가 여기에 표시됩니다.</pre>
+            </article>
+        </section>
+    </main>
+</div>
+<script src="/ui.js"></script>
+</body>
+</html>

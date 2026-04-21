@@ -115,10 +115,11 @@ COMMENT ON COLUMN document_chunk.created_at  IS '생성 일시';
 CREATE TABLE question
 (
     id          BIGSERIAL   PRIMARY KEY,
-    document_id BIGINT      NOT NULL,   -- ref: document.id (FK 제약조건 미적용)
+    document_id BIGINT,                 -- ref: document.id (문서 기반 생성 문제인 경우만 값 존재)
     content     TEXT        NOT NULL,
     type        VARCHAR(30) NOT NULL,
     difficulty  VARCHAR(10) NOT NULL,
+    source_type VARCHAR(40) NOT NULL,
     answer      TEXT        NOT NULL,
     explanation TEXT        NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -127,15 +128,18 @@ CREATE TABLE question
     CONSTRAINT chk_question_type
         CHECK (type IN ('MULTIPLE_CHOICE', 'FILL_IN_BLANK', 'IMPLEMENTATION')),
     CONSTRAINT chk_question_difficulty
-        CHECK (difficulty IN ('EASY', 'NORMAL', 'HARD'))
+        CHECK (difficulty IN ('EASY', 'NORMAL', 'HARD')),
+    CONSTRAINT chk_question_source_type
+        CHECK (source_type IN ('ADMIN_MANUAL', 'PUBLIC_DOCUMENT_GENERATED', 'PRIVATE_DOCUMENT_GENERATED'))
 );
 
 COMMENT ON TABLE  question             IS '문제';
 COMMENT ON COLUMN question.id          IS 'PK';
-COMMENT ON COLUMN question.document_id IS '기반 문서 ID (ref: document.id)';
+COMMENT ON COLUMN question.document_id IS '기반 문서 ID. 관리자 수동 등록 문제는 NULL';
 COMMENT ON COLUMN question.content     IS '문제 내용';
 COMMENT ON COLUMN question.type        IS '문제 유형 (MULTIPLE_CHOICE, FILL_IN_BLANK, IMPLEMENTATION)';
 COMMENT ON COLUMN question.difficulty  IS '난이도 (EASY, NORMAL, HARD)';
+COMMENT ON COLUMN question.source_type IS '문제 출처 (ADMIN_MANUAL, PUBLIC_DOCUMENT_GENERATED, PRIVATE_DOCUMENT_GENERATED)';
 COMMENT ON COLUMN question.answer      IS '정답';
 COMMENT ON COLUMN question.explanation IS '해설';
 COMMENT ON COLUMN question.created_at  IS '생성 일시';

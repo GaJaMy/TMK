@@ -2,6 +2,9 @@ package com.tmk.core.document.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -26,9 +29,11 @@ public class DocumentChunk {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // pgvector: 별도 네이티브 쿼리로 처리
+    // Store pgvector values directly as float[] so Hibernate can bind the VECTOR type.
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Array(length = 1536)
     @Column(columnDefinition = "vector(1536)")
-    private String embedding;
+    private float[] embedding;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

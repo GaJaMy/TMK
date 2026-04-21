@@ -1,7 +1,7 @@
 package com.tmk.core.auth.service;
 
-import com.tmk.core.port.out.RefreshTokenPort;
-import com.tmk.core.port.out.TokenBlacklistPort;
+import com.tmk.core.port.out.cache.RefreshTokenPort;
+import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

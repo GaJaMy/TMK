@@ -5,7 +5,7 @@ import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.ExamPort;
+import com.tmk.core.port.out.persistence.ExamPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

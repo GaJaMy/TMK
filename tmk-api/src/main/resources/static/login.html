@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Login</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="login" class="login-body">
+<div class="auth-layout product-auth-layout">
+    <section class="auth-side">
+        <span class="badge">TMK</span>
+        <h2>학습 흐름을 바로 시작하는 로그인 화면</h2>
+        <p>로그인 후 홈에서 시험 시작, 문서 업로드, 문항 탐색까지 이어서 사용할 수 있습니다. 모든 요청은 `http://localhost:8080` API에 연결됩니다.</p>
+        <div class="grid" style="margin-top: 24px;">
+            <div class="status-card">
+                <h3>현재 상태</h3>
+                <div class="meta-list">
+                    <div class="meta-row"><span>인증 상태</span><strong data-auth-summary>비로그인</strong></div>
+                    <div class="meta-row"><span>저장된 이메일</span><strong data-user-email>저장된 사용자 없음</strong></div>
+                    <div class="meta-row"><span>API</span><strong>localhost:8080</strong></div>
+                </div>
+            </div>
+            <div class="surface-note" id="loginNotice">이메일 인증, 회원가입, 로그인, 토큰 재발급을 이 화면에서 모두 처리할 수 있습니다.</div>
+            <div class="button-row">
+                <a href="/index.html" class="button-link secondary">홈</a>
+                <button id="logoutBtn" type="button" class="ghost">로그아웃</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-card">
+        <div>
+            <h2>계정 센터</h2>
+            <p>브라우저에 Access Token과 Refresh Token을 저장하고 이후 보호 API 호출에 자동으로 사용합니다.</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button type="button" class="tab-button active" data-tab="loginPanel">로그인</button>
+            <button type="button" class="tab-button" data-tab="verificationPanel">이메일 인증</button>
+            <button type="button" class="tab-button" data-tab="registerPanel">회원가입</button>
+            <button type="button" class="tab-button" data-tab="reissuePanel">재발급</button>
+        </div>
+
+        <div id="loginPanel" class="tab-panel active" data-tab-panel>
+            <form id="loginForm" class="stack">
+                <label>이메일
+                    <input name="email" type="email" value="test@example.com" required>
+                </label>
+                <label>비밀번호
+                    <input name="password" type="password" value="password1234" required>
+                </label>
+                <button type="submit">로그인</button>
+            </form>
+        </div>
+
+        <div id="verificationPanel" class="tab-panel" data-tab-panel>
+            <form id="sendVerificationForm" class="stack">
+                <label>이메일
+                    <input name="email" type="email" value="test@example.com" required>
+                </label>
+                <button type="submit">인증 코드 발송</button>
+            </form>
+            <form id="verifyForm" class="stack">
+                <label>이메일
+                    <input name="email" type="email" value="test@example.com" required>
+                </label>
+                <label>인증 코드
+                    <input name="code" type="text" placeholder="123456" required>
+                </label>
+                <button type="submit" class="secondary">인증 코드 확인</button>
+            </form>
+        </div>
+
+        <div id="registerPanel" class="tab-panel" data-tab-panel>
+            <form id="registerForm" class="stack">
+                <label>이메일
+                    <input name="email" type="email" value="test@example.com" required>
+                </label>
+                <label>비밀번호
+                    <input name="password" type="password" value="password1234" required>
+                </label>
+                <button type="submit">회원가입</button>
+            </form>
+        </div>
+
+        <div id="reissuePanel" class="tab-panel" data-tab-panel>
+            <form id="reissueForm" class="stack">
+                <p class="helper">저장된 Refresh Token으로 Access Token을 재발급합니다.</p>
+                <label>Access Token
+                    <textarea id="accessToken" rows="4" placeholder="로그인 후 자동 저장"></textarea>
+                </label>
+                <label>Refresh Token
+                    <textarea id="refreshToken" rows="4" placeholder="로그인 후 자동 저장"></textarea>
+                </label>
+                <div class="button-row">
+                    <button type="submit">토큰 재발급</button>
+                    <button id="clearTokensBtn" type="button" class="secondary">저장 토큰 비우기</button>
+                </div>
+            </form>
+        </div>
+
+        <section class="panel">
+            <div class="inline-actions" style="justify-content: space-between;">
+                <h2>응답 상세</h2>
+                <button id="clearResponseBtn" type="button" class="secondary">화면 로그 지우기</button>
+            </div>
+            <pre id="responseView" class="response-box">요청 결과가 여기에 표시됩니다.</pre>
+        </section>
+    </section>
+</div>
+<script src="/ui.js"></script>
+</body>
+</html>

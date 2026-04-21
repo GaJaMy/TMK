@@ -1,13 +1,15 @@
 package com.tmk.core.document.service;
 
+import com.tmk.core.common.Topic;
+import com.tmk.core.common.ContentScope;
 import com.tmk.core.document.entity.Document;
 import com.tmk.core.document.entity.DocumentStatus;
 import com.tmk.core.document.vo.DocumentStatusInfo;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.DocumentChunkPort;
-import com.tmk.core.port.out.DocumentPort;
-import com.tmk.core.port.out.QuestionPort;
+import com.tmk.core.port.out.persistence.DocumentChunkPort;
+import com.tmk.core.port.out.persistence.DocumentPort;
+import com.tmk.core.port.out.persistence.QuestionPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,6 +45,9 @@ class GetDocumentStatusServiceTest {
         Document document = Document.builder()
                 .title("test")
                 .source("/test.pdf")
+                .ownerUserId(1L)
+                .scope(ContentScope.PRIVATE)
+                .topic(Topic.SPRING)
                 .status(DocumentStatus.COMPLETED)
                 .createdAt(OffsetDateTime.now())
                 .build();

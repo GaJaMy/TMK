@@ -8,6 +8,7 @@ import com.tmk.api.exam.dto.ExamResultData;
 import com.tmk.api.exam.dto.HistoryDetailResult;
 import com.tmk.api.exam.dto.HistoryListResult;
 import com.tmk.api.exam.dto.SubmitResult;
+import com.tmk.api.exam.request.CreateExamRequest;
 import com.tmk.api.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +29,7 @@ public interface ExamControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "문제 수 부족 등 시험 생성 조건 미충족")
     })
     ResponseEntity<ApiResponse<ExamResult>> createExam(
+            @RequestBody(description = "시험 생성 조건", required = false) CreateExamRequest request,
             @Parameter(hidden = true) CustomUserDetails userDetails
     );
 

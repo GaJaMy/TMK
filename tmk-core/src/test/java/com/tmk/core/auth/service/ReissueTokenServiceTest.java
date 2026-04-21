@@ -2,8 +2,8 @@ package com.tmk.core.auth.service;
 
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.core.port.out.RefreshTokenPort;
-import com.tmk.core.port.out.UserPort;
+import com.tmk.core.port.out.cache.RefreshTokenPort;
+import com.tmk.core.port.out.persistence.UserPort;
 import com.tmk.core.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
