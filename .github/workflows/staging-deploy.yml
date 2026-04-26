@@ -54,8 +54,8 @@ jobs:
           target: api
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:staging-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.API_IMAGE_TAG }}-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.API_IMAGE_TAG }}
 
       - name: Build and push batch image
         uses: docker/build-push-action@v6
@@ -65,8 +65,8 @@ jobs:
           target: batch
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:staging-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.BATCH_IMAGE_TAG }}-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.BATCH_IMAGE_TAG }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -78,9 +78,9 @@ jobs:
       - name: Copy deployment files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
+          host: ${{ secrets.VULTR_HOST }}
+          username: ${{ secrets.VULTR_USER }}
+          key: ${{ secrets.VULTR_SSH_KEY }}
           source: "docker-compose.staging.yml,docker/postgres/init.sql"
           target: ${{ secrets.STAGING_DEPLOY_PATH }}
           strip_components: 0
@@ -88,9 +88,9 @@ jobs:
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
+          host: ${{ secrets.VULTR_HOST }}
+          username: ${{ secrets.VULTR_USER }}
+          key: ${{ secrets.VULTR_SSH_KEY }}
           script: |
             set -eu
 
@@ -105,21 +105,14 @@ jobs:
             POSTGRES_PORT=${{ secrets.STAGING_POSTGRES_PORT }}
             REDIS_PORT=${{ secrets.STAGING_REDIS_PORT }}
             REDIS_PASSWORD=${{ secrets.STAGING_REDIS_PASSWORD }}
-            API_PORT=${{ secrets.STAGING_API_PORT }}
             DOCUMENT_STORAGE_DIR=${{ secrets.STAGING_DOCUMENT_STORAGE_DIR }}
             DOCKERHUB_NAMESPACE=${{ secrets.STAGING_DOCKERHUB_NAMESPACE }}
             JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
             OPENAI_API_KEY=${{ secrets.STAGING_OPENAI_API_KEY }}
             OPENAI_EMBEDDING_MODEL=${{ secrets.STAGING_OPENAI_EMBEDDING_MODEL }}
             OPENAI_CHAT_MODEL=${{ secrets.STAGING_OPENAI_CHAT_MODEL }}
-            MAIL_HOST=${{ secrets.STAGING_MAIL_HOST }}
-            MAIL_PORT=${{ secrets.STAGING_MAIL_PORT }}
-            MAIL_USERNAME=${{ secrets.STAGING_MAIL_USERNAME }}
-            MAIL_PASSWORD=${{ secrets.STAGING_MAIL_PASSWORD }}
-            SWAGGER_ENABLED=${{ secrets.STAGING_SWAGGER_ENABLED }}
-            BATCH_JOB_ENABLED=${{ secrets.STAGING_BATCH_JOB_ENABLED }}
-            BATCH_INITIALIZE_SCHEMA=${{ secrets.STAGING_BATCH_INITIALIZE_SCHEMA }}
-            IMAGE_TAG=${{ github.sha }}
+            API_IMAGE_TAG=${{ secrets.API_IMAGE_TAG }}
+            BATCH_IMAGE_TAG=${{ secrets.BATCH_IMAGE_TAG }}
             EOF
 
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"

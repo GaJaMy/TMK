@@ -1,6 +1,6 @@
 package com.tmk.api.exam.dto;
 
-public class ExamResult {
+public class ExamCreateResult {
 
     private final Long examId;
     private final int totalQuestions;
@@ -9,8 +9,8 @@ public class ExamResult {
     private final String expiredAt;
     private final String status;
 
-    public ExamResult(Long examId, int totalQuestions, int timeLimit,
-                      String startedAt, String expiredAt, String status) {
+    public ExamCreateResult(Long examId, int totalQuestions, int timeLimit,
+                            String startedAt, String expiredAt, String status) {
         this.examId = examId;
         this.totalQuestions = totalQuestions;
         this.timeLimit = timeLimit;

@@ -1,38 +1,31 @@
 spring:
   application:
     name: tmk-api
+
   profiles:
     default: dev
+
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/tmk}
-    username: ${DB_USERNAME:tmk}
-    password: ${DB_PASSWORD:tmk}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
+
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
 
 openai:
   api-key: ${OPENAI_API_KEY:}
@@ -49,5 +42,5 @@ app:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY:1800000}
-  refresh-token-expiry: ${JWT_REFRESH_TOKEN_EXPIRY:604800000}
+  access-token-expiry: 1800000
+  refresh-token-expiry: 604800000

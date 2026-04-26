@@ -32,11 +32,11 @@ public class ExamUseCase {
     private final GetExamHistoryDetailService getExamHistoryDetailService;
     private final QuestionPort questionPort;
 
-    public ExamResult create(Long userId, String scope, String topic) {
-        ContentScope selectedScope = (scope != null && !scope.isBlank()) ? ContentScope.valueOf(scope.toUpperCase()) : ContentScope.PUBLIC;
-        Topic selectedTopic = (topic != null && !topic.isBlank()) ? Topic.valueOf(topic.toUpperCase()) : null;
+    public ExamCreateResult create(Long userId, CreateExamRequest request) {
+        ContentScope selectedScope = ContentScope.valueOf(request.getScope().toUpperCase());
+        Topic selectedTopic = Topic.valueOf(request.getTopic().toUpperCase());
         Exam exam = createExamService.create(userId, selectedScope, selectedTopic);
-        return new ExamResult(
+        return new ExamCreateResult(
                 exam.getId(),
                 exam.getTotalQuestions(),
                 exam.getTimeLimit(),

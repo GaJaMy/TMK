@@ -117,7 +117,7 @@ class ExamUseCaseTest {
         when(createExamService.create(100L, ContentScope.PUBLIC, null)).thenReturn(exam);
 
         // Act
-        ExamResult result = examUseCase.create(100L, null, null);
+        ExamCreateResult result = examUseCase.create(100L, null, null);
 
         // Assert
         assertThat(result).isNotNull();

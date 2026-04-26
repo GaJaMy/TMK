@@ -3,7 +3,7 @@ package com.tmk.api.exam.controller;
 import com.tmk.api.common.ApiResponse;
 import com.tmk.api.exam.dto.AnswerCommand;
 import com.tmk.api.exam.dto.ExamDetailResult;
-import com.tmk.api.exam.dto.ExamResult;
+import com.tmk.api.exam.dto.ExamCreateResult;
 import com.tmk.api.exam.dto.ExamResultData;
 import com.tmk.api.exam.dto.HistoryDetailResult;
 import com.tmk.api.exam.dto.HistoryListResult;
@@ -34,15 +34,11 @@ public class ExamController implements ExamControllerDocs {
 
     @PostMapping
     @Override
-    public ResponseEntity<ApiResponse<ExamResult>> createExam(
+    public ResponseEntity<ApiResponse<ExamCreateResult>> createExam(
             @RequestBody(required = false) CreateExamRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        ExamResult result = examUseCase.create(
-                userDetails.getUserId(),
-                request != null ? request.getScope() : null,
-                request != null ? request.getTopic() : null
-        );
+        ExamCreateResult result = examUseCase.create(userDetails.getUserId(), request);
         return ApiResponse.ok(result);
     }
 

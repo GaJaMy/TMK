@@ -24,8 +24,6 @@ services:
     image: redis:7-alpine
     container_name: tmk-staging-redis
     restart: unless-stopped
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-staging-data:/data
@@ -38,7 +36,7 @@ services:
       - tmk-staging-network
 
   tmk-api:
-    image: ${DOCKERHUB_NAMESPACE}/tmk-api:${IMAGE_TAG}
+    image: ${DOCKERHUB_NAMESPACE}/tmk:${API_IMAGE_TAG}
     container_name: tmk-staging-api
     restart: unless-stopped
     depends_on:
@@ -46,8 +44,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "${API_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: staging
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
@@ -78,7 +74,7 @@ services:
       - tmk-staging-network
 
   tmk-batch:
-    image: ${DOCKERHUB_NAMESPACE}/tmk-batch:${IMAGE_TAG}
+    image: ${DOCKERHUB_NAMESPACE}/tmk:${BATCH_IMAGE_TAG}
     container_name: tmk-staging-batch
     restart: unless-stopped
     depends_on:
@@ -89,8 +85,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      BATCH_JOB_ENABLED: ${BATCH_JOB_ENABLED:-false}
-      BATCH_INITIALIZE_SCHEMA: ${BATCH_INITIALIZE_SCHEMA:-always}
     networks:
       - tmk-staging-network
 

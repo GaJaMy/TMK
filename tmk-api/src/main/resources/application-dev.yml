@@ -4,9 +4,6 @@ spring:
       ddl-auto: create
     show-sql: true
 
-jwt:
-  secret: ${JWT_SECRET:9Qf7xL2mN8vR4sK1pT6wY3aB5cD8eF0gH7jL4nP2qS9uV6xZ1rM3tW8yC5bN0kD2}
-
 springdoc:
   api-docs:
     enabled: true
