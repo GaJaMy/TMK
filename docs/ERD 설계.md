@@ -1,7 +1,7 @@
 # TMK (Test My Knowledge) ERD 설계
 
-> 작성일: 2026-03-10
-> 버전: v1.0.0
+> 작성일: 2026-04-27
+> 버전: v2.0.0
 > DB: PostgreSQL
 
 ---
@@ -13,29 +13,34 @@ erDiagram
 
     USER {
         bigserial id PK
-        varchar(255) email UK "NOT NULL"
-        varchar(255) password "NULL (소셜 로그인 시)"
-        varchar(20) provider "NOT NULL (LOCAL, GOOGLE, KAKAO, NAVER)"
-        varchar(255) provider_id "NULL (소셜 로그인 시)"
+        varchar(50) username UK "NOT NULL"
+        varchar(255) password "NOT NULL"
+        varchar(20) role "NOT NULL (USER, ADMIN)"
+        varchar(10) country_code "NOT NULL"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
     }
 
-    EMAIL_VERIFICATION {
+    TOPIC {
         bigserial id PK
-        varchar(255) email UK "NOT NULL"
-        varchar(10) code "NOT NULL"
-        boolean verified "NOT NULL, DEFAULT false"
-        timestamptz expired_at "NOT NULL"
+        varchar(100) name UK "NOT NULL"
+        text description "NULL"
+        boolean active "NOT NULL, DEFAULT true"
+        bigint created_by FK "NOT NULL"
         timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     DOCUMENT {
         bigserial id PK
+        bigint user_id FK "NOT NULL"
         varchar(500) title "NOT NULL"
-        varchar(500) source "NOT NULL"
+        varchar(20) source_type "NOT NULL (PDF_UPLOAD, NOTION, URL)"
+        varchar(1000) source_reference "NOT NULL"
         varchar(20) status "NOT NULL (PROCESSING, COMPLETED, FAILED)"
+        integer generated_question_count "NOT NULL, DEFAULT 0"
         timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     DOCUMENT_CHUNK {
@@ -49,13 +54,18 @@ erDiagram
 
     QUESTION {
         bigserial id PK
-        bigint document_id FK "NULL (관리자 수동 등록 문제는 NULL)"
+        bigint owner_user_id FK "NULL (공용 문제면 NULL)"
+        bigint topic_id FK "NULL (개인 문서 문제면 NULL 가능)"
+        bigint document_id FK "NULL (공용 문제면 NULL)"
+        bigint created_by FK "NULL (AI 생성이면 NULL 가능)"
+        varchar(20) scope "NOT NULL (PUBLIC, PRIVATE)"
+        varchar(40) source_type "NOT NULL (PUBLIC_MANUAL, PRIVATE_DOCUMENT_GENERATED)"
         text content "NOT NULL"
-        varchar(30) type "NOT NULL (MULTIPLE_CHOICE, FILL_IN_BLANK, IMPLEMENTATION)"
+        varchar(30) type "NOT NULL (MULTIPLE_CHOICE, SHORT_ANSWER, TRUE_FALSE)"
         varchar(10) difficulty "NOT NULL (EASY, NORMAL, HARD)"
-        varchar(40) source_type "NOT NULL (ADMIN_MANUAL, PUBLIC_DOCUMENT_GENERATED, PRIVATE_DOCUMENT_GENERATED)"
         text answer "NOT NULL"
         text explanation "NOT NULL"
+        varchar(10) language_code "NOT NULL"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
     }
@@ -63,18 +73,21 @@ erDiagram
     QUESTION_OPTION {
         bigserial id PK
         bigint question_id FK "NOT NULL"
-        smallint option_number "NOT NULL (1~5)"
+        smallint option_number "NOT NULL"
         text content "NOT NULL"
     }
 
     EXAM {
         bigserial id PK
         bigint user_id FK "NOT NULL"
+        bigint topic_id FK "NULL"
+        bigint document_id FK "NULL"
+        varchar(30) source_type "NOT NULL (PUBLIC_TOPIC, PRIVATE_DOCUMENT)"
         smallint total_questions "NOT NULL"
-        smallint time_limit "NOT NULL (분)"
-        varchar(20) status "NOT NULL (IN_PROGRESS, SUBMITTED)"
-        timestamptz started_at "NOT NULL"
-        timestamptz expired_at "NOT NULL"
+        smallint time_limit "NOT NULL"
+        varchar(20) status "NOT NULL (CREATED, IN_PROGRESS, SUBMITTED)"
+        timestamptz started_at "NULL"
+        timestamptz expired_at "NULL"
         timestamptz submitted_at "NULL"
         timestamptz created_at "NOT NULL"
     }
@@ -88,10 +101,16 @@ erDiagram
         boolean is_correct "NULL"
     }
 
+    USER ||--o{ DOCUMENT : "등록한다"
     USER ||--o{ EXAM : "응시한다"
-    USER ||--o| EMAIL_VERIFICATION : "인증한다"
+    USER ||--o{ TOPIC : "생성한다"
+    USER ||--o{ QUESTION : "공용 문제를 등록한다"
+    USER ||--o{ USER : "admin이 admin을 생성한다"
+    TOPIC ||--o{ QUESTION : "분류한다"
+    TOPIC ||--o{ EXAM : "공용 문제 시험 주제"
     DOCUMENT ||--|{ DOCUMENT_CHUNK : "청킹된다"
-    DOCUMENT ||--o{ QUESTION : "문서 기반 문제일 때만 생성된다"
+    DOCUMENT ||--o{ QUESTION : "개인 문서 기반 문제를 생성한다"
+    DOCUMENT ||--o{ EXAM : "개인 문서 시험 기반"
     QUESTION ||--o{ QUESTION_OPTION : "선택지를 가진다"
     EXAM ||--|{ EXAM_QUESTION : "포함한다"
     QUESTION ||--o{ EXAM_QUESTION : "출제된다"
@@ -101,129 +120,127 @@ erDiagram
 
 ## 테이블 상세 설명
 
-### USER (사용자)
+### USER
 
-사용자 계정 정보를 저장합니다. 일반 로그인과 소셜 로그인을 모두 지원합니다.
+사용자 계정입니다. 일반 사용자와 관리자 모두 같은 테이블에서 관리합니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
-| email | VARCHAR(255) | NOT NULL | 이메일, UNIQUE |
-| password | VARCHAR(255) | NULL | bcrypt 암호화된 비밀번호. 소셜 로그인 시 NULL |
-| provider | VARCHAR(20) | NOT NULL | 가입 경로 (`LOCAL`, `GOOGLE`, `KAKAO`, `NAVER`) |
-| provider_id | VARCHAR(255) | NULL | 소셜 로그인 제공자의 사용자 식별자 |
+| username | VARCHAR(50) | NOT NULL | 로그인 아이디, UNIQUE |
+| password | VARCHAR(255) | NOT NULL | bcrypt 암호화 비밀번호 |
+| role | VARCHAR(20) | NOT NULL | `USER`, `ADMIN` |
+| country_code | VARCHAR(10) | NOT NULL | 문제 생성 언어 결정을 위한 국가 코드 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
 | updated_at | TIMESTAMPTZ | NOT NULL | 수정 일시 |
 
----
+### TOPIC
 
-### EMAIL_VERIFICATION (이메일 인증)
-
-이메일 인증 코드 정보를 저장합니다.
-> 만료 처리 특성상 Redis에서 관리하는 것을 권장하지만, 이력 관리가 필요한 경우 RDB에도 저장합니다.
+서비스 공용 문제를 분류하는 주제입니다. admin이 생성/관리합니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
-| email | VARCHAR(255) | NOT NULL | 인증 대상 이메일, UNIQUE |
-| code | VARCHAR(10) | NOT NULL | 인증 코드 (6자리) |
-| verified | BOOLEAN | NOT NULL | 인증 완료 여부. DEFAULT false |
-| expired_at | TIMESTAMPTZ | NOT NULL | 인증 코드 만료 일시 |
+| name | VARCHAR(100) | NOT NULL | Topic 이름, UNIQUE |
+| description | TEXT | NULL | Topic 설명 |
+| active | BOOLEAN | NOT NULL | 사용 여부 |
+| created_by | BIGINT | NOT NULL | 생성한 admin ID |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
+| updated_at | TIMESTAMPTZ | NOT NULL | 수정 일시 |
 
----
+### DOCUMENT
 
-### DOCUMENT (문서)
-
-내부 API를 통해 등록된 원본 문서입니다. 등록 즉시 청킹 → 임베딩 → pgvector 저장 → 문제 생성 파이프라인이 실행됩니다. MVP에서는 PDF만 지원합니다.
+사용자가 등록한 문제 생성용 문서의 메타데이터입니다. 원본 파일/원문은 생성 완료 후 서버 저장소에서 삭제하며, 이 테이블에는 추적용 메타정보만 남깁니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
+| user_id | BIGINT | NOT NULL | 문서 등록 사용자 ID |
 | title | VARCHAR(500) | NOT NULL | 문서 제목 |
-| source | VARCHAR(500) | NOT NULL | PDF 파일 저장 경로. 재처리 시 이 경로를 통해 PDF를 재파싱 |
-| status | VARCHAR(20) | NOT NULL | 처리 상태 (`PROCESSING`: 처리 중, `COMPLETED`: 완료, `FAILED`: 실패) |
+| source_type | VARCHAR(20) | NOT NULL | `PDF_UPLOAD`, `NOTION`, `URL` |
+| source_reference | VARCHAR(1000) | NOT NULL | 업로드 파일명 또는 읽은 노션/URL 참조값 |
+| status | VARCHAR(20) | NOT NULL | `PROCESSING`, `COMPLETED`, `FAILED` |
+| generated_question_count | INTEGER | NOT NULL | 생성된 문제 수 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
+| updated_at | TIMESTAMPTZ | NOT NULL | 수정 일시 |
 
----
+### DOCUMENT_CHUNK
 
-### DOCUMENT_CHUNK (문서 청크)
-
-문서를 일정 크기로 분할한 청크와 OpenAI 임베딩 벡터를 저장합니다. pgvector 확장의 `vector` 타입을 사용하며, 문제 생성 시 사용자 요청 임베딩과의 코사인 유사도 검색(ANN)에 활용됩니다.
+문제 생성에 사용되는 청크와 임베딩입니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
 | document_id | BIGINT | NOT NULL | FK → DOCUMENT.id |
-| chunk_index | SMALLINT | NOT NULL | 문서 내 청크 순서 (0부터 시작) |
-| content | TEXT | NOT NULL | 청크 원문 텍스트 |
-| embedding | vector(1536) | NOT NULL | OpenAI text-embedding-3-small 임베딩 벡터 (1536차원) |
+| chunk_index | SMALLINT | NOT NULL | 문서 내 청크 순서 |
+| content | TEXT | NOT NULL | 청크 텍스트 |
+| embedding | vector(1536) | NOT NULL | 임베딩 벡터 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
 
----
+### QUESTION
 
-### QUESTION (문제)
-
-문제는 문서 기반 자동 생성 또는 관리자 수동 등록으로 생성됩니다.
+문제 본문입니다. 공용 문제는 admin이 직접 등록하고, 개인 문제는 사용자 문서에서 AI가 생성합니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
-| document_id | BIGINT | NULL | FK → DOCUMENT.id, 관리자 수동 등록 문제는 NULL |
+| owner_user_id | BIGINT | NULL | 개인 문제 소유 사용자 ID. 공용 문제면 NULL |
+| topic_id | BIGINT | NULL | 공용 문제의 Topic ID |
+| document_id | BIGINT | NULL | 개인 문서 기반 문제의 원본 문서 ID |
+| created_by | BIGINT | NULL | 공용 문제를 등록한 admin ID |
+| scope | VARCHAR(20) | NOT NULL | `PUBLIC`, `PRIVATE` |
+| source_type | VARCHAR(40) | NOT NULL | `PUBLIC_MANUAL`, `PRIVATE_DOCUMENT_GENERATED` |
 | content | TEXT | NOT NULL | 문제 내용 |
-| type | VARCHAR(30) | NOT NULL | 문제 유형 (`MULTIPLE_CHOICE`, `FILL_IN_BLANK`, `IMPLEMENTATION`) |
-| difficulty | VARCHAR(10) | NOT NULL | 난이도 (`EASY`, `NORMAL`, `HARD`) |
-| source_type | VARCHAR(40) | NOT NULL | 문제 출처 (`ADMIN_MANUAL`, `PUBLIC_DOCUMENT_GENERATED`, `PRIVATE_DOCUMENT_GENERATED`) |
+| type | VARCHAR(30) | NOT NULL | `MULTIPLE_CHOICE`, `SHORT_ANSWER`, `TRUE_FALSE` |
+| difficulty | VARCHAR(10) | NOT NULL | `EASY`, `NORMAL`, `HARD` |
 | answer | TEXT | NOT NULL | 정답 |
 | explanation | TEXT | NOT NULL | 해설 |
+| language_code | VARCHAR(10) | NOT NULL | 생성 언어 코드 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
 | updated_at | TIMESTAMPTZ | NOT NULL | 수정 일시 |
 
----
+### QUESTION_OPTION
 
-### QUESTION_OPTION (문제 선택지)
-
-객관식 문제(`MULTIPLE_CHOICE`)의 선택지 데이터입니다. 5지선다이므로 문제당 5개의 행이 생성됩니다.
+객관식과 참/거짓형 선택지입니다. 객관식은 5개, 참/거짓형은 2개 선택지를 가집니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
 | question_id | BIGINT | NOT NULL | FK → QUESTION.id |
-| option_number | SMALLINT | NOT NULL | 선택지 번호 (1~5) |
+| option_number | SMALLINT | NOT NULL | 선택지 번호 |
 | content | TEXT | NOT NULL | 선택지 내용 |
 
----
+### EXAM
 
-### EXAM (시험)
-
-사용자가 응시한 시험 정보입니다.
+시험 세션입니다. 특정 Topic의 공용 문제로 시작하거나, 특정 문서에서 생성된 개인 문제로 시작합니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
-| user_id | BIGINT | NOT NULL | FK → USER.id |
-| total_questions | SMALLINT | NOT NULL | 총 문제 수 (최소 10) |
-| time_limit | SMALLINT | NOT NULL | 시험 제한 시간 (분, 기본 30) |
-| status | VARCHAR(20) | NOT NULL | 시험 상태 (`IN_PROGRESS`, `SUBMITTED`) |
-| started_at | TIMESTAMPTZ | NOT NULL | 시험 시작 일시 |
-| expired_at | TIMESTAMPTZ | NOT NULL | 시험 만료 일시 |
-| submitted_at | TIMESTAMPTZ | NULL | 제출 일시. 미제출 시 NULL |
+| user_id | BIGINT | NOT NULL | 응시 사용자 ID |
+| topic_id | BIGINT | NULL | 공용 Topic 시험인 경우 사용 |
+| document_id | BIGINT | NULL | 개인 문서 시험인 경우 사용 |
+| source_type | VARCHAR(30) | NOT NULL | `PUBLIC_TOPIC`, `PRIVATE_DOCUMENT` |
+| total_questions | SMALLINT | NOT NULL | 사용자 지정 문제 수 |
+| time_limit | SMALLINT | NOT NULL | 사용자 지정 시험 시간(분) |
+| status | VARCHAR(20) | NOT NULL | `CREATED`, `IN_PROGRESS`, `SUBMITTED` |
+| started_at | TIMESTAMPTZ | NULL | 시작 전에는 NULL, 시작 시점 확정 |
+| expired_at | TIMESTAMPTZ | NULL | 시작 전에는 NULL, 시작 시점 확정 |
+| submitted_at | TIMESTAMPTZ | NULL | 제출 일시 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
 
----
+### EXAM_QUESTION
 
-### EXAM_QUESTION (시험 문제)
-
-시험에 포함된 문제와 사용자 답안을 함께 관리하는 연결 테이블입니다.
+시험에 포함된 문제와 사용자의 답안/채점 결과입니다.
 
 | 컬럼 | 타입 | NULL | 설명 |
 |------|------|------|------|
 | id | BIGSERIAL | NOT NULL | PK |
 | exam_id | BIGINT | NOT NULL | FK → EXAM.id |
 | question_id | BIGINT | NOT NULL | FK → QUESTION.id |
-| order_num | SMALLINT | NOT NULL | 문제 출제 순서 |
-| my_answer | TEXT | NULL | 사용자 제출 답안. 미응답 시 NULL |
-| is_correct | BOOLEAN | NULL | 정답 여부. 채점 전 NULL |
+| order_num | SMALLINT | NOT NULL | 시험 내 순서 |
+| my_answer | TEXT | NULL | 사용자 답안 |
+| is_correct | BOOLEAN | NULL | 채점 전 NULL |
 
 ---
 
@@ -231,170 +248,87 @@ erDiagram
 
 | 관계 | 설명 |
 |------|------|
+| USER : DOCUMENT | 1:N — 한 사용자는 여러 문서를 등록할 수 있다 |
 | USER : EXAM | 1:N — 한 사용자는 여러 시험을 응시할 수 있다 |
-| USER : EMAIL_VERIFICATION | 1:1 — 한 사용자는 하나의 인증 정보를 가진다 |
+| USER : TOPIC | 1:N — 한 admin은 여러 Topic을 만들 수 있다 |
+| USER : QUESTION | 1:N — 한 admin은 여러 공용 문제를 등록할 수 있다 |
+| TOPIC : QUESTION | 1:N — 하나의 Topic은 여러 공용 문제를 가진다 |
 | DOCUMENT : DOCUMENT_CHUNK | 1:N — 하나의 문서는 여러 청크로 분할된다 |
-| DOCUMENT : QUESTION | 1:N — 문서 기반 생성 문제에만 적용된다 |
-| QUESTION : QUESTION_OPTION | 1:N — 객관식 문제는 5개의 선택지를 가진다 |
-| EXAM : EXAM_QUESTION | 1:N — 하나의 시험은 여러 시험 문제를 포함한다 (최소 10개) |
+| DOCUMENT : QUESTION | 1:N — 하나의 문서에서 여러 개인 문제가 생성된다 |
+| QUESTION : QUESTION_OPTION | 1:N — 객관식/참거짓 문제는 선택지를 가진다 |
+| EXAM : EXAM_QUESTION | 1:N — 하나의 시험은 여러 문항을 포함한다 |
 | QUESTION : EXAM_QUESTION | 1:N — 하나의 문제는 여러 시험에 출제될 수 있다 |
 
 ---
 
 ## 인덱스 설계
 
-> PK, UNIQUE 제약조건에 의한 인덱스는 PostgreSQL이 자동 생성하므로 별도 명시하지 않습니다.
-
 ### USER
 
 ```sql
--- 소셜 로그인 조회: provider + provider_id 복합 조건으로 사용자 식별
-CREATE INDEX idx_user_provider_provider_id ON "user" (provider, provider_id)
-    WHERE provider_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_user_username ON "user" (username);
+CREATE INDEX idx_user_role ON "user" (role);
 ```
 
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_user_provider_provider_id | (provider, provider_id) | 부분 인덱스 | 소셜 로그인 시 provider + provider_id 조합으로 사용자 조회. provider_id가 NULL인 일반 로그인 행 제외 |
-
----
-
-### EMAIL_VERIFICATION
+### TOPIC
 
 ```sql
--- Spring Batch: 만료된 인증 코드 정기 삭제 시 만료 일시 기준 스캔
-CREATE INDEX idx_email_verification_expired_at ON email_verification (expired_at);
+CREATE UNIQUE INDEX uq_topic_name ON topic (name);
+CREATE INDEX idx_topic_active ON topic (active);
 ```
-
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_email_verification_expired_at | expired_at | B-tree | 만료된 인증 코드 정리 배치 작업 시 범위 스캔 성능 향상 |
-
----
 
 ### DOCUMENT
 
 ```sql
--- 문서 수집 시 중복 등록 방지를 위한 출처 조회
-CREATE INDEX idx_document_source ON document (source);
-
--- 처리 중인 문서 조회 (배치 재처리, 모니터링용)
-CREATE INDEX idx_document_status ON document (status)
-    WHERE status IN ('PROCESSING', 'FAILED');
+CREATE INDEX idx_document_user_id_created_at ON document (user_id, created_at DESC);
+CREATE INDEX idx_document_status ON document (status);
 ```
-
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_document_source | source | B-tree | 동일 출처 문서 중복 수집 방지 조회 |
-| idx_document_status | status (부분) | 부분 인덱스 | 처리 미완료 문서만 인덱싱. COMPLETED 행 제외로 인덱스 크기 최소화 |
-
----
 
 ### DOCUMENT_CHUNK
 
 ```sql
--- FK 조인: document → document_chunk
 CREATE INDEX idx_document_chunk_document_id ON document_chunk (document_id);
-
--- 벡터 유사도 검색 인덱스 (HNSW, 코사인 유사도)
--- pgvector 확장 필요: CREATE EXTENSION IF NOT EXISTS vector;
 CREATE INDEX idx_document_chunk_embedding_hnsw ON document_chunk
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 ```
 
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_document_chunk_document_id | document_id | B-tree | 문서 삭제·조회 시 청크 일괄 접근 |
-| idx_document_chunk_embedding_hnsw | embedding | HNSW | 코사인 유사도 기반 근사 최근접 이웃(ANN) 검색. IVFFlat 대비 사전 학습 불필요, 안정적인 쿼리 성능 보장 |
-
----
-
 ### QUESTION
 
 ```sql
--- FK 조인: document → question
+CREATE INDEX idx_question_owner_user_id ON question (owner_user_id);
+CREATE INDEX idx_question_topic_id ON question (topic_id);
 CREATE INDEX idx_question_document_id ON question (document_id);
-
--- 시험 문제 구성 시 유형 + 난이도 조건으로 랜덤 출제
-CREATE INDEX idx_question_type_difficulty ON question (type, difficulty);
+CREATE INDEX idx_question_scope_topic_difficulty ON question (scope, topic_id, difficulty);
+CREATE INDEX idx_question_scope_document_difficulty ON question (scope, document_id, difficulty);
 ```
-
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_question_document_id | document_id | B-tree | DOCUMENT JOIN 시 FK 탐색 성능 향상 |
-| idx_question_type_difficulty | (type, difficulty) | 복합 B-tree | 시험 구성 시 유형·난이도 조건 필터 후 `ORDER BY RANDOM()` 추출. 두 조건을 동시에 사용하므로 단일 인덱스보다 복합이 효율적 |
-
----
 
 ### QUESTION_OPTION
 
 ```sql
--- FK 조인: question → question_option (문제 조회 시 선택지 일괄 로드)
 CREATE INDEX idx_question_option_question_id ON question_option (question_id);
 ```
-
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_question_option_question_id | question_id | B-tree | 문제 상세 조회 시 선택지 일괄 로드 (1:5 관계로 접근 빈도 높음) |
-
----
 
 ### EXAM
 
 ```sql
--- FK 조인 + 히스토리 조회: 특정 사용자의 시험 목록
-CREATE INDEX idx_exam_user_id ON exam (user_id);
-
--- 사용자의 진행 중 시험 조회 (시험 응시 중 재진입 시)
-CREATE INDEX idx_exam_user_id_status ON exam (user_id, status);
-
--- Spring Batch: 만료된 시험 자동 제출 처리
-CREATE INDEX idx_exam_expired_at_status ON exam (expired_at)
+CREATE INDEX idx_exam_user_id_created_at ON exam (user_id, created_at DESC);
+CREATE INDEX idx_exam_expired_at_in_progress ON exam (expired_at)
     WHERE status = 'IN_PROGRESS';
 ```
-
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_exam_user_id | user_id | B-tree | 사용자 시험 히스토리 목록 조회 시 FK 탐색 |
-| idx_exam_user_id_status | (user_id, status) | 복합 B-tree | 사용자의 진행 중 시험 조회. `WHERE user_id = ? AND status = 'IN_PROGRESS'` 패턴에 최적화 |
-| idx_exam_expired_at_status | expired_at (부분) | 부분 인덱스 | 배치가 만료 시험을 자동 제출할 때 `IN_PROGRESS` 행만 스캔. 이미 제출된 행 제외로 인덱스 크기 최소화 |
-
----
 
 ### EXAM_QUESTION
 
 ```sql
--- FK 조인 + 시험 문제 목록 조회 (순서 포함)
 CREATE INDEX idx_exam_question_exam_id_order ON exam_question (exam_id, order_num);
-
--- FK 조인: question → exam_question
 CREATE INDEX idx_exam_question_question_id ON exam_question (question_id);
 ```
 
-| 인덱스명 | 대상 컬럼 | 종류 | 이유 |
-|----------|-----------|------|------|
-| idx_exam_question_exam_id_order | (exam_id, order_num) | 복합 B-tree | 시험 문제 목록을 순서대로 조회할 때 `ORDER BY order_num` 포함 정렬 제거 효과. exam_id만 단독 인덱스를 두는 것보다 정렬 비용 절감 |
-| idx_exam_question_question_id | question_id | B-tree | 채점 시 question → exam_question 방향 조인, 히스토리 상세 조회 시 사용 |
-
 ---
 
-## PostgreSQL 특이사항
+## 설계 메모
 
-- **BIGSERIAL**: `BIGINT` + `SEQUENCE` 자동 생성. JPA에서는 `GenerationType.IDENTITY` 또는 `GenerationType.SEQUENCE` 사용
-- **TIMESTAMPTZ**: 타임존 정보를 포함하는 타임스탬프. 서버 타임존과 무관하게 UTC로 저장되므로 다중 환경에서 안전. JPA에서는 `OffsetDateTime` 또는 `Instant` 매핑 권장
-- **SMALLINT**: 값 범위가 작은 컬럼(`order_num`, `total_questions`, `time_limit`, `option_number`, `chunk_index`)에 적용하여 저장 공간 절약 (2 bytes vs INT 4 bytes)
-- **부분 인덱스 (Partial Index)**: `WHERE` 절 조건을 포함한 인덱스. `IN_PROGRESS` 상태의 시험 행, 처리 미완료 문서 행만 인덱싱 — PostgreSQL 고유 기능
-- **Enum 처리**: `provider`, `type`, `difficulty`, `status`는 PostgreSQL 네이티브 ENUM 타입 대신 `VARCHAR` + `CHECK` 제약조건 방식으로 설계. JPA와의 호환성 및 값 추가 유연성 확보
-- **pgvector 확장**: `vector` 타입은 PostgreSQL 기본 타입이 아니며 `CREATE EXTENSION IF NOT EXISTS vector;` 실행 후 사용 가능. `DOCUMENT_CHUNK.embedding` 컬럼에 적용
-- **HNSW 인덱스**: pgvector의 근사 최근접 이웃(ANN) 인덱스. `m`(연결 수)과 `ef_construction`(인덱스 빌드 탐색 범위)으로 정확도와 빌드 속도를 조절. 기본값 `m=16, ef_construction=64` 적용
-
----
-
-## 설계 비고
-
-- **Vector DB**: DOCUMENT_CHUNK 테이블이 pgvector 확장을 이용해 벡터 저장소 역할을 담당합니다. 별도 Vector DB 없이 PostgreSQL 단일 인스턴스로 운영합니다.
-- **문서 처리 파이프라인**: 내부 API로 PDF 등록 → 텍스트 파싱 → 청킹 → OpenAI 임베딩 → DOCUMENT_CHUNK 저장 → LLM 문제 생성 순서로 진행됩니다. MVP에서는 사용자가 직접 문서를 등록하지 않습니다.
-- **Redis 활용**: 이메일 인증 코드, JWT 리프레시 토큰, 시험 진행 중 임시 답안 저장은 Redis에서 TTL 기반으로 관리합니다.
-- **소프트 딜리트 미적용**: MVP 단계에서는 하드 딜리트를 기본으로 합니다.
-- **시험 채점**: `EXAM_QUESTION.is_correct`는 시험 제출(`EXAM.status = SUBMITTED`) 시점에 일괄 업데이트됩니다.
+- Topic은 관리 대상이므로 정적 enum이 아니라 관리 가능한 데이터로 취급합니다.
+- 원본 문서는 서버 저장소에 영구 보관하지 않고, 문제 생성 완료 후 삭제합니다.
+- 단답형 문제는 문서에 실제 존재하는 명시적 문자열/내용으로만 정답 판정이 가능해야 합니다.
+- 참/거짓 문제는 자유 입력이 아닌 2지선다 선택형으로 저장/응시합니다.

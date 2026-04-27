@@ -11,6 +11,7 @@
 | [배포 가이드.md](./배포 가이드.md) | GitHub Actions, Docker Hub, Vultr 기반 staging/prod 배포 절차 |
 
 현재 구현 기준 모듈 경계는 `tmk-core`(서비스 + 포트), `tmk-infra`(JPA 어댑터), `tmk-api`(REST/보안), `tmk-batch`(배치)입니다.
+현재 문서 기준 권장 구조는 `tmk-core`(도메인), `tmk-infra`(영속화), `tmk-admin`(관리자 전용 API 구성요소), `tmk-api`(단일 Boot 서버), `tmk-batch`(배치)입니다.
 
 ## 현재 실행 흐름
 
@@ -32,8 +33,8 @@
 
 - `index.html`: 비로그인 시 로그인/회원가입 진입 화면, 로그인 후 제품 홈
 - `exams.html`: 실제 시험 응시 형태의 문제 풀이 화면
-- `documents.html`: 내부 문서 등록 및 처리 상태 확인
+- `documents.html`: 사용자 문서 등록 및 처리 상태 확인
 - `questions.html`: 문제 목록/상세 탐색
-- `auth.html`: 인증 센터 및 토큰 재발급 보조 화면
+- `auth.html`: 회원가입, 로그인, 토큰 재발급 보조 화면
 
-문서의 API 경로와 화면 설명은 현재 코드 구현(`AuthController`, `ExamController`, `DocumentController`, 정적 리소스) 기준으로 유지합니다.
+문서 기준으로는 `tmk-api` 서버가 단일 실행 서버이며, `tmk-admin` 모듈은 별도 컨테이너가 아니라 `tmk-api`에 포함되어 `/admin/v1/**` 경로를 함께 제공하는 구조를 전제로 합니다.
