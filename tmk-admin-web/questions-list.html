@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Public Question Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="admin-dashboard-body">
+<main class="dashboard-shell">
+    <aside class="sidebar">
+        <nav class="sidebar-nav" aria-label="관리자 메뉴">
+            <a class="nav-item" href="./dashboard.html">모니터링</a>
+            <a class="nav-item is-active" href="./questions-list.html">공용문제 관리</a>
+            <a class="nav-item" href="./admin-create.html">관리자 관리</a>
+        </nav>
+    </aside>
+
+    <section class="dashboard-main">
+        <header class="dashboard-header dashboard-header-compact">
+            <div>
+                <h1>공용문제 관리</h1>
+                <p id="questionListDescription">Topic 기준으로 등록된 공용 문제를 조회하고 관리합니다.</p>
+            </div>
+        </header>
+
+        <section class="tab-frame">
+            <div class="tab-switch" role="tablist" aria-label="공용문제 관리 탭">
+                <button type="button" class="tab-button is-active" data-tab="questions">문제 관리</button>
+                <button type="button" class="tab-button" data-tab="topics">Topic 관리</button>
+            </div>
+
+            <section class="tab-panel is-active" data-panel="questions">
+                <section class="filter-panel">
+                <div class="filter-row">
+                    <label class="field field-inline">
+                        <span>Topic</span>
+                        <select id="topicFilter" class="filter-select">
+                            <option value="all">전체</option>
+                        </select>
+                    </label>
+
+                    <div class="bulk-actions">
+                        <button type="button" class="ghost-button" id="bulkEnableButton">활성화</button>
+                        <button type="button" class="ghost-button" id="bulkDisableButton">비활성화</button>
+                        <button type="button" class="ghost-button is-danger" id="bulkDeleteButton">삭제</button>
+                    </div>
+                </div>
+                <div class="filter-row filter-row-secondary">
+                    <div class="filter-caption">선택한 공용 문제를 일괄 관리할 수 있습니다.</div>
+                </div>
+                </section>
+
+                <section class="table-panel">
+                    <div class="table-wrap">
+                    <table class="admin-table admin-table-selectable">
+                        <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAllQuestions" aria-label="전체 선택">
+                            </th>
+                            <th>문제</th>
+                            <th>유형</th>
+                            <th>난이도</th>
+                            <th>Topic</th>
+                            <th>상태</th>
+                            <th>등록일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="publicQuestionTableBody">
+                        <tr class="append-row" id="appendQuestionRow">
+                            <td colspan="8"><span class="append-symbol">+</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
+
+                </section>
+            </section>
+
+            <section class="tab-panel" data-panel="topics">
+                <section class="table-panel">
+                    <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                        <tr>
+                            <th>Topic명</th>
+                            <th>문제 수</th>
+                            <th>생성일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="topicTableBody">
+                        <tr class="append-row" id="appendTopicRow">
+                            <td colspan="4"><span class="append-symbol">+</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
+
+                </section>
+            </section>
+        </section>
+    </section>
+</main>
+
+<div class="modal-backdrop" id="questionDetailModal" hidden>
+    <div class="modal-card modal-card-wide" role="dialog" aria-modal="true" aria-labelledby="questionDetailTitle">
+        <div class="modal-head">
+            <div>
+                <h2 id="questionDetailTitle">문제 상세</h2>
+                <p>선택한 공용 문제의 상세 정보를 확인합니다.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeQuestionDetailModal" aria-label="닫기">×</button>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item detail-item-full">
+                <span class="detail-label">문제</span>
+                <div class="detail-box" id="detailQuestion">-</div>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">유형</span>
+                <div class="detail-box" id="detailType">-</div>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">난이도</span>
+                <div class="detail-box" id="detailLevel">-</div>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Topic</span>
+                <div class="detail-box" id="detailTopic">-</div>
+            </div>
+
+            <div class="detail-item detail-item-full">
+                <span class="detail-label">정답</span>
+                <div class="detail-box" id="detailAnswer">-</div>
+            </div>
+
+            <div class="detail-item detail-item-full">
+                <span class="detail-label">해설</span>
+                <div class="detail-box" id="detailExplanation">-</div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="ghost-button" id="detailToggleStatusButton">비활성화</button>
+            <button type="button" class="ghost-button is-danger" id="detailDeleteButton">삭제</button>
+        </div>
+
+        <div class="modal-actions modal-actions-single">
+            <button type="button" class="secondary-button" id="cancelQuestionDetailModal">닫기</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="topicModalBackdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="topicModalTitle">
+        <div class="modal-head">
+            <div>
+                <h2 id="topicModalTitle">Topic 추가</h2>
+                <p>공용 문제 분류에 사용할 Topic을 등록합니다.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeTopicModal" aria-label="닫기">×</button>
+        </div>
+
+        <form class="admin-form" id="topicCreateForm">
+            <label class="field">
+                <span>Topic명</span>
+                <input id="newTopicName" name="newTopicName" type="text" placeholder="예: Network" required>
+            </label>
+
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" id="cancelTopicModal">취소</button>
+                <button type="submit" class="primary-button">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="questionModalBackdrop" hidden>
+    <div class="modal-card modal-card-wide" role="dialog" aria-modal="true" aria-labelledby="questionModalTitle">
+        <div class="modal-head">
+            <div>
+                <h2 id="questionModalTitle">문제 등록</h2>
+                <p>문제, 정답, 해설, 난이도, Topic을 입력해 공용 문제를 등록합니다.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeQuestionModal" aria-label="닫기">×</button>
+        </div>
+
+        <form class="admin-form" id="questionCreateForm">
+            <label class="field">
+                <span>문제</span>
+                <input id="newQuestionText" name="newQuestionText" type="text" placeholder="문제를 입력하세요" required>
+            </label>
+
+            <div class="detail-grid detail-grid-tight">
+                <label class="field">
+                    <span>유형</span>
+                    <select id="newQuestionType" class="filter-select" required>
+                        <option value="객관식">객관식</option>
+                        <option value="단답형">단답형</option>
+                        <option value="참/거짓">참/거짓</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>난이도</span>
+                    <select id="newQuestionLevel" class="filter-select" required>
+                        <option value="하">하</option>
+                        <option value="중">중</option>
+                        <option value="상">상</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="detail-grid detail-grid-tight">
+                <label class="field">
+                    <span>Topic</span>
+                    <select id="newQuestionTopic" class="filter-select" required>
+                        <option value="">Topic을 먼저 추가하세요</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>정답</span>
+                    <input id="newQuestionAnswer" name="newQuestionAnswer" type="text" placeholder="정답을 입력하세요" required>
+                </label>
+            </div>
+
+            <label class="field">
+                <span>해설</span>
+                <textarea id="newQuestionExplanation" name="newQuestionExplanation" class="form-textarea" placeholder="해설을 입력하세요" required></textarea>
+            </label>
+
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" id="cancelQuestionModal">취소</button>
+                <button type="submit" class="primary-button">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="./assets/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.tmk.batch.job;
 
 import com.tmk.core.exam.entity.Exam;
+import com.tmk.core.exam.entity.ExamQuestion;
 import com.tmk.core.exam.service.ExamGradingService;
 import com.tmk.core.port.out.persistence.ExamPort;
 import com.tmk.core.port.out.persistence.QuestionPort;
@@ -49,11 +50,11 @@ public class ExamAutoSubmitJob {
                     for (Exam exam : expiredExams) {
                         try {
                             List<Long> questionIds = exam.getExamQuestions().stream()
-                                    .map(eq -> eq.getQuestionId())
+                                    .map(ExamQuestion::getQuestionId)
                                     .toList();
 
                             List<Question> questions = questionIds.stream()
-                                    .map(id -> questionPort.findById(id))
+                                    .map(questionPort::findById)
                                     .filter(Optional::isPresent)
                                     .map(Optional::get)
                                     .toList();

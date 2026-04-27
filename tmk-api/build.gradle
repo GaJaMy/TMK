@@ -5,7 +5,6 @@ plugins {
 dependencies {
     implementation project(':tmk-core')
     implementation project(':tmk-infra')
-    implementation project(':tmk-admin')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'

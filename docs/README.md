@@ -9,16 +9,18 @@
 | [ERD 설계.md](./ERD 설계.md) | 테이블 구조, 인덱스 설계 |
 | [ddl.sql](./ddl.sql) | 실제 DDL SQL |
 | [배포 가이드.md](./배포 가이드.md) | GitHub Actions, Docker Hub, Vultr 기반 staging/prod 배포 절차 |
+| [프론트엔드 구조.md](./프론트엔드 구조.md) | 사용자/관리자 웹 분리 구조와 배포 방향 |
+| [사용자 웹 요구사항.md](./사용자 웹 요구사항.md) | 사용자용 웹 화면 요구사항 정리 문서 |
+| [관리자 웹 요구사항.md](./관리자 웹 요구사항.md) | 관리자용 웹 화면 요구사항 정리 문서 |
 
 현재 구현 기준 모듈 경계는 `tmk-core`(서비스 + 포트), `tmk-infra`(JPA 어댑터), `tmk-api`(REST/보안), `tmk-batch`(배치)입니다.
-현재 문서 기준 권장 구조는 `tmk-core`(도메인), `tmk-infra`(영속화), `tmk-admin`(관리자 전용 API 구성요소), `tmk-api`(단일 Boot 서버), `tmk-batch`(배치)입니다.
+현재 문서 기준 권장 구조는 `tmk-core`(도메인), `tmk-infra`(영속화), `tmk-api`(사용자 API + 관리자 API 단일 Boot 서버), `tmk-batch`(배치), `tmk-user-web`(사용자 웹), `tmk-admin-web`(관리자 웹)입니다.
 
 ## 현재 실행 흐름
 
 - 개발용 인프라 실행: `docker compose up -d` 또는 `docker compose -f docker-compose.dev.yml up -d`
 - API 서버 실행: `SPRING_PROFILES_ACTIVE=dev ./gradlew :tmk-api:bootRun`
 - 배치 서버 실행: `SPRING_PROFILES_ACTIVE=dev ./gradlew :tmk-batch:bootRun`
-- 웹 UI 진입점: `http://localhost:8080/index.html`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 
 환경 설정은 `application.yml` + `application-{profile}.yml` 구조로 분리되어 있으며, 기본 프로필은 `dev`입니다.
@@ -29,12 +31,9 @@
 
 민감 정보는 코드에 두지 않고 환경 변수로 주입합니다. 로컬 개발은 직접 환경 변수를 지정하고, staging/prod 는 GitHub Actions가 개별 GitHub Secrets를 조합해 배포 시점에 `.env` 파일을 생성합니다.
 
-정적 프론트는 `tmk-api/src/main/resources/static` 아래에 있으며 현재 기준 페이지 구성은 다음과 같습니다.
+신규 프론트는 아래 별도 웹 앱 디렉터리에서 관리합니다.
 
-- `index.html`: 비로그인 시 로그인/회원가입 진입 화면, 로그인 후 제품 홈
-- `exams.html`: 실제 시험 응시 형태의 문제 풀이 화면
-- `documents.html`: 사용자 문서 등록 및 처리 상태 확인
-- `questions.html`: 문제 목록/상세 탐색
-- `auth.html`: 회원가입, 로그인, 토큰 재발급 보조 화면
+- `tmk-user-web`: 사용자용 웹 앱
+- `tmk-admin-web`: 관리자용 웹 앱
 
-문서 기준으로는 `tmk-api` 서버가 단일 실행 서버이며, `tmk-admin` 모듈은 별도 컨테이너가 아니라 `tmk-api`에 포함되어 `/admin/v1/**` 경로를 함께 제공하는 구조를 전제로 합니다.
+문서 기준으로는 `tmk-api` 서버가 단일 실행 서버이며, 관리자 API는 별도 모듈이 아니라 `tmk-api` 내부 패키지로 구성되어 `/admin/v1/**` 경로를 함께 제공하는 구조를 전제로 합니다.

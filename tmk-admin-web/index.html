@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Admin Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="admin-login-body">
+<main class="login-shell">
+    <section class="login-panel">
+        <div class="panel-head">
+            <span class="eyebrow">TMK ADMIN</span>
+            <h2>관리자 로그인</h2>
+            <p>아이디와 비밀번호를 입력하세요.</p>
+        </div>
+
+        <form class="login-form" id="adminLoginForm">
+            <label class="field">
+                <span>아이디</span>
+                <input id="adminId" name="adminId" type="text" autocomplete="username" placeholder="admin id" required>
+            </label>
+
+            <label class="field">
+                <span>비밀번호</span>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="password" required>
+            </label>
+
+            <button type="submit" class="primary-button">로그인</button>
+        </form>
+
+        <div class="status-card" id="loginStatus" aria-live="polite">
+            관리자 인증 API 연동 전입니다. 현재는 입력 검증과 상태 표현만 동작합니다.
+        </div>
+    </section>
+</main>
+
+<script src="./assets/app.js"></script>
+</body>
+</html>

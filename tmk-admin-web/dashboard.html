@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="admin-dashboard-body">
+<main class="dashboard-shell">
+    <aside class="sidebar">
+        <nav class="sidebar-nav" aria-label="관리자 메뉴">
+            <a class="nav-item is-active" href="./dashboard.html">모니터링</a>
+            <a class="nav-item" href="./questions-list.html">공용문제 관리</a>
+            <a class="nav-item" href="./admin-create.html">관리자 관리</a>
+        </nav>
+    </aside>
+
+    <section class="dashboard-main">
+        <header class="dashboard-header">
+            <div>
+                <h1>주간 사용자 모니터링</h1>
+                <p id="monitoringDescription">사용자 접근과 학습 활동을 일별 기준으로 확인하는 관리자 메인페이지입니다.</p>
+            </div>
+
+            <div class="range-switch" role="tablist" aria-label="조회 단위">
+                <button class="range-button is-active" type="button" data-range="일별">일별</button>
+                <button class="range-button" type="button" data-range="주별">주별</button>
+                <button class="range-button" type="button" data-range="월별">월별</button>
+            </div>
+        </header>
+
+        <section class="metric-grid">
+            <article class="metric-card">
+                <span class="metric-label">사용자 웹 접근 시도</span>
+                <strong class="metric-value">-</strong>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">시험 진행 횟수</span>
+                <strong class="metric-value">-</strong>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">사용자 문서 등록</span>
+                <strong class="metric-value">-</strong>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">생성된 사용자 문제</span>
+                <strong class="metric-value">-</strong>
+            </article>
+        </section>
+
+        <section class="chart-grid">
+            <article class="chart-card">
+                <div class="card-head">
+                    <div>
+                        <span class="card-kicker">Traffic</span>
+                        <h2>접근 시도 추이</h2>
+                    </div>
+                </div>
+                <div class="chart-empty">
+                    아직 표시할 데이터가 없습니다.
+                </div>
+            </article>
+
+            <article class="chart-card">
+                <div class="card-head">
+                    <div>
+                        <span class="card-kicker">Exams</span>
+                        <h2>시험 진행 추이</h2>
+                    </div>
+                </div>
+                <div class="chart-empty">
+                    아직 표시할 데이터가 없습니다.
+                </div>
+            </article>
+
+            <article class="chart-card">
+                <div class="card-head">
+                    <div>
+                        <span class="card-kicker">Documents</span>
+                        <h2>문서 등록 추이</h2>
+                    </div>
+                </div>
+                <div class="chart-empty">
+                    아직 표시할 데이터가 없습니다.
+                </div>
+            </article>
+
+            <article class="chart-card">
+                <div class="card-head">
+                    <div>
+                        <span class="card-kicker">Questions</span>
+                        <h2>사용자 문제 생성 추이</h2>
+                    </div>
+                </div>
+                <div class="chart-empty">
+                    아직 표시할 데이터가 없습니다.
+                </div>
+            </article>
+        </section>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>

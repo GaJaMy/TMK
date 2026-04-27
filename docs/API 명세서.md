@@ -6,7 +6,7 @@
 
 ---
 
-이 문서의 관리자 API는 별도 서버가 아니라 `tmk-api` 단일 서버에 포함된 `tmk-admin` 모듈을 통해 `/admin/v1/**` 경로로 제공되는 구조를 전제로 합니다.
+이 문서의 관리자 API는 별도 서버가 아니라 `tmk-api` 단일 서버 내부의 관리자 패키지/도메인을 통해 `/admin/v1/**` 경로로 제공되는 구조를 전제로 합니다.
 
 ---
 
@@ -46,6 +46,8 @@ Authorization: Bearer {accessToken}
 | AUTH_006 | 401 | 아이디 또는 비밀번호 불일치 |
 | AUTH_007 | 403 | admin만 admin 계정을 생성 가능 |
 | AUTH_008 | 401 | 유효하지 않은 리프레시 토큰 |
+| AUTH_009 | 403 | 비활성화된 계정 |
+| AUTH_010 | 404 | 관리자를 찾을 수 없음 |
 
 ### TOPIC
 
@@ -53,6 +55,8 @@ Authorization: Bearer {accessToken}
 |------|------|------|
 | TOPIC_001 | 404 | Topic을 찾을 수 없음 |
 | TOPIC_002 | 409 | 이미 존재하는 Topic 이름 |
+| TOPIC_003 | 409 | 공용 문제와 연결된 Topic은 삭제할 수 없음 |
+| TOPIC_004 | 422 | 잘못된 Topic 생성 요청 |
 
 ### DOCUMENT
 
@@ -61,6 +65,7 @@ Authorization: Bearer {accessToken}
 | DOCUMENT_001 | 404 | 문서를 찾을 수 없음 |
 | DOCUMENT_002 | 400 | PDF 파일만 업로드 가능 |
 | DOCUMENT_003 | 422 | 읽을 수 없는 노션/URL |
+| DOCUMENT_004 | 403 | 다른 사용자의 문서에 접근할 수 없음 |
 
 ### QUESTION
 
@@ -68,6 +73,13 @@ Authorization: Bearer {accessToken}
 |------|------|------|
 | QUESTION_001 | 404 | 문제를 찾을 수 없음 |
 | QUESTION_002 | 422 | 시험을 생성할 문제가 부족함 |
+| QUESTION_003 | 422 | 잘못된 문제 생성 요청 |
+| QUESTION_004 | 409 | 이미 비활성화된 문제 |
+| QUESTION_005 | 409 | 이미 활성화된 문제 |
+| QUESTION_006 | 422 | 객관식 선택지 개수 오류 |
+| QUESTION_007 | 422 | 참/거짓 선택지 개수 오류 |
+| QUESTION_008 | 422 | 단답형 정답 형식 오류 |
+| QUESTION_009 | 403 | 다른 사용자의 개인 문제에 접근할 수 없음 |
 
 ### EXAM
 
@@ -78,6 +90,14 @@ Authorization: Bearer {accessToken}
 | EXAM_003 | 410 | 시험 시간 만료 |
 | EXAM_004 | 400 | 잘못된 시험 생성 조건 |
 | EXAM_005 | 409 | 이미 시작된 시험 |
+| EXAM_006 | 403 | 다른 사용자의 시험에 접근할 수 없음 |
+
+### MONITORING
+
+| 코드 | HTTP | 설명 |
+|------|------|------|
+| MONITORING_001 | 422 | 지원하지 않는 기간 단위 |
+| MONITORING_002 | 422 | 잘못된 조회 기간 범위 |
 
 ---
 
@@ -267,10 +287,12 @@ Authorization: Bearer {accessToken}
 |----------|------|
 | documentId | 특정 문서 기반 문제만 조회 |
 
-### 4.2 공용 문제 조회
+### 4.2 공용 문제 목록 조회
 
 **GET** `/questions/public`
 🔒 인증 필요
+
+관리자 웹의 `공용문제 관리 > 문제 관리` 탭에서 사용한다.
 
 **Query**
 
@@ -416,7 +438,59 @@ Authorization: Bearer {accessToken}
 
 모든 Admin API는 `ADMIN` 권한이 필요합니다.
 
-### 6.1 admin 계정 생성
+### 6.1 관리자 로그인
+
+**POST** `/admin/auth/login`
+
+관리자 웹 로그인 전용 API입니다. 일반 사용자 계정은 로그인에 성공하더라도 `AUTH_004` 또는 `AUTH_007`로 차단할 수 있습니다.
+
+```json
+{
+  "username": "admin-master",
+  "password": "Password1234!"
+}
+```
+
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": {
+    "accessToken": "jwt-access-token",
+    "refreshToken": "jwt-refresh-token",
+    "expiresIn": 1800,
+    "role": "ADMIN"
+  }
+}
+```
+
+### 6.2 관리자 목록 조회
+
+**GET** `/admin/users`
+🔒 ADMIN
+
+관리자 관리 페이지의 목록 표에서 사용합니다.
+
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": [
+    {
+      "userId": 101,
+      "username": "admin-master",
+      "active": true,
+      "createdAt": "2026-04-27T09:00:00+09:00"
+    }
+  ]
+}
+```
+
+### 6.3 관리자 계정 생성
 
 **POST** `/admin/users`
 🔒 ADMIN
@@ -424,42 +498,150 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "username": "admin2",
-  "password": "Password1234!",
-  "countryCode": "KR"
+  "password": "Password1234!"
 }
 ```
 
-### 6.2 Topic 생성
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": {
+    "userId": 102,
+    "username": "admin2",
+    "active": true,
+    "createdAt": "2026-04-27T10:00:00+09:00"
+  }
+}
+```
+
+### 6.4 관리자 계정 상태 변경
+
+**PATCH** `/admin/users/{userId}/status`
+🔒 ADMIN
+
+```json
+{
+  "active": false
+}
+```
+
+### 6.5 관리자 계정 삭제
+
+**DELETE** `/admin/users/{userId}`
+🔒 ADMIN
+
+### 6.6 관리자 Topic 목록 조회
+
+**GET** `/admin/topics`
+🔒 ADMIN
+
+공용문제 관리 > Topic 관리 탭에서 사용합니다.
+
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": [
+    {
+      "topicId": 1,
+      "name": "Java",
+      "questionCount": 12,
+      "createdAt": "2026-04-27T09:00:00+09:00"
+    }
+  ]
+}
+```
+
+### 6.7 Topic 생성
 
 **POST** `/admin/topics`
 🔒 ADMIN
 
 ```json
 {
-  "name": "SPRING",
-  "description": "Spring ecosystem"
+  "name": "SPRING"
 }
 ```
 
-### 6.3 Topic 수정/활성화 관리
+### 6.8 Topic 삭제
 
-**PATCH** `/admin/topics/{topicId}`
+**DELETE** `/admin/topics/{topicId}`
 🔒 ADMIN
+
+Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 규칙으로 정의합니다.
+
+### 6.9 공용 문제 목록 조회
+
+**GET** `/admin/questions`
+🔒 ADMIN
+
+공용문제 관리 > 문제 관리 탭의 목록 표에서 사용합니다.
+
+**Query**
+
+| 파라미터 | 설명 |
+|----------|------|
+| topicId | Topic 기준 필터 |
+| difficulty | 난이도 필터 |
+| type | 문제 유형 필터 |
+| active | 활성/비활성 필터 |
+
+**Response**
 
 ```json
 {
-  "name": "SPRING BOOT",
-  "description": "Spring Boot focused topic",
-  "active": true
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": [
+    {
+      "questionId": 1001,
+      "content": "Spring Boot의 자동 설정 기능을 담당하는 핵심 개념은 무엇인가?",
+      "type": "SHORT_ANSWER",
+      "difficulty": "EASY",
+      "topicId": 1,
+      "topicName": "Spring",
+      "active": true,
+      "createdAt": "2026-04-27T09:00:00+09:00"
+    }
+  ]
 }
 ```
 
-### 6.4 Topic 목록 조회
+### 6.10 공용 문제 상세 조회
 
-**GET** `/admin/topics`
+**GET** `/admin/questions/{questionId}`
 🔒 ADMIN
 
-### 6.5 공용 문제 등록
+공용문제 관리 페이지에서 행 클릭 시 열리는 상세 다이얼로그에서 사용합니다.
+
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": {
+    "questionId": 1001,
+    "content": "Spring Boot의 자동 설정 기능을 담당하는 핵심 개념은 무엇인가?",
+    "type": "SHORT_ANSWER",
+    "difficulty": "EASY",
+    "topicId": 1,
+    "topicName": "Spring",
+    "answer": "Auto Configuration",
+    "explanation": "Spring Boot는 Auto Configuration을 통해 설정을 자동 적용한다.",
+    "options": [],
+    "active": true,
+    "createdAt": "2026-04-27T09:00:00+09:00"
+  }
+}
+```
+
+### 6.11 공용 문제 등록
 
 **POST** `/admin/questions`
 🔒 ADMIN
@@ -481,18 +663,120 @@ Authorization: Bearer {accessToken}
 - `TRUE_FALSE`는 선택지 2개 필수
 - `SHORT_ANSWER`는 서술형 금지, 문서/기준 텍스트에 근거한 명확한 단일 정답만 허용
 
-### 6.6 공용 문제 목록 조회
+### 6.12 공용 문제 상태 변경
 
-**GET** `/admin/questions`
+**PATCH** `/admin/questions/{questionId}/status`
+🔒 ADMIN
+
+```json
+{
+  "active": false
+}
+```
+
+### 6.13 공용 문제 삭제
+
+**DELETE** `/admin/questions/{questionId}`
+🔒 ADMIN
+
+### 6.14 공용 문제 일괄 상태 변경
+
+**PATCH** `/admin/questions/bulk/status`
+🔒 ADMIN
+
+```json
+{
+  "questionIds": [1001, 1002, 1003],
+  "active": false
+}
+```
+
+### 6.15 공용 문제 일괄 삭제
+
+**DELETE** `/admin/questions/bulk`
+🔒 ADMIN
+
+```json
+{
+  "questionIds": [1001, 1002, 1003]
+}
+```
+
+### 6.16 사용자 웹 접근 시도 통계 조회
+
+**GET** `/admin/monitoring/access-attempts`
 🔒 ADMIN
 
 **Query**
 
 | 파라미터 | 설명 |
 |----------|------|
-| topicId | Topic 기준 필터 |
-| difficulty | 난이도 필터 |
-| type | 문제 유형 필터 |
+| periodType | `DAILY`, `WEEKLY`, `MONTHLY` |
+| from | 조회 시작일 |
+| to | 조회 종료일 |
+
+### 6.17 시험 진행 통계 조회
+
+**GET** `/admin/monitoring/exam-runs`
+🔒 ADMIN
+
+**Query**
+
+| 파라미터 | 설명 |
+|----------|------|
+| periodType | `DAILY`, `WEEKLY`, `MONTHLY` |
+| from | 조회 시작일 |
+| to | 조회 종료일 |
+
+### 6.18 사용자 문서 등록 통계 조회
+
+**GET** `/admin/monitoring/document-registrations`
+🔒 ADMIN
+
+**Query**
+
+| 파라미터 | 설명 |
+|----------|------|
+| periodType | `DAILY`, `WEEKLY`, `MONTHLY` |
+| from | 조회 시작일 |
+| to | 조회 종료일 |
+
+### 6.19 사용자 문제 생성 통계 조회
+
+**GET** `/admin/monitoring/question-generations`
+🔒 ADMIN
+
+**Query**
+
+| 파라미터 | 설명 |
+|----------|------|
+| periodType | `DAILY`, `WEEKLY`, `MONTHLY` |
+| from | 조회 시작일 |
+| to | 조회 종료일 |
+
+모니터링 통계 응답 예시:
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": {
+    "summary": {
+      "totalCount": 1284
+    },
+    "series": [
+      {
+        "label": "2026-04-21",
+        "count": 120
+      },
+      {
+        "label": "2026-04-22",
+        "count": 156
+      }
+    ]
+  }
+}
+```
 
 ---
 

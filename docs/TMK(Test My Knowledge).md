@@ -7,7 +7,7 @@
 
 사용자가 직접 업로드한 PDF 문서나 읽기 가능한 노션/특정 URL 문서를 등록하면 OpenAI를 통해 자동으로 시험 문제를 생성하고, 사용자가 시험을 응시하여 학습 이해도를 확인할 수 있는 AI 기반 문제은행 플랫폼입니다.
 
-현재 `tmk-api`에는 정적 웹 UI가 포함되어 있으며, `http://localhost:8080/index.html` 접속 시 비로그인 상태에서는 로그인 진입 화면이, 로그인 후에는 제품 홈 화면이 표시됩니다. 시험 화면은 단순 API 테스트 폼이 아니라 실제 응시 흐름에 가깝게 문제/보기/답안 저장/제출 UI를 제공합니다.
+웹 레이어는 `tmk-user-web`, `tmk-admin-web`로 분리하며, 관리자 웹은 로그인, 모니터링, 공용문제 관리, 관리자 관리 화면을 제공합니다.
 
 ### 핵심 기술 특징
 
@@ -63,14 +63,15 @@
 tmk-parent/
 ├── tmk-core/     # 도메인 엔티티, 애플리케이션 서비스, outbound port
 ├── tmk-infra/    # Spring Data JPA repository + persistence adapter
-├── tmk-admin/    # 관리자 전용 API 구성요소 (tmk-api에 포함되어 함께 기동)
-├── tmk-api/      # 사용자 API, Boot Application, JWT, AI/Redis adapter, static web UI
-└── tmk-batch/    # Spring Batch (만료 시험 자동 제출)
+├── tmk-api/      # 사용자 API + 관리자 API, Boot Application, JWT, AI/Redis adapter
+├── tmk-batch/    # Spring Batch (만료 시험 자동 제출)
+├── tmk-user-web/ # 사용자 웹
+└── tmk-admin-web/  # 관리자 웹
 ```
 
-**의존성 방향**: `tmk-api` → `tmk-admin`, `tmk-core`, `tmk-infra` / `tmk-admin` → `tmk-core` / `tmk-batch` → `tmk-core`, `tmk-infra`
+**의존성 방향**: `tmk-api` → `tmk-core`, `tmk-infra` / `tmk-batch` → `tmk-core`, `tmk-infra`
 
-**구조 원칙**: 코어 서비스는 JPA repository를 직접 참조하지 않고 `Port`에만 의존합니다. DB 접근은 `tmk-infra`의 adapter가 담당합니다.
+**구조 원칙**: 코어 서비스는 JPA repository를 직접 참조하지 않고 `Port`에만 의존합니다. DB 접근은 `tmk-infra`의 adapter가 담당하며, 관리자 API는 별도 모듈이 아니라 `tmk-api` 내부 패키지와 `tmk-core`의 관리자 도메인으로 분리합니다.
 
 **포트 분류**: `tmk-core`의 outbound port는 역할별로 `port.out.persistence`, `port.out.ai`, `port.out.cache`, `port.out.security`로 분리합니다.
 
@@ -89,16 +90,13 @@ pgvector 저장 (HNSW 인덱스, m=16, ef_construction=64)
   ↓
 ANN 검색 (코사인 유사도) → LLM 문제 생성
   ↓
-QUESTION 테이블 저장
+개인 문제 저장
 ```
 
 ### 웹 UI 구성
 
-- `index.html`: 로그인 화면 + 로그인 후 홈 대시보드
-- `exams.html`: 시험 시작, 문항 이동, 보기 선택, 임시 저장, 제출, 결과 조회
-- `documents.html`: PDF 업로드, 노션/URL 기반 등록, 처리 상태 조회
-- `questions.html`: 문제 목록 필터링 및 상세 확인
-- `auth.html`: 회원가입, 로그인, 토큰 재발급
+- `tmk-user-web`: 사용자 인증, 문서 등록, 개인 문제 조회, 시험 생성/시작/응시/결과
+- `tmk-admin-web`: 관리자 로그인, 운영 모니터링, 공용문제 관리, 관리자 관리
 
 ### 시스템 아키텍처 다이어그램
 
@@ -201,14 +199,22 @@ ADMIN이 Topic 생성
 - 서비스 제공 문제 등록에 사용할 Topic 목록을 조회할 수 있어야 함
 - Topic은 관리자 기능을 통해 관리할 수 있어야 함
 
-### 2-2. 관리자 기능
+### 3. 관리자 기능
 
 - 서비스 운영을 위한 별도의 admin 페이지가 필요
-- 현재 admin 기능은 공용 문제 생성과 Topic 관리 기능만 제공
+- admin 웹의 진입점은 관리자 로그인 페이지여야 함
+- 로그인 후 첫 화면은 운영 모니터링 중심의 관리자 메인페이지여야 함
+- 관리자 메인페이지에서는 사용자 웹 접근 시도, 시험 진행 횟수, 사용자 문서 등록 횟수, 사용자 문제 생성 횟수를 기간별로 조회할 수 있어야 함
+- 관리자 메인페이지에서 좌측 네비게이션을 통해 공용문제 관리와 관리자 관리 페이지로 이동할 수 있어야 함
+- 공용문제 관리는 `문제 관리`와 `Topic 관리`를 포함하는 구조여야 함
+- 문제 관리에서는 Topic 필터, 문제 목록 조회, 문제 상세 조회, 공용 문제 등록, 개별 활성/비활성, 개별 삭제, 선택 문제 일괄 활성/비활성, 선택 문제 일괄 삭제가 가능해야 함
+- Topic 관리에서는 Topic 목록 조회, Topic 추가, Topic 삭제가 가능해야 함
+- 관리자 관리에서는 관리자 목록 조회, 관리자 계정 생성, 관리자 계정 활성/비활성, 관리자 계정 삭제가 가능해야 함
 - admin 계정은 admin 권한을 가진 사용자만 생성할 수 있어야 함
 - 일반 사용자는 admin 계정 생성 및 admin 전용 기능에 접근할 수 없어야 함
+- 관리자 계정과 공용 문제는 활성/비활성 상태 관리가 가능해야 함
 
-### 3. 시험 기능
+### 4. 시험 기능
 
 - 사용자는 두 가지 방식으로 시험을 시작할 수 있어야 함
 - 특정 Topic을 선택하여 서비스 제공 공용 문제로 시험 응시 가능
@@ -224,12 +230,12 @@ ADMIN이 Topic 생성
 - 시험 시간 초과 시 Spring Batch가 자동 제출
 - 채점: 정답률 50% 이상 → 합격
 
-### 4. 시험 히스토리
+### 5. 시험 히스토리
 
 - 응시 이력 목록 조회 (총점, 합격 여부)
 - 상세 조회 (문제별 내 답안, 정답, 해설)
 
-### 5. 비기능 요구사항
+### 6. 비기능 요구사항
 
 - 인증된 사용자만 서비스 이용 가능
 - 사용자 데이터 및 시험 결과 안전 저장
@@ -265,7 +271,7 @@ ADMIN이 Topic 생성
 | API 컨트롤러 | ✅ 완료 | 현재 문서의 요구사항 기준으로 정비 예정 |
 | 문서 등록 API | ✅ 완료 | 사용자 PDF 업로드 + 읽기 가능한 노션/URL 등록 지원 예정 |
 | Spring Batch 잡 | ✅ 완료 | 만료 시험 자동 제출 |
-| 정적 웹 UI | ✅ 완료 | 제품형 로그인 홈 + 시험 응시 화면 포함 |
+| 웹 UI 프로토타입 | ✅ 작성 중 | `tmk-user-web`, `tmk-admin-web` 기준으로 정비 중 |
 | OpenAI 통합 | ✅ 완료 | 운영 환경에서는 OpenAI API billing/quota 설정 필요 |
 | 테스트 코드 | ✅ 작성됨 | 모듈별 단위/통합 테스트 존재 |
 
