@@ -1,9 +1,14 @@
 package com.tmk.core.document.vo;
 
-import com.tmk.core.document.entity.Document;
+import com.tmk.core.document.entity.DocumentStatus;
+import java.time.OffsetDateTime;
 
 public record DocumentStatusInfo(
-    Document document,
-    long chunkCount,
-    long questionCount
-) {}
+        Long documentId,
+        String title,
+        DocumentStatus status,
+        int generatedQuestionCount,
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt
+) {
+}

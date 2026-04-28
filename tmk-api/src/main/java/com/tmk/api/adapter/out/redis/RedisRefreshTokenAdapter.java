@@ -1,11 +1,12 @@
 package com.tmk.api.adapter.out.redis;
 
 import com.tmk.core.port.out.cache.RefreshTokenPort;
+import java.time.Duration;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -14,22 +15,27 @@ public class RedisRefreshTokenAdapter implements RefreshTokenPort {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    private String key(Long userId) {
-        return "refresh_token:" + userId;
+    private String key(String principalType, Long principalId) {
+        return "refresh_token:" + principalType + ":" + principalId;
     }
 
     @Override
-    public void save(Long userId, String token, long ttlSeconds) {
-        redisTemplate.opsForValue().set(key(userId), token, ttlSeconds, TimeUnit.SECONDS);
+    public void save(String principalType, Long principalId, String refreshToken, Duration ttl) {
+        redisTemplate.opsForValue().set(
+                key(principalType, principalId),
+                refreshToken,
+                ttl.toSeconds(),
+                TimeUnit.SECONDS
+        );
     }
 
     @Override
-    public Optional<String> find(Long userId) {
-        return Optional.ofNullable(redisTemplate.opsForValue().get(key(userId)));
+    public Optional<String> find(String principalType, Long principalId) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(key(principalType, principalId)));
     }
 
     @Override
-    public void delete(Long userId) {
-        redisTemplate.delete(key(userId));
+    public void delete(String principalType, Long principalId) {
+        redisTemplate.delete(key(principalType, principalId));
     }
 }

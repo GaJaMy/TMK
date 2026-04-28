@@ -12,6 +12,14 @@
 <body class="admin-dashboard-body">
 <main class="dashboard-shell">
     <aside class="sidebar">
+        <section class="sidebar-account" aria-label="현재 로그인한 관리자">
+            <div class="sidebar-account-copy">
+                <span class="sidebar-account-label">현재 로그인</span>
+                <strong class="sidebar-account-name" data-admin-username>admin</strong>
+            </div>
+            <button type="button" class="sidebar-logout-button" data-admin-logout>로그아웃</button>
+        </section>
+
         <nav class="sidebar-nav" aria-label="관리자 메뉴">
             <a class="nav-item is-active" href="./dashboard.html">모니터링</a>
             <a class="nav-item" href="./questions-list.html">공용문제 관리</a>

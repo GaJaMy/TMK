@@ -43,8 +43,24 @@ const bulkEnableButton = document.getElementById("bulkEnableButton");
 const bulkDisableButton = document.getElementById("bulkDisableButton");
 const bulkDeleteButton = document.getElementById("bulkDeleteButton");
 const topicTableBody = document.getElementById("topicTableBody");
+const adminUsernameDisplays = document.querySelectorAll("[data-admin-username]");
+const adminLogoutButtons = document.querySelectorAll("[data-admin-logout]");
 
 let selectedQuestionRow = null;
+const ADMIN_SESSION_KEY = "tmk_admin_username";
+
+const getStoredAdminUsername = () => window.sessionStorage.getItem(ADMIN_SESSION_KEY);
+
+const applyAdminIdentity = () => {
+    const username = getStoredAdminUsername() || "admin";
+    adminUsernameDisplays.forEach((node) => {
+        node.textContent = username;
+    });
+};
+
+const clearAdminIdentity = () => {
+    window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
+};
 
 const setStatus = (message, kind) => {
     statusCard.textContent = message;
@@ -148,10 +164,24 @@ if (loginForm) {
             return;
         }
 
+        window.sessionStorage.setItem(ADMIN_SESSION_KEY, adminId);
         setStatus("입력 검증이 완료되었습니다. 관리자 메인페이지로 이동합니다.", "is-success");
         window.setTimeout(() => {
             window.location.href = "./dashboard.html";
         }, 500);
+    });
+}
+
+if (adminUsernameDisplays.length > 0) {
+    applyAdminIdentity();
+}
+
+if (adminLogoutButtons.length > 0) {
+    adminLogoutButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            clearAdminIdentity();
+            window.location.href = "./index.html";
+        });
     });
 }
 

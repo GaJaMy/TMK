@@ -5,12 +5,10 @@ import com.tmk.api.security.handler.JwtAccessDeniedHandler;
 import com.tmk.api.security.handler.JwtAuthenticationEntryPoint;
 import com.tmk.api.security.jwt.JwtAuthenticationFilter;
 import com.tmk.api.security.jwt.JwtProvider;
+import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,7 +27,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final TokenBlacklistPort tokenBlacklistPort;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -54,6 +52,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/v1/my/documents/*/events",
                                 "/admin/v1/documents/*/events",
+                                "/admin/auth/v1/login",
                                 "/api/v1/auth/verification/send",
                                 "/api/v1/auth/verification/verify",
                                 "/api/v1/auth/register",
@@ -75,12 +74,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider, objectMapper, redisTemplate);
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+        return new JwtAuthenticationFilter(jwtProvider, objectMapper, tokenBlacklistPort);
     }
 
     @Bean

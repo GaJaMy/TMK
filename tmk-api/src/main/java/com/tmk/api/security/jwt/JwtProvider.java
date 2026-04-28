@@ -19,20 +19,22 @@ public class JwtProvider {
         return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(Long userId, String email, String role) {
+    public String generateAccessToken(Long principalId, String username, String role, String principalType) {
         return Jwts.builder()
-                .subject(email)
-                .claim("userId", userId)
+                .subject(username)
+                .claim("principalId", principalId)
                 .claim("role", role)
+                .claim("principalType", principalType)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessTokenExpiry()))
                 .signWith(getSigningKey())
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId) {
+    public String generateRefreshToken(Long principalId, String principalType) {
         return Jwts.builder()
-                .subject(String.valueOf(userId))
+                .subject(String.valueOf(principalId))
+                .claim("principalType", principalType)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshTokenExpiry()))
                 .signWith(getSigningKey())
@@ -54,5 +56,13 @@ public class JwtProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public long getAccessTokenExpiry() {
+        return jwtProperties.getAccessTokenExpiry();
+    }
+
+    public long getRefreshTokenExpiry() {
+        return jwtProperties.getRefreshTokenExpiry();
     }
 }

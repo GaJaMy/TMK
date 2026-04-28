@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Exams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-home-body">
+<main class="user-home-shell">
+    <aside class="user-sidebar">
+        <a class="user-sidebar-brand" href="./home.html">TMK</a>
+
+        <nav class="user-sidebar-nav" aria-label="사용자 메뉴">
+            <a class="user-nav-item" href="./documents.html">문서 등록</a>
+            <a class="user-nav-item is-active" href="./exams.html">시험 보기</a>
+            <a class="user-nav-item" href="./history.html">시험 내역확인</a>
+        </nav>
+    </aside>
+
+    <section class="user-home-main">
+        <header class="user-home-header">
+            <div class="user-home-copy">
+                <span class="hero-kicker">EXAMS</span>
+                <h1>시험 상태를 확인하고 다음 시험을 시작합니다.</h1>
+                <p>진행 중인 시험이 있다면 먼저 재진입하고, 없다면 공용문제 또는 개인문제 시험으로 이어집니다.</p>
+            </div>
+
+            <div class="user-account-box">
+                <strong class="user-account-name" data-user-username>user</strong>
+                <button type="button" class="user-logout-button" data-user-logout>로그아웃</button>
+            </div>
+        </header>
+
+        <section class="exam-status-card">
+            <div class="exam-card-head">
+                <div>
+                    <span class="feature-index">IN PROGRESS</span>
+                    <h2>현재 진행중인 시험</h2>
+                    <p>시험은 한 번에 하나만 진행할 수 있으며, 이탈해도 시험 시간은 서버에서 계속 감소합니다.</p>
+                </div>
+            </div>
+
+            <div class="exam-empty-state" id="examEmptyState">
+                <strong>진행중인 시험이 없습니다.</strong>
+                <p>진행중인 시험이 생기면 이 영역에 남은 시간과 재진입 버튼이 표시됩니다.</p>
+            </div>
+
+            <div class="exam-active-state" id="examActiveState" hidden>
+                <div class="exam-active-copy">
+                    <strong id="examActiveTitle">진행중인 시험</strong>
+                    <p id="examActiveMeta">남은 시간과 시험 정보가 여기에 표시됩니다.</p>
+                </div>
+                <button type="button" class="primary-cta primary-cta-confirm exam-resume-button" id="resumeExamButton">재진입</button>
+            </div>
+        </section>
+
+        <section class="exam-entry-grid" id="examEntryGrid">
+            <article class="exam-entry-card">
+                <span class="feature-index">PUBLIC</span>
+                <h2>공용문제 시험보기</h2>
+                <p>특정 Topic의 서비스 공용문제로 시험을 생성하고 시작하는 흐름입니다.</p>
+
+                <form class="exam-entry-form" data-exam-start-form data-exam-source="PUBLIC">
+                    <label class="user-field">
+                        <span>Topic</span>
+                        <select class="exam-select" name="sourceLabel">
+                            <option value="">Topic을 선택하세요</option>
+                            <option value="Java">Java</option>
+                            <option value="Spring">Spring</option>
+                            <option value="Database">Database</option>
+                        </select>
+                    </label>
+
+                    <label class="user-field">
+                        <span>문제 수</span>
+                        <input type="number" name="questionCount" min="1" placeholder="예: 10">
+                    </label>
+
+                    <label class="user-field">
+                        <span>시험 시간(분)</span>
+                        <input type="number" name="durationMinutes" min="1" placeholder="예: 30">
+                    </label>
+
+                    <button type="submit" class="primary-cta primary-cta-block">공용문제 시험 시작</button>
+                </form>
+            </article>
+
+            <article class="exam-entry-card">
+                <span class="feature-index">PRIVATE</span>
+                <h2>개인문제 시험보기</h2>
+                <p>내가 등록한 문서로 생성된 개인 문제를 바탕으로 시험을 생성하고 시작하는 흐름입니다.</p>
+
+                <form class="exam-entry-form" data-exam-start-form data-exam-source="PRIVATE">
+                    <label class="user-field">
+                        <span>문서 / 문제 묶음</span>
+                        <select class="exam-select" name="sourceLabel">
+                            <option value="">문서 또는 문제 묶음을 선택하세요</option>
+                            <option value="운영체제 정리.md">운영체제 정리.md</option>
+                            <option value="Spring Boot 핵심.pdf">Spring Boot 핵심.pdf</option>
+                            <option value="데이터베이스 요약.md">데이터베이스 요약.md</option>
+                        </select>
+                    </label>
+
+                    <label class="user-field">
+                        <span>문제 수</span>
+                        <input type="number" name="questionCount" min="1" placeholder="예: 10">
+                    </label>
+
+                    <label class="user-field">
+                        <span>시험 시간(분)</span>
+                        <input type="number" name="durationMinutes" min="1" placeholder="예: 30">
+                    </label>
+
+                    <button type="submit" class="primary-cta primary-cta-block">개인문제 시험 시작</button>
+                </form>
+            </article>
+        </section>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>

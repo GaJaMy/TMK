@@ -20,20 +20,22 @@ Generate a Korean commit message, and when asked, a full git commit command, fro
 
 1. Inspect the current changes with `git status --short` and `git diff --stat`.
 2. Read focused diffs only for files that materially changed.
-3. Infer the main intent of the change.
-4. Write a Korean commit message with:
+3. Before committing, update `docs/개발 로그.md` with only the work actually done in this commit scope.
+4. Infer the main intent of the change.
+5. Write a Korean commit message with:
    - one subject line
    - a blank line
    - body bullets
-5. If the user asks for a commit command, provide:
+6. If the user asks for a commit command, provide:
    - an example `git add` command only for the relevant files when the scope is clear
    - a `git commit` command that includes both subject and body
-6. If unrelated pre-existing changes exist, mention that the message targets only the relevant changes.
+7. If unrelated pre-existing changes exist, mention that the message targets only the relevant changes.
 
 ## Format rules
 
 - The commit message must be in Korean.
 - The body is mandatory. Never return a subject-only commit message unless the user explicitly overrides this rule.
+- `docs/개발 로그.md` must not include future work, TODOs, or next steps. Record only what was actually changed in the current commit scope.
 - Default to a conventional prefix in repository style:
   - `feat:`
   - `fix:`
@@ -90,3 +92,4 @@ If the file list is not clear or there are unrelated changes in the worktree, do
 - If the change is too broad for one clean commit, say so and provide:
   - one recommended combined message
   - optional split commit suggestions
+- When the user asks you to actually commit, update `docs/개발 로그.md` first, then include that file in the commit if it reflects the same work scope.

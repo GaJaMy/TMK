@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-home-body">
+<main class="user-home-shell">
+    <aside class="user-sidebar">
+        <a class="user-sidebar-brand" href="./home.html">TMK</a>
+
+        <nav class="user-sidebar-nav" aria-label="사용자 메뉴">
+            <a class="user-nav-item" href="./documents.html">문서 등록</a>
+            <a class="user-nav-item" href="./exams.html">시험 보기</a>
+            <a class="user-nav-item is-active" href="./history.html">시험 내역확인</a>
+        </nav>
+    </aside>
+
+    <section class="user-home-main">
+        <header class="user-home-header">
+            <div class="user-home-copy">
+                <span class="hero-kicker">HISTORY</span>
+                <h1>내가 진행한 시험 이력을 확인합니다.</h1>
+                <p>시험 리스트에서 원하는 항목을 선택하면 별도 상세 화면에서 문제별 결과와 해설을 확인할 수 있습니다.</p>
+            </div>
+
+            <div class="user-account-box">
+                <strong class="user-account-name" data-user-username>user</strong>
+                <button type="button" class="user-logout-button" data-user-logout>로그아웃</button>
+            </div>
+        </header>
+
+        <section class="history-list-section">
+            <div class="history-section-head">
+                <span class="feature-index">EXAM LIST</span>
+                <h2>시험 이력 목록</h2>
+            </div>
+
+            <div class="history-linear-list">
+                <button type="button" class="history-row-item" data-history-item
+                        data-history-title="Spring 공용문제 시험"
+                        data-history-meta="불합격 · 2026-04-28 · 30분 · 정답률 40%"
+                        data-history-questions='[
+                            {"label":"QUESTION 1","title":"Spring Container가 관리하는 객체를 무엇이라고 하나요?","result":"정답","resultClass":"is-correct","myAnswer":"Bean","correctAnswer":"Bean","explanation":"Spring Container가 관리하는 객체를 Bean이라고 합니다."},
+                            {"label":"QUESTION 2","title":"JPA에서 기본 키 자동 증가 전략 이름을 입력하세요.","result":"오답","resultClass":"is-wrong","myAnswer":"AUTO_INCREMENT","correctAnswer":"IDENTITY","explanation":"JPA 전략 이름은 DB 키워드가 아니라 IDENTITY 입니다."}
+                        ]'>
+                    <span class="history-row-title">Spring 공용문제 시험</span>
+                    <span class="history-pass-badge is-fail">불합격</span>
+                    <span class="history-row-meta">2026-04-28</span>
+                    <span class="history-row-meta">30분</span>
+                    <span class="history-row-meta">공용문제 · Spring</span>
+                </button>
+
+                <button type="button" class="history-row-item" data-history-item
+                        data-history-title="운영체제 정리 개인문제 시험"
+                        data-history-meta="합격 · 2026-04-24 · 20분 · 정답률 80%"
+                        data-history-questions='[
+                            {"label":"QUESTION 1","title":"프로세스와 스레드의 차이를 가장 잘 설명한 것은 무엇인가요?","result":"정답","resultClass":"is-correct","myAnswer":"프로세스는 자원을 독립적으로 가지며 스레드는 자원을 공유한다.","correctAnswer":"프로세스는 자원을 독립적으로 가지며 스레드는 자원을 공유한다.","explanation":"문서 기준 핵심은 프로세스는 독립 자원, 스레드는 자원 공유입니다."},
+                            {"label":"QUESTION 2","title":"문맥 교환이 발생할 때 저장되는 정보로 옳은 것은 무엇인가요?","result":"정답","resultClass":"is-correct","myAnswer":"레지스터 상태","correctAnswer":"레지스터 상태","explanation":"문맥 교환 시에는 CPU 레지스터 상태가 저장됩니다."}
+                        ]'>
+                    <span class="history-row-title">운영체제 정리 개인문제 시험</span>
+                    <span class="history-pass-badge is-pass">합격</span>
+                    <span class="history-row-meta">2026-04-24</span>
+                    <span class="history-row-meta">20분</span>
+                    <span class="history-row-meta">개인문제 · 운영체제 정리.md</span>
+                </button>
+
+                <button type="button" class="history-row-item" data-history-item
+                        data-history-title="Database 공용문제 시험"
+                        data-history-meta="합격 · 2026-04-19 · 25분 · 정답률 60%"
+                        data-history-questions='[
+                            {"label":"QUESTION 1","title":"정규화의 목적은 무엇인가요?","result":"오답","resultClass":"is-wrong","myAnswer":"조회 속도 향상","correctAnswer":"데이터 중복 최소화와 이상 현상 방지","explanation":"정규화의 핵심 목적은 중복 최소화와 이상 현상 방지입니다."},
+                            {"label":"QUESTION 2","title":"트랜잭션의 ACID 중 일관성을 의미하는 것은 무엇인가요?","result":"정답","resultClass":"is-correct","myAnswer":"Consistency","correctAnswer":"Consistency","explanation":"ACID의 C는 Consistency 입니다."}
+                        ]'>
+                    <span class="history-row-title">Database 공용문제 시험</span>
+                    <span class="history-pass-badge is-pass">합격</span>
+                    <span class="history-row-meta">2026-04-19</span>
+                    <span class="history-row-meta">25분</span>
+                    <span class="history-row-meta">공용문제 · Database</span>
+                </button>
+            </div>
+        </section>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>

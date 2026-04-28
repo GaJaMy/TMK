@@ -1,6 +1,8 @@
 package com.tmk.core.port.out.ai;
 
+import java.util.List;
+
 public interface EmbeddingPort {
-    float[] embed(String text);
-    int getDimension();
+
+    List<float[]> embed(List<String> texts);
 }

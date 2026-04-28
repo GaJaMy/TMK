@@ -2,7 +2,7 @@
 
 | 문서 | 내용 |
 |------|------|
-| [TMK(Test My Knowledge).md](./TMK(Test My Knowledge).md) | 프로젝트 개요, 요구사항, 구현 현황 |
+| [TMK(Test My Knowledge).md](./TMK(Test My Knowledge).md) | 프로젝트 개요, 요구사항, 구현 계획 |
 | [기술 스택.md](./기술 스택.md) | 기술 선택 이유, 개발 환경 설정, 환경 변수 |
 | [도메인 모델 설계.md](./도메인 모델 설계.md) | 클린 아키텍처, 포트-어댑터 경계, 도메인 모델 |
 | [API 명세서.md](./API 명세서.md) | REST API 전체 명세, 에러 코드 |
@@ -12,9 +12,10 @@
 | [프론트엔드 구조.md](./프론트엔드 구조.md) | 사용자/관리자 웹 분리 구조와 배포 방향 |
 | [사용자 웹 요구사항.md](./사용자 웹 요구사항.md) | 사용자용 웹 화면 요구사항 정리 문서 |
 | [관리자 웹 요구사항.md](./관리자 웹 요구사항.md) | 관리자용 웹 화면 요구사항 정리 문서 |
+| [개발 규칙.md](./개발 규칙.md) | API 버전 관리와 개발 시 지키는 공통 규칙 |
+| [개발 로그.md](./개발 로그.md) | 날짜별 작업 및 개발 내용 기록 |
 
-현재 구현 기준 모듈 경계는 `tmk-core`(서비스 + 포트), `tmk-infra`(JPA 어댑터), `tmk-api`(REST/보안), `tmk-batch`(배치)입니다.
-현재 문서 기준 권장 구조는 `tmk-core`(도메인), `tmk-infra`(영속화), `tmk-api`(사용자 API + 관리자 API 단일 Boot 서버), `tmk-batch`(배치), `tmk-user-web`(사용자 웹), `tmk-admin-web`(관리자 웹)입니다.
+현재 서버는 새 요구사항 기준으로 재구현 예정이며, 문서 기준 권장 구조는 `tmk-core`(도메인), `tmk-infra`(영속화), `tmk-api`(사용자 API + 관리자 API 단일 Boot 서버), `tmk-batch`(배치), `tmk-user-web`(사용자 웹), `tmk-admin-web`(관리자 웹)입니다.
 
 ## 현재 실행 흐름
 

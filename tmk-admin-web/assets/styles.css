@@ -186,6 +186,53 @@ body {
     background: rgba(252, 254, 255, 0.9);
 }
 
+.sidebar-account {
+    display: grid;
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(43, 111, 219, 0.14);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(43, 111, 219, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+}
+
+.sidebar-account-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.sidebar-account-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.sidebar-account-name {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: -0.04em;
+    color: var(--accent-deep);
+    overflow-wrap: anywhere;
+}
+
+.sidebar-logout-button {
+    height: 44px;
+    border: 1px solid rgba(16, 32, 51, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.84);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.sidebar-logout-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(43, 111, 219, 0.24);
+    background: rgba(255, 255, 255, 0.96);
+}
+
 .sidebar-nav {
     display: grid;
     gap: 10px;

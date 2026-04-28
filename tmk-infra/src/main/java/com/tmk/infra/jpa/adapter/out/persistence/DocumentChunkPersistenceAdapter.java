@@ -3,10 +3,9 @@ package com.tmk.infra.jpa.adapter.out.persistence;
 import com.tmk.core.document.entity.DocumentChunk;
 import com.tmk.core.port.out.persistence.DocumentChunkPort;
 import com.tmk.infra.jpa.repository.DocumentChunkJpaRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +19,12 @@ public class DocumentChunkPersistenceAdapter implements DocumentChunkPort {
     }
 
     @Override
+    public List<DocumentChunk> findAllByDocumentIdOrderByChunkIndexAsc(Long documentId) {
+        return documentChunkJpaRepository.findAllByDocument_IdOrderByChunkIndexAsc(documentId);
+    }
+
+    @Override
     public long countByDocumentId(Long documentId) {
-        return documentChunkJpaRepository.countByDocumentId(documentId);
+        return documentChunkJpaRepository.countByDocument_Id(documentId);
     }
 }

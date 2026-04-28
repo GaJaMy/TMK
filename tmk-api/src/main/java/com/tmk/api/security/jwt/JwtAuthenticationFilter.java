@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tmk.api.common.SecurityResponseWriter;
 import com.tmk.api.security.CustomUserDetails;
 import com.tmk.core.exception.ErrorCode;
-import com.tmk.api.security.jwt.JwtProvider;
+import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -12,7 +12,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -25,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final TokenBlacklistPort tokenBlacklistPort;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,18 +40,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             var claims = jwtProvider.parseClaims(token);
 
-            // Check blacklist
-            String blacklistKey = "token_blacklist:" + token;
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey))) {
+            if (tokenBlacklistPort.isBlacklisted(token)) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
             String role = claims.get("role", String.class);
-            Long userId = claims.get("userId", Long.class);
-            String email = claims.getSubject();
+            Long principalId = claims.get("principalId", Long.class);
+            String principalType = claims.get("principalType", String.class);
+            String username = claims.getSubject();
 
-            CustomUserDetails userDetails = new CustomUserDetails(email, null, userId, role);
+            CustomUserDetails userDetails = new CustomUserDetails(username, null, principalId, role, principalType);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -60,9 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            SecurityResponseWriter.write(response, objectMapper, ErrorCode.TOKEN_EXPIRED);
+            SecurityResponseWriter.write(response, objectMapper, ErrorCode.EXPIRED_ACCESS_TOKEN);
         } catch (JwtException e) {
-            SecurityResponseWriter.write(response, objectMapper, ErrorCode.TOKEN_INVALID);
+            SecurityResponseWriter.write(response, objectMapper, ErrorCode.INVALID_ACCESS_TOKEN);
         }
     }
 

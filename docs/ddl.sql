@@ -90,7 +90,7 @@ CREATE TABLE document
     updated_at               TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
     CONSTRAINT chk_document_source_type
-        CHECK (source_type IN ('PDF_UPLOAD', 'NOTION', 'URL')),
+        CHECK (source_type IN ('PDF_UPLOAD', 'MD_UPLOAD')),
     CONSTRAINT chk_document_status
         CHECK (status IN ('PROCESSING', 'COMPLETED', 'FAILED')),
     CONSTRAINT chk_document_generated_question_count
@@ -98,7 +98,7 @@ CREATE TABLE document
 );
 
 COMMENT ON TABLE document IS '사용자 문서 메타데이터';
-COMMENT ON COLUMN document.source_reference IS '업로드 파일명 또는 노션/URL 참조값';
+COMMENT ON COLUMN document.source_reference IS '업로드 파일명 또는 저장 경로 참조값';
 COMMENT ON COLUMN document.status IS '문서 처리 상태';
 COMMENT ON COLUMN document.generated_question_count IS '생성된 개인 문제 수';
 
@@ -258,6 +258,7 @@ CREATE TABLE exam
 COMMENT ON TABLE exam IS '시험 세션';
 COMMENT ON COLUMN exam.source_type IS '시험 출처 유형';
 COMMENT ON COLUMN exam.time_limit_minutes IS '사용자 지정 시험 시간(분)';
+COMMENT ON COLUMN exam.expired_at IS '시험 재진입 시 남은 시간 계산 기준 시각';
 
 
 -- =============================================================
@@ -424,6 +425,10 @@ CREATE INDEX idx_exam_document_id
 
 CREATE INDEX idx_exam_expired_at_in_progress
     ON exam (expired_at)
+    WHERE status = 'IN_PROGRESS';
+
+CREATE UNIQUE INDEX uq_exam_user_single_in_progress
+    ON exam (user_id)
     WHERE status = 'IN_PROGRESS';
 
 

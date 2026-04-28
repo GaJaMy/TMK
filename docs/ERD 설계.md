@@ -57,7 +57,7 @@ erDiagram
         bigserial id PK
         bigint user_id FK "NOT NULL"
         varchar(500) title "NOT NULL"
-        varchar(20) source_type "NOT NULL (PDF_UPLOAD, NOTION, URL)"
+        varchar(20) source_type "NOT NULL (PDF_UPLOAD, MD_UPLOAD)"
         varchar(1000) source_reference "NOT NULL"
         varchar(20) status "NOT NULL (PROCESSING, COMPLETED, FAILED)"
         integer generated_question_count "NOT NULL, DEFAULT 0"
@@ -226,8 +226,8 @@ erDiagram
 | id | BIGSERIAL | NOT NULL | PK |
 | user_id | BIGINT | NOT NULL | 문서 등록 사용자 |
 | title | VARCHAR(500) | NOT NULL | 문서 제목 |
-| source_type | VARCHAR(20) | NOT NULL | `PDF_UPLOAD`, `NOTION`, `URL` |
-| source_reference | VARCHAR(1000) | NOT NULL | 업로드 파일명 또는 링크 참조값 |
+| source_type | VARCHAR(20) | NOT NULL | `PDF_UPLOAD`, `MD_UPLOAD` |
+| source_reference | VARCHAR(1000) | NOT NULL | 업로드 파일명 또는 저장 경로 참조값 |
 | status | VARCHAR(20) | NOT NULL | `PROCESSING`, `COMPLETED`, `FAILED` |
 | generated_question_count | INTEGER | NOT NULL | 생성된 개인 문제 수 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
@@ -322,6 +322,10 @@ RAG 문제 생성에 쓰는 청크와 임베딩입니다.
 | expired_at | TIMESTAMPTZ | NULL | 종료 예정 시각 |
 | submitted_at | TIMESTAMPTZ | NULL | 제출 시각 |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 일시 |
+
+추가 제약:
+- 한 사용자는 동시에 하나의 `IN_PROGRESS` 시험만 가질 수 있어야 한다.
+- 시험 재진입 시 남은 시간은 별도 저장값이 아니라 `expired_at - 현재 시각`으로 계산한다.
 
 ### EXAM_QUESTION
 
@@ -444,6 +448,9 @@ CREATE INDEX idx_exam_user_id_created_at ON exam (user_id, created_at DESC);
 CREATE INDEX idx_exam_topic_id ON exam (topic_id);
 CREATE INDEX idx_exam_document_id ON exam (document_id);
 CREATE INDEX idx_exam_expired_at_in_progress ON exam (expired_at)
+    WHERE status = 'IN_PROGRESS';
+
+CREATE UNIQUE INDEX uq_exam_user_single_in_progress ON exam (user_id)
     WHERE status = 'IN_PROGRESS';
 ```
 

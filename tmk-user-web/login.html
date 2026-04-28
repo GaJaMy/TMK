@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-login-body">
+<main class="user-login-shell">
+    <div class="login-shell-top">
+        <a class="login-back-link" href="./index.html">TMK</a>
+        <a class="login-home-link" href="./index.html">홈으로 돌아가기</a>
+    </div>
+
+    <section class="user-login-panel">
+        <div class="user-login-head">
+            <span class="hero-kicker" id="authPanelKicker">LOGIN</span>
+            <h1 id="authPanelTitle">로그인</h1>
+            <p id="authPanelDescription">문서를 등록하고 나만의 문제를 생성하려면 로그인해야 합니다.</p>
+        </div>
+
+        <form class="user-login-form" id="userLoginForm">
+            <label class="user-field">
+                <span>아이디</span>
+                <input id="userLoginId" name="userLoginId" type="text" placeholder="아이디를 입력하세요" required>
+            </label>
+
+            <label class="user-field">
+                <span>비밀번호</span>
+                <input id="userLoginPassword" name="userLoginPassword" type="password" placeholder="비밀번호를 입력하세요" required>
+            </label>
+
+            <button type="submit" class="primary-cta primary-cta-block">로그인</button>
+        </form>
+
+        <form class="user-login-form" id="userRegisterForm" hidden>
+            <label class="user-field">
+                <span>아이디</span>
+                <input id="registerUsername" name="registerUsername" type="text" placeholder="아이디를 입력하세요" required>
+            </label>
+
+            <label class="user-field">
+                <span>비밀번호</span>
+                <input id="registerPassword" name="registerPassword" type="password" placeholder="비밀번호를 입력하세요" required>
+            </label>
+
+            <label class="user-field">
+                <span>국가 코드</span>
+                <input id="registerCountryCode" name="registerCountryCode" type="text" placeholder="예: KR" required>
+            </label>
+
+            <button type="submit" class="primary-cta primary-cta-block">회원가입</button>
+        </form>
+
+        <form class="user-login-form" id="resetPasswordForm" hidden>
+            <label class="user-field">
+                <span>아이디</span>
+                <input id="resetUsername" name="resetUsername" type="text" placeholder="아이디를 입력하세요" required>
+            </label>
+
+            <button type="button" class="primary-cta primary-cta-block" id="verifyResetUsernameButton">확인</button>
+
+            <div id="resetPasswordFields" hidden>
+                <label class="user-field">
+                    <span>새 비밀번호</span>
+                    <input id="resetNewPassword" name="resetNewPassword" type="password" placeholder="새 비밀번호를 입력하세요">
+                </label>
+
+                <button type="submit" class="primary-cta primary-cta-block">비밀번호 재설정</button>
+            </div>
+        </form>
+
+        <div class="login-utility-links" id="loginUtilityLinks" aria-label="인증 보조 기능">
+            <button type="button" class="login-utility-button" id="toggleRegisterButton">회원가입</button>
+            <button type="button" class="login-utility-button" id="resetPasswordButton">비밀번호 재설정</button>
+        </div>
+
+        <div class="login-inline-switch" id="loginInlineSwitch" hidden>
+            <button type="button" class="login-utility-button login-utility-button-wide" id="backToLoginButton">로그인으로 돌아가기</button>
+        </div>
+
+        <div class="user-status-card" id="userLoginStatus" aria-live="polite">
+            사용자 인증 API 연동 전입니다. 현재는 진입 흐름만 확인할 수 있습니다.
+        </div>
+    </section>
+</main>
+
+<div class="modal-backdrop" id="registerConfirmModal" hidden>
+    <div class="modal-card user-modal-card" role="dialog" aria-modal="true" aria-labelledby="registerConfirmTitle">
+        <div class="modal-head">
+            <div>
+                <span class="hero-kicker">CHECK</span>
+                <h2 id="registerConfirmTitle">회원가입 전 확인</h2>
+                <p>아래 정책을 확인한 뒤 동의하면 회원가입을 완료합니다.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeRegisterConfirmModal" aria-label="닫기">×</button>
+        </div>
+
+        <section class="register-policy-card" aria-label="회원가입 안내">
+            <strong>회원가입 전 확인</strong>
+            <ul class="register-policy-list">
+                <li>아이디는 찾을 수 없습니다. 반드시 직접 기억해야 합니다.</li>
+                <li>아이디 외의 개인정보를 저장하지 않기 때문에 계정을 대신 찾아드릴 수 없습니다.</li>
+                <li>로그인 30일 이상 지난 계정은 자동으로 삭제됩니다.</li>
+                <li>등록한 문서는 서버에 저장되지 않습니다.</li>
+                <li>계정이 삭제되면 개인 문제, 시험 내역 등 관련 데이터도 함께 삭제됩니다.</li>
+            </ul>
+        </section>
+
+        <div class="confirm-modal-actions">
+            <button type="button" class="login-utility-button login-utility-button-wide" id="cancelRegisterConfirmButton">취소</button>
+            <button type="button" class="primary-cta primary-cta-confirm" id="confirmRegisterButton">확인</button>
+        </div>
+    </div>
+</div>
+<script src="./assets/app.js"></script>
+</body>
+</html>

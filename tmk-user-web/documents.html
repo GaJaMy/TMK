@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Documents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-home-body">
+<main class="user-home-shell">
+    <aside class="user-sidebar">
+        <a class="user-sidebar-brand" href="./home.html">TMK</a>
+
+        <nav class="user-sidebar-nav" aria-label="사용자 메뉴">
+            <a class="user-nav-item is-active" href="./documents.html">문서 등록</a>
+            <a class="user-nav-item" href="./exams.html">시험 보기</a>
+            <a class="user-nav-item" href="./history.html">시험 내역확인</a>
+        </nav>
+    </aside>
+
+    <section class="user-home-main">
+        <header class="user-home-header">
+            <div class="user-home-copy">
+                <span class="hero-kicker">DOCUMENTS</span>
+                <h1>문서를 등록하고 문제 생성을 시작합니다.</h1>
+                <p>PDF 또는 <code>.md</code> 파일을 업로드하면 개인 문제 생성 흐름을 시작할 수 있습니다.</p>
+            </div>
+
+            <div class="user-account-box">
+                <strong class="user-account-name" data-user-username>user</strong>
+                <button type="button" class="user-logout-button" data-user-logout>로그아웃</button>
+            </div>
+        </header>
+
+        <section class="document-workspace">
+            <article class="document-upload-card">
+                <div class="document-card-head">
+                    <div>
+                        <span class="feature-index">UPLOAD</span>
+                        <h2>문서 등록</h2>
+                        <p>지원 형식은 <code>.pdf</code>, <code>.md</code> 입니다.</p>
+                    </div>
+                </div>
+
+                <form id="documentUploadForm" class="document-upload-form">
+                    <label class="document-dropzone" for="documentFileInput">
+                        <input id="documentFileInput" name="documentFileInput" type="file" accept=".pdf,.md,application/pdf,text/markdown,text/plain" required>
+                        <span class="document-dropzone-step">1. 업로드할 문서 선택</span>
+                        <span class="document-dropzone-label">파일 선택하기</span>
+                        <strong id="documentFileName">선택된 파일이 없습니다.</strong>
+                        <small>클릭해서 <code>.pdf</code> 또는 <code>.md</code> 파일을 선택하세요.</small>
+                    </label>
+
+                    <div class="document-submit-block">
+                        <p>2. 문서 선택이 끝나면 아래 버튼으로 문제 생성을 시작합니다.</p>
+                        <button type="submit" class="primary-cta primary-cta-block">문제 생성 시작</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="document-progress-card">
+                <div class="document-card-head">
+                    <div>
+                        <span class="feature-index">STATUS</span>
+                        <h2>진행 상태</h2>
+                        <p id="documentProgressSummary">아직 업로드가 시작되지 않았습니다.</p>
+                    </div>
+                </div>
+
+                <ol class="document-progress-list" id="documentProgressList">
+                    <li class="document-progress-step" data-step="upload">
+                        <span class="document-progress-index">1</span>
+                        <div>
+                            <strong>업로드</strong>
+                            <p>문서 파일을 서버로 전송합니다.</p>
+                        </div>
+                    </li>
+                    <li class="document-progress-step" data-step="generating">
+                        <span class="document-progress-index">2</span>
+                        <div>
+                            <strong>문제 생성중</strong>
+                            <p>AI가 문서를 분석하고 문제, 정답, 해설을 생성합니다.</p>
+                        </div>
+                    </li>
+                    <li class="document-progress-step" data-step="completed">
+                        <span class="document-progress-index">3</span>
+                        <div>
+                            <strong>생성 완료</strong>
+                            <p>개인 문제 생성이 완료되고 시험 준비가 가능합니다.</p>
+                        </div>
+                    </li>
+                </ol>
+            </article>
+        </section>
+
+        <div class="user-status-card" id="documentUploadStatus" aria-live="polite">
+            문서 등록 API 연동 전입니다. 현재는 업로드 이후 상태 변화만 확인할 수 있습니다.
+        </div>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>
