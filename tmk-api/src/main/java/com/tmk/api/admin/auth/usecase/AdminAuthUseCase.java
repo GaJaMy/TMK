@@ -1,12 +1,18 @@
 package com.tmk.api.admin.auth.usecase;
 
 import com.tmk.api.admin.auth.dto.AdminLoginResponse;
+import com.tmk.api.security.CustomUserDetails;
 import com.tmk.api.security.jwt.JwtProvider;
-import com.tmk.core.admin.service.AdminLoginService;
-import com.tmk.core.admin.vo.AdminLoginResult;
+import com.tmk.core.exception.BusinessException;
+import com.tmk.core.exception.ErrorCode;
 import com.tmk.core.port.out.cache.RefreshTokenPort;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,31 +21,42 @@ public class AdminAuthUseCase {
 
     private static final String ADMIN_PRINCIPAL_TYPE = "ADMIN";
 
-    private final AdminLoginService adminLoginService;
+    private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final RefreshTokenPort refreshTokenPort;
 
     public AdminLoginResponse login(String username, String password) {
-        AdminLoginResult result = adminLoginService.login(username, password);
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+        } catch (DisabledException e) {
+            throw new BusinessException(ErrorCode.ADMIN_ACCOUNT_INACTIVE);
+        } catch (AuthenticationException e) {
+            throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         String accessToken = jwtProvider.generateAccessToken(
-                result.adminId(),
-                result.username(),
-                result.role(),
+                userDetails.getPrincipalId(),
+                userDetails.getUsername(),
+                userDetails.getRole(),
                 ADMIN_PRINCIPAL_TYPE
         );
-        String refreshToken = jwtProvider.generateRefreshToken(result.adminId(), ADMIN_PRINCIPAL_TYPE);
+        String refreshToken = jwtProvider.generateRefreshToken(userDetails.getPrincipalId(), ADMIN_PRINCIPAL_TYPE);
 
         refreshTokenPort.save(
                 ADMIN_PRINCIPAL_TYPE,
-                result.adminId(),
+                userDetails.getPrincipalId(),
                 refreshToken,
                 Duration.ofMillis(jwtProvider.getRefreshTokenExpiry())
         );
 
         return new AdminLoginResponse(
-                result.adminId(),
-                result.username(),
+                userDetails.getPrincipalId(),
+                userDetails.getUsername(),
                 accessToken,
                 refreshToken,
                 jwtProvider.getAccessTokenExpiry()

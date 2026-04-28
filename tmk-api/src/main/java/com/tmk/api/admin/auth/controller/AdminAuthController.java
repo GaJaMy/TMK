@@ -16,11 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/admin/auth")
 @RequiredArgsConstructor
-public class AdminAuthController {
+public class AdminAuthController implements AdminAuthControllerDocs {
 
     private final AdminAuthUseCase adminAuthUseCase;
 
     @PostMapping(ApiVersion.V1 + "/login")
+    @Override
     public ResponseEntity<ApiResponse<AdminLoginResponse>> login(
             @Valid @RequestBody AdminLoginRequest request
     ) {
