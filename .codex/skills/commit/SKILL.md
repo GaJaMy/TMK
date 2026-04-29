@@ -48,6 +48,8 @@ Generate a Korean commit message, and when asked, a full git commit command, fro
   - what changed
   - why it changed if that is visible from the diff
 - Prefer 2-4 bullet lines in the body.
+- Write body bullets in concise noun/verb form such as `추가`, `연결`, `보강`, `정리`, `분리`, `개선`.
+- Do not end body bullets with narrative past-tense phrasing such as `했다`.
 - Do not invent behavior that is not supported by the diff.
 - Do not include file-by-file noise unless the user asks.
 - Prefer concrete nouns from the codebase over vague phrases.
