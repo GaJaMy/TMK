@@ -11,10 +11,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AdminUserDetailsService implements UserDetailsService {
+public class AdminAccountDetailsService implements UserDetailsService {
 
     private static final String ADMIN_ROLE = "ADMIN";
-    private static final String ADMIN_PRINCIPAL_TYPE = "ADMIN";
 
     private final AdminAccountPort adminAccountPort;
 
@@ -27,12 +26,12 @@ public class AdminUserDetailsService implements UserDetailsService {
             throw new DisabledException("비활성 관리자 계정입니다.");
         }
 
-        return new CustomUserDetails(
+        return new AuthenticatedPrincipal(
                 adminAccount.getUsername(),
                 adminAccount.getPassword(),
                 adminAccount.getId(),
                 ADMIN_ROLE,
-                ADMIN_PRINCIPAL_TYPE
+                AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE
         );
     }
 }

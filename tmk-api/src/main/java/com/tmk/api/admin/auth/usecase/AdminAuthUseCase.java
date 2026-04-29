@@ -1,7 +1,7 @@
 package com.tmk.api.admin.auth.usecase;
 
 import com.tmk.api.admin.auth.dto.AdminLoginResponse;
-import com.tmk.api.security.CustomUserDetails;
+import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.api.security.jwt.JwtProvider;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
@@ -19,8 +19,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AdminAuthUseCase {
 
-    private static final String ADMIN_PRINCIPAL_TYPE = "ADMIN";
-
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final RefreshTokenPort refreshTokenPort;
@@ -37,18 +35,21 @@ public class AdminAuthUseCase {
             throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
         }
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        AuthenticatedPrincipal userDetails = (AuthenticatedPrincipal) authentication.getPrincipal();
 
         String accessToken = jwtProvider.generateAccessToken(
                 userDetails.getPrincipalId(),
                 userDetails.getUsername(),
                 userDetails.getRole(),
-                ADMIN_PRINCIPAL_TYPE
+                AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE
         );
-        String refreshToken = jwtProvider.generateRefreshToken(userDetails.getPrincipalId(), ADMIN_PRINCIPAL_TYPE);
+        String refreshToken = jwtProvider.generateRefreshToken(
+                userDetails.getPrincipalId(),
+                AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE
+        );
 
         refreshTokenPort.save(
-                ADMIN_PRINCIPAL_TYPE,
+                AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE,
                 userDetails.getPrincipalId(),
                 refreshToken,
                 Duration.ofMillis(jwtProvider.getRefreshTokenExpiry())

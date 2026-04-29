@@ -9,7 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 @Getter
-public class CustomUserDetails implements UserDetails {
+public class AuthenticatedPrincipal implements UserDetails {
+
+    public static final String ADMIN_PRINCIPAL_TYPE = "ADMIN";
 
     private final Long principalId;
     private final String username;
@@ -17,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     private final String role;
     private final String principalType;
 
-    public CustomUserDetails(String username, String password, Long principalId, String role, String principalType) {
+    public AuthenticatedPrincipal(String username, String password, Long principalId, String role, String principalType) {
         this.username = username;
         this.password = password;
         this.principalId = principalId;
@@ -32,6 +34,10 @@ public class CustomUserDetails implements UserDetails {
 
     public Long getUserId() {
         return principalId;
+    }
+
+    public boolean isAdminPrincipal() {
+        return ADMIN_PRINCIPAL_TYPE.equals(principalType);
     }
 
     @Override public String getUsername() { return username; }

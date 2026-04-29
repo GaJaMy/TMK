@@ -2,7 +2,7 @@ package com.tmk.api.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tmk.api.common.SecurityResponseWriter;
-import com.tmk.api.security.CustomUserDetails;
+import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.core.exception.ErrorCode;
 import com.tmk.core.port.out.cache.TokenBlacklistPort;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -21,6 +21,8 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final String ADMIN_API_PREFIX = "/admin/";
 
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
@@ -50,7 +52,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String principalType = claims.get("principalType", String.class);
             String username = claims.getSubject();
 
-            CustomUserDetails userDetails = new CustomUserDetails(username, null, principalId, role, principalType);
+            if (isAdminRequest(request) && !AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE.equals(principalType)) {
+                SecurityResponseWriter.write(response, objectMapper, ErrorCode.FORBIDDEN);
+                return;
+            }
+
+            AuthenticatedPrincipal userDetails = new AuthenticatedPrincipal(
+                    username,
+                    null,
+                    principalId,
+                    role,
+                    principalType
+            );
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -70,5 +83,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearer.substring(7);
         }
         return null;
+    }
+
+    private boolean isAdminRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith(ADMIN_API_PREFIX);
     }
 }
