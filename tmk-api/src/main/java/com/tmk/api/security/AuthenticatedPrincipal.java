@@ -11,7 +11,10 @@ import java.util.List;
 @Getter
 public class AuthenticatedPrincipal implements UserDetails {
 
+    public static final String ADMIN_ROLE = "ADMIN";
+    public static final String USER_ROLE = "USER";
     public static final String ADMIN_PRINCIPAL_TYPE = "ADMIN";
+    public static final String USER_PRINCIPAL_TYPE = "USER";
 
     private final Long principalId;
     private final String username;
@@ -38,6 +41,10 @@ public class AuthenticatedPrincipal implements UserDetails {
 
     public boolean isAdminPrincipal() {
         return ADMIN_PRINCIPAL_TYPE.equals(principalType);
+    }
+
+    public boolean isUserPrincipal() {
+        return USER_PRINCIPAL_TYPE.equals(principalType);
     }
 
     @Override public String getUsername() { return username; }

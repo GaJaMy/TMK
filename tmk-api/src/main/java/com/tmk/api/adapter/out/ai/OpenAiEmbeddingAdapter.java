@@ -30,7 +30,8 @@ public class OpenAiEmbeddingAdapter implements EmbeddingPort {
                     .build();
 
             CreateEmbeddingResponse response = openAIClient.embeddings().create(params);
-            List<float[]> embeddings = response.data().stream()
+            var embeddingData = response.data();
+            List<float[]> embeddings = embeddingData.stream()
                     .map(item -> {
                         List<Double> vector = item.embedding();
                         float[] result = new float[vector.size()];

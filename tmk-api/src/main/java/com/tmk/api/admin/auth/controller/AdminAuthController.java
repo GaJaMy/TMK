@@ -25,7 +25,6 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     public ResponseEntity<ApiResponse<AdminLoginResponse>> login(
             @Valid @RequestBody AdminLoginRequest request
     ) {
-        AdminLoginResponse response = adminAuthUseCase.login(request.username(), request.password());
-        return ApiResponse.ok(response);
+        return ApiResponse.ok(adminAuthUseCase.login(request));
     }
 }

@@ -22,8 +22,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String ADMIN_API_PREFIX = "/admin/";
-
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
     private final TokenBlacklistPort tokenBlacklistPort;
@@ -52,11 +50,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String principalType = claims.get("principalType", String.class);
             String username = claims.getSubject();
 
-            if (isAdminRequest(request) && !AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE.equals(principalType)) {
-                SecurityResponseWriter.write(response, objectMapper, ErrorCode.FORBIDDEN);
-                return;
-            }
-
             AuthenticatedPrincipal userDetails = new AuthenticatedPrincipal(
                     username,
                     null,
@@ -83,9 +76,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearer.substring(7);
         }
         return null;
-    }
-
-    private boolean isAdminRequest(HttpServletRequest request) {
-        return request.getRequestURI().startsWith(ADMIN_API_PREFIX);
     }
 }

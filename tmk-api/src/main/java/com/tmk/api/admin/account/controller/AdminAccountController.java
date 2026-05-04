@@ -40,11 +40,7 @@ public class AdminAccountController implements AdminAccountControllerDocs {
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody AdminAccountCreateRequest request
     ) {
-        AdminAccountSummaryResponse response = adminAccountUseCase.createAdminAccount(
-                principal.getPrincipalId(),
-                request.username(),
-                request.password()
-        );
+        AdminAccountSummaryResponse response = adminAccountUseCase.createAdminAccount(principal.getPrincipalId(), request);
         return ApiResponse.ok(response);
     }
 
@@ -54,7 +50,7 @@ public class AdminAccountController implements AdminAccountControllerDocs {
             @PathVariable("userId") Long userId,
             @Valid @RequestBody AdminAccountStatusChangeRequest request
     ) {
-        return ApiResponse.ok(adminAccountUseCase.changeAdminAccountStatus(userId, request.active()));
+        return ApiResponse.ok(adminAccountUseCase.changeAdminAccountStatus(userId, request));
     }
 
     @DeleteMapping(ApiVersion.V1 + "/users/{userId}")

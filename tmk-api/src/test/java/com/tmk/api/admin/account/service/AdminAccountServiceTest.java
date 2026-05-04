@@ -1,11 +1,11 @@
-package com.tmk.api.admin.account.usecase;
+package com.tmk.api.admin.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.tmk.api.admin.account.dto.AdminAccountSummaryResponse;
+import com.tmk.api.admin.account.result.AdminAccountResult;
 import com.tmk.core.admin.entity.AdminAccount;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
@@ -13,6 +13,7 @@ import com.tmk.core.port.out.persistence.AdminAccountPort;
 import com.tmk.core.port.out.security.PasswordEncoderPort;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,8 +21,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @ExtendWith(MockitoExtension.class)
-class AdminAccountUseCaseTest {
+class AdminAccountServiceTest {
 
     @Mock
     private AdminAccountPort adminAccountPort;
@@ -30,7 +33,7 @@ class AdminAccountUseCaseTest {
     private PasswordEncoderPort passwordEncoderPort;
 
     @InjectMocks
-    private AdminAccountUseCase adminAccountUseCase;
+    private AdminAccountService adminAccountService;
 
     @Test
     void getAdminAccountsReturnsMappedAdminList() {
@@ -56,11 +59,11 @@ class AdminAccountUseCaseTest {
 
         given(adminAccountPort.findAll()).willReturn(List.of(firstAdmin, secondAdmin));
 
-        List<AdminAccountSummaryResponse> result = adminAccountUseCase.getAdminAccounts();
+        List<AdminAccountResult> result = adminAccountService.getAdminAccounts();
 
         assertThat(result).containsExactly(
-                new AdminAccountSummaryResponse(101L, "admin-master", true, now),
-                new AdminAccountSummaryResponse(100L, "admin-sub", false, now.minusDays(1))
+                new AdminAccountResult(101L, "admin-master", true, now),
+                new AdminAccountResult(100L, "admin-sub", false, now.minusDays(1))
         );
     }
 
@@ -79,21 +82,21 @@ class AdminAccountUseCaseTest {
 
         given(adminAccountPort.existsByUsername("admin2")).willReturn(false);
         given(passwordEncoderPort.encode("Password1234!")).willReturn("encoded-password");
-        given(adminAccountPort.save(org.mockito.ArgumentMatchers.any(AdminAccount.class))).willReturn(savedAdmin);
+        given(adminAccountPort.save(any(AdminAccount.class))).willReturn(savedAdmin);
 
-        AdminAccountSummaryResponse result = adminAccountUseCase.createAdminAccount(101L, "admin2", "Password1234!");
+        AdminAccountResult result = adminAccountService.createAdminAccount(101L, "admin2", "Password1234!");
 
-        assertThat(result).isEqualTo(new AdminAccountSummaryResponse(102L, "admin2", true, now));
+        assertThat(result).isEqualTo(new AdminAccountResult(102L, "admin2", true, now));
         then(adminAccountPort).should().existsByUsername("admin2");
         then(passwordEncoderPort).should().encode("Password1234!");
-        then(adminAccountPort).should().save(org.mockito.ArgumentMatchers.any(AdminAccount.class));
+        then(adminAccountPort).should().save(any(AdminAccount.class));
     }
 
     @Test
     void createAdminAccountThrowsWhenUsernameAlreadyExists() {
         given(adminAccountPort.existsByUsername("admin2")).willReturn(true);
 
-        assertThatThrownBy(() -> adminAccountUseCase.createAdminAccount(101L, "admin2", "Password1234!"))
+        assertThatThrownBy(() -> adminAccountService.createAdminAccount(101L, "admin2", "Password1234!"))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.DUPLICATE_USERNAME.getMessage());
     }
@@ -111,11 +114,11 @@ class AdminAccountUseCaseTest {
                 .updatedAt(now)
                 .build();
 
-        given(adminAccountPort.findById(101L)).willReturn(java.util.Optional.of(adminAccount));
-        given(adminAccountPort.save(org.mockito.ArgumentMatchers.any(AdminAccount.class)))
+        given(adminAccountPort.findById(101L)).willReturn(Optional.of(adminAccount));
+        given(adminAccountPort.save(any(AdminAccount.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
-        AdminAccountSummaryResponse result = adminAccountUseCase.changeAdminAccountStatus(101L, false);
+        AdminAccountResult result = adminAccountService.changeAdminAccountStatus(101L, false);
 
         assertThat(result.adminId()).isEqualTo(101L);
         assertThat(result.active()).isFalse();
@@ -127,9 +130,9 @@ class AdminAccountUseCaseTest {
 
     @Test
     void changeAdminAccountStatusThrowsWhenAdminAccountDoesNotExist() {
-        given(adminAccountPort.findById(999L)).willReturn(java.util.Optional.empty());
+        given(adminAccountPort.findById(999L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminAccountUseCase.changeAdminAccountStatus(999L, false))
+        assertThatThrownBy(() -> adminAccountService.changeAdminAccountStatus(999L, false))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.ADMIN_NOT_FOUND.getMessage());
     }
@@ -147,18 +150,18 @@ class AdminAccountUseCaseTest {
                 .updatedAt(now)
                 .build();
 
-        given(adminAccountPort.findById(101L)).willReturn(java.util.Optional.of(adminAccount));
+        given(adminAccountPort.findById(101L)).willReturn(Optional.of(adminAccount));
 
-        adminAccountUseCase.deleteAdminAccount(101L);
+        adminAccountService.deleteAdminAccount(101L);
 
         then(adminAccountPort).should().deleteById(101L);
     }
 
     @Test
     void deleteAdminAccountThrowsWhenAdminAccountDoesNotExist() {
-        given(adminAccountPort.findById(999L)).willReturn(java.util.Optional.empty());
+        given(adminAccountPort.findById(999L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminAccountUseCase.deleteAdminAccount(999L))
+        assertThatThrownBy(() -> adminAccountService.deleteAdminAccount(999L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.ADMIN_NOT_FOUND.getMessage());
     }

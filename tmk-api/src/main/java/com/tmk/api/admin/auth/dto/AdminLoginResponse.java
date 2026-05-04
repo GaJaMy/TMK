@@ -1,5 +1,7 @@
 package com.tmk.api.admin.auth.dto;
 
+import com.tmk.api.admin.auth.result.AdminLoginResult;
+
 public record AdminLoginResponse(
         Long adminId,
         String username,
@@ -7,4 +9,14 @@ public record AdminLoginResponse(
         String refreshToken,
         long expiresIn
 ) {
+
+    public static AdminLoginResponse from(AdminLoginResult result) {
+        return new AdminLoginResponse(
+                result.adminId(),
+                result.username(),
+                result.accessToken(),
+                result.refreshToken(),
+                result.expiresIn()
+        );
+    }
 }

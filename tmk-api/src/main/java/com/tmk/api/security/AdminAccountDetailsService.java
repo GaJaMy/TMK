@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AdminAccountDetailsService implements UserDetailsService {
 
-    private static final String ADMIN_ROLE = "ADMIN";
-
     private final AdminAccountPort adminAccountPort;
 
     @Override
@@ -30,7 +28,7 @@ public class AdminAccountDetailsService implements UserDetailsService {
                 adminAccount.getUsername(),
                 adminAccount.getPassword(),
                 adminAccount.getId(),
-                ADMIN_ROLE,
+                AuthenticatedPrincipal.ADMIN_ROLE,
                 AuthenticatedPrincipal.ADMIN_PRINCIPAL_TYPE
         );
     }

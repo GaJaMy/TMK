@@ -24,7 +24,8 @@ public class GlobalExceptionHandler {
     /** @RequestBody @Valid 실패 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
+        var fieldErrors = e.getBindingResult().getFieldErrors();
+        String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
                 .orElse(ErrorCode.INVALID_INPUT.getMessage());
@@ -34,8 +35,12 @@ public class GlobalExceptionHandler {
     /** @Validated 컨트롤러에서 @RequestParam/@PathVariable 검증 실패 (Spring Boot 3.2+) */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
-        String message = e.getAllValidationResults().stream()
-                .flatMap(result -> result.getResolvableErrors().stream())
+        var validationResults = e.getAllValidationResults();
+        String message = validationResults.stream()
+                .flatMap(result -> {
+                    var resolvableErrors = result.getResolvableErrors();
+                    return resolvableErrors.stream();
+                })
                 .map(error -> error.getDefaultMessage())
                 .findFirst()
                 .orElse(ErrorCode.INVALID_INPUT.getMessage());
@@ -45,7 +50,8 @@ public class GlobalExceptionHandler {
     /** @Validated 서비스 레이어 검증 실패 */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException e) {
-        String message = e.getConstraintViolations().stream()
+        var violations = e.getConstraintViolations();
+        String message = violations.stream()
                 .map(v -> {
                     String path = v.getPropertyPath().toString();
                     String field = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
