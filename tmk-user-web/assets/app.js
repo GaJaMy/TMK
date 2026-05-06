@@ -20,18 +20,30 @@ const confirmRegisterButton = document.getElementById("confirmRegisterButton");
 const userNameDisplays = document.querySelectorAll("[data-user-username]");
 const userLogoutButtons = document.querySelectorAll("[data-user-logout]");
 const documentUploadForm = document.getElementById("documentUploadForm");
+const documentTitleInput = document.getElementById("documentTitleInput");
 const documentFileInput = document.getElementById("documentFileInput");
 const documentFileName = document.getElementById("documentFileName");
 const documentUploadStatus = document.getElementById("documentUploadStatus");
 const documentProgressSummary = document.getElementById("documentProgressSummary");
 const documentProgressSteps = document.querySelectorAll(".document-progress-step");
+const documentListStatus = document.getElementById("documentListStatus");
+const documentListEmptyState = document.getElementById("documentListEmptyState");
+const documentList = document.getElementById("documentList");
 const examStartForms = document.querySelectorAll("[data-exam-start-form]");
 const examEmptyState = document.getElementById("examEmptyState");
 const examActiveState = document.getElementById("examActiveState");
 const examActiveTitle = document.getElementById("examActiveTitle");
 const examActiveMeta = document.getElementById("examActiveMeta");
 const resumeExamButton = document.getElementById("resumeExamButton");
+const examCreatedSection = document.getElementById("examCreatedSection");
+const examCreatedList = document.getElementById("examCreatedList");
 const examEntryGrid = document.getElementById("examEntryGrid");
+const examCreateStatus = document.getElementById("examCreateStatus");
+const examStartDialog = document.getElementById("examStartDialog");
+const examStartDialogTitle = document.getElementById("examStartDialogTitle");
+const examStartDialogMessage = document.getElementById("examStartDialogMessage");
+const closeExamStartDialog = document.getElementById("closeExamStartDialog");
+const confirmExamStartDialog = document.getElementById("confirmExamStartDialog");
 const examRoomContent = document.querySelectorAll("[data-exam-room-content]");
 const examRoomEmptyState = document.getElementById("examRoomEmptyState");
 const examRoomTitle = document.getElementById("examRoomTitle");
@@ -49,19 +61,174 @@ const historyDetailMeta = document.getElementById("historyDetailMeta");
 const historyDetailList = document.getElementById("historyDetailList");
 
 const USER_SESSION_KEY = "tmk_user_username";
+const USER_ACCESS_TOKEN_KEY = "tmk_user_access_token";
+const USER_REFRESH_TOKEN_KEY = "tmk_user_refresh_token";
+const USER_API_ORIGIN_KEY = "tmk_user_api_origin";
 const EXAM_SESSION_KEY = "tmk_user_exam_session";
 const EXAM_ANSWERS_KEY = "tmk_user_exam_answers";
 const HISTORY_DETAIL_KEY = "tmk_user_history_detail";
+const PUBLIC_PAGES = new Set(["index.html", "login.html"]);
 
 let pendingRegisterPayload = null;
 let examCountdownTimer = null;
+let activeDocumentEventSource = null;
+let activeDocumentId = null;
+let currentDocuments = [];
+let currentAvailableExams = [];
+const currentPage = window.location.pathname.split("/").pop() || "index.html";
+
+const getStoredUsername = () => window.sessionStorage.getItem(USER_SESSION_KEY);
+const getStoredAccessToken = () => window.sessionStorage.getItem(USER_ACCESS_TOKEN_KEY);
+const getStoredRefreshToken = () => window.sessionStorage.getItem(USER_REFRESH_TOKEN_KEY);
+const getStoredApiOrigin = () => window.localStorage.getItem(USER_API_ORIGIN_KEY);
+
+const getApiOrigin = () => {
+    const configuredOrigin = getStoredApiOrigin();
+    if (configuredOrigin) {
+        return configuredOrigin.replace(/\/$/, "");
+    }
+
+    const { protocol, hostname, port } = window.location;
+    const isLocalStaticPreview =
+        protocol === "file:"
+            || hostname === "localhost"
+            || hostname === "127.0.0.1"
+            || hostname === "::1";
+
+    if (isLocalStaticPreview && port !== "8080") {
+        return "http://localhost:8080";
+    }
+
+    return window.location.origin.replace(/\/$/, "");
+};
+
+const apiUrl = (path) => `${getApiOrigin()}${path}`;
+
+const setStoredUserSession = ({ username, accessToken, refreshToken }) => {
+    window.sessionStorage.setItem(USER_SESSION_KEY, username);
+    window.sessionStorage.setItem(USER_ACCESS_TOKEN_KEY, accessToken);
+    window.sessionStorage.setItem(USER_REFRESH_TOKEN_KEY, refreshToken);
+};
+
+const clearUserSession = () => {
+    window.sessionStorage.removeItem(USER_SESSION_KEY);
+    window.sessionStorage.removeItem(USER_ACCESS_TOKEN_KEY);
+    window.sessionStorage.removeItem(USER_REFRESH_TOKEN_KEY);
+};
+
+const ensureAuthenticated = () => {
+    if (PUBLIC_PAGES.has(currentPage)) {
+        return true;
+    }
+
+    if (getStoredAccessToken()) {
+        return true;
+    }
+
+    window.location.href = "./login.html";
+    return false;
+};
+
+const getErrorMessage = (error) => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return "알 수 없는 오류가 발생했습니다.";
+};
+
+const reissueUserSession = async () => {
+    const refreshToken = getStoredRefreshToken();
+    if (!refreshToken) {
+        throw new Error("로그인이 만료되었습니다. 다시 로그인해 주세요.");
+    }
+
+    const response = await fetch(apiUrl("/api/auth/v1/reissue"), {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ refreshToken })
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+        clearUserSession();
+        throw new Error(payload?.msg || "로그인이 만료되었습니다. 다시 로그인해 주세요.");
+    }
+
+    const data = payload?.data ?? null;
+    if (!data?.accessToken || !data?.refreshToken) {
+        clearUserSession();
+        throw new Error("토큰 재발급에 실패했습니다.");
+    }
+
+    setStoredUserSession({
+        username: getStoredUsername() || "",
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
+    });
+};
+
+const request = async (path, options = {}) => {
+    const { auth = true, headers = {}, body, skipReissue = false, ...rest } = options;
+    const requestHeaders = new Headers(headers);
+    const isFormData = body instanceof FormData;
+
+    if (body !== undefined && !isFormData) {
+        requestHeaders.set("Content-Type", "application/json");
+    }
+
+    if (auth) {
+        const accessToken = getStoredAccessToken();
+        if (accessToken) {
+            requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+        }
+    }
+
+    const response = await fetch(apiUrl(path), {
+        ...rest,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
+    });
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+        const errorCode = payload?.errorCode;
+        const message = payload?.msg || "요청 처리에 실패했습니다.";
+
+        if (response.status === 401 && auth && !skipReissue && errorCode === "AUTH_002") {
+            await reissueUserSession();
+            return request(path, { ...options, skipReissue: true });
+        }
+
+        if (response.status === 401) {
+            clearUserSession();
+        }
+        throw new Error(message);
+    }
+
+    return payload?.data ?? null;
+};
+
+const closeDocumentStatusStream = () => {
+    if (!activeDocumentEventSource) {
+        return;
+    }
+
+    activeDocumentEventSource.close();
+    activeDocumentEventSource = null;
+};
 
 const resetStatus = () => {
     if (!userLoginStatus) {
         return;
     }
     userLoginStatus.classList.remove("is-success", "is-warning");
-    userLoginStatus.textContent = "사용자 인증 API 연동 전입니다. 현재는 진입 흐름만 확인할 수 있습니다.";
+    userLoginStatus.textContent = "로컬 API 서버와 연동할 준비가 되었습니다.";
 };
 
 const setAuthMode = (mode) => {
@@ -110,7 +277,7 @@ const toggleRegisterConfirmModal = (isOpen) => {
 };
 
 const applyUserIdentity = () => {
-    const username = window.sessionStorage.getItem(USER_SESSION_KEY) || "user";
+    const username = getStoredUsername() || "user";
     userNameDisplays.forEach((node) => {
         node.textContent = username;
     });
@@ -121,6 +288,18 @@ const formatRemainingTime = (remainingMs) => {
     const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
     const seconds = String(totalSeconds % 60).padStart(2, "0");
     return `${minutes}:${seconds}`;
+};
+
+const formatRemainingSeconds = (remainingSeconds) => formatRemainingTime(remainingSeconds * 1000);
+
+const getExamSourceLabel = (sourceType) => {
+    if (sourceType === "PUBLIC_TOPIC") {
+        return "공용 문제 시험";
+    }
+    if (sourceType === "PRIVATE_DOCUMENT") {
+        return "개인 문제 시험";
+    }
+    return sourceType || "";
 };
 
 const getExamSession = () => {
@@ -139,6 +318,19 @@ const getExamSession = () => {
 const clearExamSession = () => {
     window.sessionStorage.removeItem(EXAM_SESSION_KEY);
     window.sessionStorage.removeItem(EXAM_ANSWERS_KEY);
+};
+
+const setExamSession = (examSession) => {
+    window.sessionStorage.setItem(EXAM_SESSION_KEY, JSON.stringify(examSession));
+};
+
+const toggleExamStartDialog = (isOpen, title = "시험을 시작할 수 없습니다.", message = "시험 시작 조건을 확인한 뒤 다시 시도해 주세요.") => {
+    if (!examStartDialog || !examStartDialogTitle || !examStartDialogMessage) {
+        return;
+    }
+    examStartDialog.hidden = !isOpen;
+    examStartDialogTitle.textContent = title;
+    examStartDialogMessage.textContent = message;
 };
 
 const getExamAnswers = () => {
@@ -216,28 +408,57 @@ const applySavedExamAnswers = () => {
 };
 
 const renderExamOverview = () => {
-    const examSession = getActiveExamSession();
     if (!examEmptyState || !examEntryGrid) {
         return;
     }
 
-    if (!examSession) {
+    const inProgressExam = currentAvailableExams.find((exam) => exam.status === "IN_PROGRESS") || null;
+    const createdExams = currentAvailableExams.filter((exam) => exam.status === "CREATED");
+
+    if (!inProgressExam && createdExams.length === 0) {
         examEmptyState.hidden = false;
         if (examActiveState) {
             examActiveState.hidden = true;
+        }
+        if (examCreatedSection) {
+            examCreatedSection.hidden = true;
         }
         examEntryGrid.hidden = false;
         return;
     }
 
     examEmptyState.hidden = true;
-    examEntryGrid.hidden = true;
+    examEntryGrid.hidden = false;
 
     if (examActiveState && examActiveTitle && examActiveMeta) {
-        examActiveState.hidden = false;
-        examActiveTitle.textContent = examSession.title;
-        examActiveMeta.textContent = `${examSession.sourceLabel} · ${examSession.questionCount}문제 · 남은 시간 ${formatRemainingTime(examSession.expiresAt - Date.now())}`;
+        if (inProgressExam) {
+            examActiveState.hidden = false;
+            examActiveTitle.textContent = inProgressExam.title;
+            examActiveMeta.textContent =
+                `${inProgressExam.totalQuestions}문제 · 남은 시간 ${formatRemainingSeconds(inProgressExam.remainingSeconds)}`;
+        } else {
+            examActiveState.hidden = true;
+        }
     }
+
+    if (examCreatedSection && examCreatedList) {
+        examCreatedSection.hidden = createdExams.length === 0;
+        examCreatedList.innerHTML = createdExams.map((exam) => `
+            <div class="history-row-item">
+                <span class="history-row-title">${exam.title}</span>
+                <span class="history-pass-badge">${exam.status}</span>
+                <span class="history-row-meta">${exam.totalQuestions}문제</span>
+                <span class="history-row-meta">${exam.timeLimitMinutes}분</span>
+                <span class="history-row-meta">생성 ${formatDocumentDateTime(exam.createdAt)}</span>
+                <button type="button" class="primary-cta" data-created-exam-id="${exam.examId}">시험 시작하기</button>
+            </div>
+        `).join("");
+    }
+};
+
+const loadAvailableExams = async () => {
+    currentAvailableExams = await request("/exams");
+    renderExamOverview();
 };
 
 const startExamCountdown = (examSession) => {
@@ -393,6 +614,63 @@ const renderStoredHistoryDetail = () => {
     }
 };
 
+const loadPublicTopics = async () => {
+    const publicExamForm = document.querySelector("[data-exam-source='PUBLIC']");
+    if (!publicExamForm) {
+        return;
+    }
+
+    const topicSelect = publicExamForm.querySelector("select[name='sourceId']");
+    if (!topicSelect) {
+        return;
+    }
+
+    try {
+        const topics = await request("/topics");
+        const topicOptions = topics.map((topic) => `
+            <option value="${topic.topicId}">${topic.name}</option>
+        `);
+        topicSelect.innerHTML = `
+            <option value="">Topic을 선택하세요</option>
+            ${topicOptions.join("")}
+        `;
+    } catch (error) {
+        console.warn("공용 Topic 목록 조회 실패", error);
+        topicSelect.innerHTML = `
+            <option value="">Topic을 불러오지 못했습니다.</option>
+        `;
+    }
+};
+
+const loadPrivateDocumentOptions = async () => {
+    const privateExamForm = document.querySelector("[data-exam-source='PRIVATE']");
+    if (!privateExamForm) {
+        return;
+    }
+
+    const documentSelect = privateExamForm.querySelector("select[name='sourceId']");
+    if (!documentSelect) {
+        return;
+    }
+
+    try {
+        const documents = await request("/my/documents");
+        const completedDocuments = documents.filter((documentItem) => documentItem.status === "COMPLETED");
+        const documentOptions = completedDocuments.map((documentItem) => `
+            <option value="${documentItem.documentId}">${documentItem.title} (${documentItem.generatedQuestionCount}문제)</option>
+        `);
+        documentSelect.innerHTML = `
+            <option value="">문서 또는 문제 묶음을 선택하세요</option>
+            ${documentOptions.join("")}
+        `;
+    } catch (error) {
+        console.warn("완료 문서 목록 조회 실패", error);
+        documentSelect.innerHTML = `
+            <option value="">완료 문서를 불러오지 못했습니다.</option>
+        `;
+    }
+};
+
 if (loginTriggers.length > 0) {
     loginTriggers.forEach((button) => {
         button.addEventListener("click", () => {
@@ -402,7 +680,7 @@ if (loginTriggers.length > 0) {
 }
 
 if (userLoginForm && userLoginStatus) {
-    userLoginForm.addEventListener("submit", (event) => {
+    userLoginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const userId = document.getElementById("userLoginId").value.trim();
@@ -416,12 +694,30 @@ if (userLoginForm && userLoginStatus) {
             return;
         }
 
-        window.sessionStorage.setItem(USER_SESSION_KEY, userId);
-        userLoginStatus.textContent = "입력 검증이 완료되었습니다. 사용자 홈으로 이동합니다.";
-        userLoginStatus.classList.add("is-success");
-        window.setTimeout(() => {
-            window.location.href = "./home.html";
-        }, 400);
+        try {
+            userLoginStatus.textContent = "로그인 중입니다.";
+            const data = await request("/api/auth/v1/login", {
+                method: "POST",
+                auth: false,
+                body: {
+                    username: userId,
+                    password
+                }
+            });
+            setStoredUserSession({
+                username: userId,
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken
+            });
+            userLoginStatus.textContent = "로그인에 성공했습니다. 사용자 홈으로 이동합니다.";
+            userLoginStatus.classList.add("is-success");
+            window.setTimeout(() => {
+                window.location.href = "./home.html";
+            }, 400);
+        } catch (error) {
+            userLoginStatus.textContent = `로그인 실패: ${getErrorMessage(error)}`;
+            userLoginStatus.classList.add("is-warning");
+        }
     });
 }
 
@@ -477,31 +773,51 @@ if (cancelRegisterConfirmButton) {
 }
 
 if (confirmRegisterButton && userRegisterForm && userLoginStatus) {
-    confirmRegisterButton.addEventListener("click", () => {
+    confirmRegisterButton.addEventListener("click", async () => {
         if (!pendingRegisterPayload) {
             toggleRegisterConfirmModal(false);
             return;
         }
 
-        userLoginStatus.classList.remove("is-warning");
-        userLoginStatus.classList.add("is-success");
-        userLoginStatus.textContent = "정책 확인이 완료되었습니다. API 연동 후 이 시점에 회원가입 요청이 전송됩니다.";
-        userRegisterForm.reset();
-        pendingRegisterPayload = null;
-        toggleRegisterConfirmModal(false);
-        setAuthMode("login");
-    });
-}
+        userLoginStatus.classList.remove("is-warning", "is-success");
+        userLoginStatus.textContent = "회원가입 요청을 전송하고 있습니다.";
 
-if (userNameDisplays.length > 0) {
-    applyUserIdentity();
+        try {
+            const created = await request("/api/auth/v1/register", {
+                method: "POST",
+                auth: false,
+                body: pendingRegisterPayload
+            });
+            userLoginStatus.classList.add("is-success");
+            userLoginStatus.textContent = `${created.username} 계정이 생성되었습니다. 로그인해 주세요.`;
+            userRegisterForm.reset();
+            pendingRegisterPayload = null;
+            toggleRegisterConfirmModal(false);
+            setAuthMode("login");
+        } catch (error) {
+            userLoginStatus.classList.add("is-warning");
+            userLoginStatus.textContent = `회원가입 실패: ${getErrorMessage(error)}`;
+            toggleRegisterConfirmModal(false);
+        }
+    });
 }
 
 if (userLogoutButtons.length > 0) {
     userLogoutButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            window.sessionStorage.removeItem(USER_SESSION_KEY);
-            window.location.href = "./index.html";
+        button.addEventListener("click", async () => {
+            try {
+                if (getStoredAccessToken()) {
+                    await request("/api/auth/v1/logout", {
+                        method: "POST"
+                    });
+                }
+            } catch (error) {
+                console.warn("로그아웃 요청 실패", error);
+            } finally {
+                closeDocumentStatusStream();
+                clearUserSession();
+                window.location.href = "./index.html";
+            }
         });
     });
 }
@@ -528,7 +844,7 @@ if (verifyResetUsernameButton && userLoginStatus) {
 }
 
 if (resetPasswordForm && userLoginStatus) {
-    resetPasswordForm.addEventListener("submit", (event) => {
+    resetPasswordForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const username = document.getElementById("resetUsername").value.trim();
@@ -548,9 +864,22 @@ if (resetPasswordForm && userLoginStatus) {
             return;
         }
 
-        userLoginStatus.textContent = "비밀번호 재설정 입력 검증이 완료되었습니다. API 연동 후 이 시점에 재설정 요청이 전송됩니다.";
-        userLoginStatus.classList.add("is-success");
-        setAuthMode("login");
+        try {
+            await request("/api/auth/v1/reset-password", {
+                method: "POST",
+                auth: false,
+                body: {
+                    username,
+                    newPassword
+                }
+            });
+            userLoginStatus.textContent = "비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해 주세요.";
+            userLoginStatus.classList.add("is-success");
+            setAuthMode("login");
+        } catch (error) {
+            userLoginStatus.textContent = `비밀번호 재설정 실패: ${getErrorMessage(error)}`;
+            userLoginStatus.classList.add("is-warning");
+        }
     });
 }
 
@@ -564,6 +893,15 @@ const setDocumentProgress = (stage) => {
 
     documentProgressSteps.forEach((step, index) => {
         step.classList.remove("is-active", "is-completed");
+
+        if (stage === "failed") {
+            if (index === 0) {
+                step.classList.add("is-completed");
+            } else if (index === 1) {
+                step.classList.add("is-active");
+            }
+            return;
+        }
 
         if (index < currentIndex) {
             step.classList.add("is-completed");
@@ -580,8 +918,209 @@ const setDocumentProgress = (stage) => {
         documentProgressSummary.textContent = "업로드가 완료되어 AI가 문제를 생성하고 있습니다.";
     } else if (stage === "completed") {
         documentProgressSummary.textContent = "문제 생성이 완료되었습니다. 다음 시험 흐름으로 넘어갈 수 있습니다.";
+    } else if (stage === "failed") {
+        documentProgressSummary.textContent = "문제 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.";
     } else {
         documentProgressSummary.textContent = "아직 업로드가 시작되지 않았습니다.";
+    }
+};
+
+const formatDocumentStatusLabel = (status) => {
+    if (status === "PROCESSING") {
+        return "생성중";
+    }
+    if (status === "COMPLETED") {
+        return "완료";
+    }
+    if (status === "FAILED") {
+        return "실패";
+    }
+    return status;
+};
+
+const formatDocumentDateTime = (value) => {
+    if (!value) {
+        return "-";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date);
+};
+
+const syncDocumentProgress = (documentStatus) => {
+    if (!documentStatus) {
+        setDocumentProgress();
+        return;
+    }
+
+    if (documentStatus.status === "PROCESSING") {
+        setDocumentProgress("generating");
+        return;
+    }
+
+    if (documentStatus.status === "COMPLETED") {
+        setDocumentProgress("completed");
+        return;
+    }
+
+    if (documentStatus.status === "FAILED") {
+        setDocumentProgress("failed");
+        return;
+    }
+
+    setDocumentProgress();
+};
+
+const renderDocumentList = (documents) => {
+    if (!documentList || !documentListEmptyState || !documentListStatus) {
+        return;
+    }
+
+    documentList.innerHTML = "";
+
+    currentDocuments = Array.isArray(documents) ? [...documents] : [];
+
+    if (!documents || documents.length === 0) {
+        documentListEmptyState.hidden = false;
+        documentListStatus.textContent = "등록된 문서가 없습니다.";
+        return;
+    }
+
+    documentListEmptyState.hidden = true;
+    documentListStatus.textContent = `${documents.length}개의 문서를 확인했습니다.`;
+
+    documents.forEach((documentItem) => {
+        const item = document.createElement("li");
+        item.className = "document-history-item";
+        item.dataset.documentId = String(documentItem.documentId);
+        if (activeDocumentId === documentItem.documentId) {
+            item.classList.add("is-selected");
+        }
+
+        const main = document.createElement("div");
+        main.className = "document-history-main";
+
+        const title = document.createElement("strong");
+        title.textContent = documentItem.title;
+
+        const meta = document.createElement("p");
+        meta.textContent =
+            `생성 문제 ${documentItem.generatedQuestionCount}개 · 마지막 변경 ${formatDocumentDateTime(documentItem.updatedAt)}`;
+
+        main.append(title, meta);
+
+        const badge = document.createElement("span");
+        badge.className = "document-history-badge";
+        badge.textContent = formatDocumentStatusLabel(documentItem.status);
+        badge.classList.toggle("is-processing", documentItem.status === "PROCESSING");
+        badge.classList.toggle("is-completed", documentItem.status === "COMPLETED");
+        badge.classList.toggle("is-failed", documentItem.status === "FAILED");
+
+        item.append(main, badge);
+        documentList.append(item);
+    });
+};
+
+const applyDocumentStatus = (documentStatus) => {
+    if (!documentStatus) {
+        return;
+    }
+
+    activeDocumentId = documentStatus.documentId;
+    syncDocumentProgress(documentStatus);
+
+    if (documentUploadStatus) {
+        documentUploadStatus.classList.remove("is-success", "is-warning");
+        if (documentStatus.status === "FAILED") {
+            documentUploadStatus.textContent = `문서 ${documentStatus.documentId} 문제 생성에 실패했습니다.`;
+            documentUploadStatus.classList.add("is-warning");
+        } else {
+            documentUploadStatus.textContent =
+                `문서 ${documentStatus.documentId} · ${formatDocumentStatusLabel(documentStatus.status)} · 생성 문제 ${documentStatus.generatedQuestionCount}개`;
+            documentUploadStatus.classList.add("is-success");
+        }
+    }
+};
+
+const updateRenderedDocument = (documentStatus) => {
+    if (!documentList) {
+        return;
+    }
+
+    const updatedDocuments = [...currentDocuments];
+    const targetIndex = updatedDocuments.findIndex((item) => item.documentId === documentStatus.documentId);
+    if (targetIndex >= 0) {
+        updatedDocuments[targetIndex] = documentStatus;
+    } else {
+        updatedDocuments.unshift(documentStatus);
+    }
+
+    renderDocumentList(updatedDocuments);
+};
+
+const subscribeDocumentStatus = (documentId) => {
+    closeDocumentStatusStream();
+
+    const accessToken = getStoredAccessToken();
+    if (!accessToken) {
+        return;
+    }
+
+    activeDocumentId = documentId;
+    const eventSource = new EventSource(
+        apiUrl(`/my/documents/${documentId}/events?accessToken=${encodeURIComponent(accessToken)}`)
+    );
+
+    eventSource.addEventListener("document-status", (event) => {
+        const documentStatus = JSON.parse(event.data);
+        applyDocumentStatus(documentStatus);
+        updateRenderedDocument(documentStatus);
+
+        if (documentStatus.status !== "PROCESSING") {
+            closeDocumentStatusStream();
+        }
+    });
+
+    eventSource.onerror = () => {
+        closeDocumentStatusStream();
+    };
+
+    activeDocumentEventSource = eventSource;
+};
+
+const loadDocuments = async (focusedDocumentId = null) => {
+    const documents = await request("/my/documents");
+    if (focusedDocumentId !== null) {
+        activeDocumentId = focusedDocumentId;
+    } else if (!activeDocumentId && documents.length > 0) {
+        activeDocumentId = documents[0].documentId;
+    }
+
+    renderDocumentList(documents);
+
+    const selectedDocument = documents.find((item) => item.documentId === activeDocumentId) || documents[0];
+    if (!selectedDocument) {
+        activeDocumentId = null;
+        syncDocumentProgress(null);
+        closeDocumentStatusStream();
+        return;
+    }
+
+    applyDocumentStatus(selectedDocument);
+    if (selectedDocument.status === "PROCESSING") {
+        subscribeDocumentStatus(selectedDocument.documentId);
+    } else {
+        closeDocumentStatusStream();
     }
 };
 
@@ -593,12 +1132,19 @@ if (documentFileInput && documentFileName) {
 }
 
 if (documentUploadForm && documentUploadStatus) {
-    documentUploadForm.addEventListener("submit", (event) => {
+    documentUploadForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
+        const title = documentTitleInput ? documentTitleInput.value.trim() : "";
         const selectedFile = documentFileInput && documentFileInput.files ? documentFileInput.files[0] : null;
 
         documentUploadStatus.classList.remove("is-success", "is-warning");
+
+        if (!title) {
+            documentUploadStatus.textContent = "문서 제목을 입력해야 합니다.";
+            documentUploadStatus.classList.add("is-warning");
+            return;
+        }
 
         if (!selectedFile) {
             documentUploadStatus.textContent = "먼저 위 영역에서 업로드할 문서를 선택해야 합니다.";
@@ -606,25 +1152,74 @@ if (documentUploadForm && documentUploadStatus) {
             return;
         }
 
-        setDocumentProgress("upload");
-        documentUploadStatus.textContent = "문서 업로드를 시작했습니다.";
-        documentUploadStatus.classList.add("is-success");
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("file", selectedFile);
 
-        window.setTimeout(() => {
+        try {
+            setDocumentProgress("upload");
+            documentUploadStatus.textContent = "문서를 업로드하고 있습니다.";
+            documentUploadStatus.classList.add("is-success");
+
+            const uploaded = await request("/my/documents/upload", {
+                method: "POST",
+                body: formData
+            });
+
             setDocumentProgress("generating");
-            documentUploadStatus.textContent = "업로드가 완료되어 문제를 생성하고 있습니다.";
-        }, 800);
+            documentUploadStatus.textContent =
+                `문서가 등록되었습니다. 문서 ID ${uploaded.documentId}, 상태 ${uploaded.status}로 문제 생성을 준비합니다.`;
+            documentUploadForm.reset();
+            if (documentFileName) {
+                documentFileName.textContent = "선택된 파일이 없습니다.";
+            }
+            await loadDocuments(uploaded.documentId);
+            subscribeDocumentStatus(uploaded.documentId);
+        } catch (error) {
+            documentUploadStatus.textContent = `문서 등록 실패: ${getErrorMessage(error)}`;
+            documentUploadStatus.classList.add("is-warning");
+        }
+    });
+}
 
-        window.setTimeout(() => {
-            setDocumentProgress("completed");
-            documentUploadStatus.textContent = "문제 생성이 완료되었습니다. API 연동 후 이 시점에 생성 결과와 다음 액션이 연결됩니다.";
-        }, 1800);
+if (documentList) {
+    documentList.addEventListener("click", async (event) => {
+        const item = event.target.closest(".document-history-item");
+        if (!item) {
+            return;
+        }
+
+        const documentId = Number(item.dataset.documentId);
+        if (!documentId) {
+            return;
+        }
+
+        try {
+            const documentStatus = await request(`/my/documents/${documentId}/status`);
+            applyDocumentStatus(documentStatus);
+            updateRenderedDocument(documentStatus);
+
+            if (documentStatus.status === "PROCESSING") {
+                subscribeDocumentStatus(documentId);
+            } else {
+                closeDocumentStatusStream();
+            }
+        } catch (error) {
+            if (documentUploadStatus) {
+                documentUploadStatus.classList.remove("is-success");
+                documentUploadStatus.classList.add("is-warning");
+                documentUploadStatus.textContent = `문서 상태 조회 실패: ${getErrorMessage(error)}`;
+            }
+        }
     });
 }
 
 if (examStartForms.length > 0) {
+    loadPublicTopics();
+    loadPrivateDocumentOptions();
+
     examStartForms.forEach((form) => {
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
             const activeExam = getActiveExamSession();
@@ -634,27 +1229,52 @@ if (examStartForms.length > 0) {
             }
 
             const sourceType = form.dataset.examSource;
-            const sourceLabel = form.elements.sourceLabel.value.trim();
+            const sourceId = Number(form.elements.sourceId.value);
+            const sourceLabel = form.elements.sourceId.options[form.elements.sourceId.selectedIndex]?.text || "";
             const questionCount = Number(form.elements.questionCount.value);
             const durationMinutes = Number(form.elements.durationMinutes.value);
-
-            if (!sourceLabel || !questionCount || !durationMinutes) {
+            if (!sourceId || !questionCount || !durationMinutes) {
                 return;
             }
 
-            const examSession = {
-                sourceType,
-                sourceLabel,
-                questionCount,
-                durationMinutes,
-                title: sourceType === "PUBLIC" ? "공용문제 시험" : "개인문제 시험",
-                startedAt: Date.now(),
-                expiresAt: Date.now() + (durationMinutes * 60 * 1000)
-            };
+            if (examCreateStatus) {
+                examCreateStatus.classList.remove("is-success", "is-warning");
+                examCreateStatus.textContent = "시험을 생성하고 있습니다.";
+            }
 
-            window.sessionStorage.setItem(EXAM_SESSION_KEY, JSON.stringify(examSession));
-            window.sessionStorage.setItem(EXAM_ANSWERS_KEY, JSON.stringify({}));
-            window.location.href = "./exam-room.html";
+            try {
+                const requestBody = sourceType === "PUBLIC"
+                    ? {
+                        sourceType: "PUBLIC_TOPIC",
+                        topicId: sourceId,
+                        questionCount,
+                        timeLimitMinutes: durationMinutes
+                    }
+                    : {
+                        sourceType: "PRIVATE_DOCUMENT",
+                        documentId: sourceId,
+                        questionCount,
+                        timeLimitMinutes: durationMinutes
+                    };
+
+                const createdExam = await request("/exams", {
+                    method: "POST",
+                    body: requestBody
+                });
+
+                if (examCreateStatus) {
+                    examCreateStatus.classList.add("is-success");
+                    examCreateStatus.textContent =
+                        `${sourceLabel} 기준 시험 ${createdExam.examId}번이 생성되었습니다. 현재 상태는 ${createdExam.status}입니다.`;
+                }
+                form.reset();
+                await loadAvailableExams();
+            } catch (error) {
+                if (examCreateStatus) {
+                    examCreateStatus.classList.add("is-warning");
+                    examCreateStatus.textContent = `시험 생성 실패: ${getErrorMessage(error)}`;
+                }
+            }
         });
     });
 }
@@ -667,14 +1287,86 @@ if (resumeExamButton) {
 
 if (examActiveMeta) {
     window.setInterval(() => {
-        const examSession = getActiveExamSession();
-        if (!examSession) {
+        const currentInProgressExam = currentAvailableExams.find((exam) => exam.status === "IN_PROGRESS");
+        if (!currentInProgressExam) {
             renderExamOverview();
             return;
         }
 
-        examActiveMeta.textContent = `${examSession.sourceLabel} · ${examSession.questionCount}문제 · 남은 시간 ${formatRemainingTime(examSession.expiresAt - Date.now())}`;
+        currentAvailableExams = currentAvailableExams.map((exam) => {
+            if (exam.examId !== currentInProgressExam.examId) {
+                return exam;
+            }
+            return {
+                ...exam,
+                remainingSeconds: Math.max(0, exam.remainingSeconds - 1)
+            };
+        });
+        const updatedInProgressExam = currentAvailableExams.find((exam) => exam.examId === currentInProgressExam.examId);
+        examActiveMeta.textContent =
+            `${updatedInProgressExam.totalQuestions}문제 · 남은 시간 ${formatRemainingSeconds(updatedInProgressExam.remainingSeconds)}`;
+
+        if (updatedInProgressExam.remainingSeconds <= 0) {
+            currentAvailableExams = currentAvailableExams.filter((exam) => exam.examId !== updatedInProgressExam.examId);
+            renderExamOverview();
+        }
     }, 1000);
+}
+
+if (examCreatedList) {
+    examCreatedList.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-created-exam-id]");
+        if (!button) {
+            return;
+        }
+        const examId = Number(button.dataset.createdExamId);
+
+        if (examCreateStatus) {
+            examCreateStatus.classList.remove("is-success", "is-warning");
+            examCreateStatus.textContent = `시험 ${examId}번을 시작하고 있습니다.`;
+        }
+
+        try {
+            const startedExam = await request(`/exams/${examId}/start`, {
+                method: "POST"
+            });
+
+            setExamSession({
+                examId: startedExam.examId,
+                title: startedExam.title,
+                sourceLabel: getExamSourceLabel(startedExam.sourceType),
+                questionCount: startedExam.totalQuestions,
+                durationMinutes: startedExam.timeLimitMinutes,
+                expiresAt: new Date(startedExam.expiredAt).getTime()
+            });
+
+            await loadAvailableExams();
+            window.location.href = "./exam-room.html";
+        } catch (error) {
+            toggleExamStartDialog(true, "시험을 시작할 수 없습니다.", getErrorMessage(error));
+            if (examCreateStatus) {
+                examCreateStatus.classList.remove("is-success");
+                examCreateStatus.classList.add("is-warning");
+                examCreateStatus.textContent = `시험 시작 실패: ${getErrorMessage(error)}`;
+            }
+        }
+    });
+}
+
+if (closeExamStartDialog) {
+    closeExamStartDialog.addEventListener("click", () => toggleExamStartDialog(false));
+}
+
+if (confirmExamStartDialog) {
+    confirmExamStartDialog.addEventListener("click", () => toggleExamStartDialog(false));
+}
+
+if (examStartDialog) {
+    examStartDialog.addEventListener("click", (event) => {
+        if (event.target === examStartDialog) {
+            toggleExamStartDialog(false);
+        }
+    });
 }
 
 if (examAnswerButtons.length > 0) {
@@ -742,6 +1434,32 @@ if (historyItems.length > 0) {
             window.location.href = "./history-detail.html";
         });
     });
+}
+
+if (!ensureAuthenticated()) {
+    // redirected
+} else if (userNameDisplays.length > 0) {
+    applyUserIdentity();
+
+    if (currentPage === "documents.html" && documentUploadForm) {
+        loadDocuments().catch((error) => {
+            if (documentUploadStatus) {
+                documentUploadStatus.classList.remove("is-success");
+                documentUploadStatus.classList.add("is-warning");
+                documentUploadStatus.textContent = `문서 목록 조회 실패: ${getErrorMessage(error)}`;
+            }
+        });
+    }
+
+    if (currentPage === "exams.html") {
+        loadAvailableExams().catch((error) => {
+            if (examCreateStatus) {
+                examCreateStatus.classList.remove("is-success");
+                examCreateStatus.classList.add("is-warning");
+                examCreateStatus.textContent = `시험 목록 조회 실패: ${getErrorMessage(error)}`;
+            }
+        });
+    }
 }
 
 renderExamOverview();

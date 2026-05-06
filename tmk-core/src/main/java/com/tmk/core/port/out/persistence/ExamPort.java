@@ -13,6 +13,8 @@ public interface ExamPort {
 
     Optional<Exam> findByIdAndUserId(Long examId, Long userId);
 
+    List<Exam> findAvailableByUserIdOrderByCreatedAtDesc(Long userId);
+
     Optional<Exam> findInProgressByUserId(Long userId);
 
     List<Exam> findHistoryByUserIdOrderByCreatedAtDesc(Long userId);

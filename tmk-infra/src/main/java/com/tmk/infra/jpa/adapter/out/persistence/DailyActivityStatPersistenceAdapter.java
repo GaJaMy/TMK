@@ -4,6 +4,7 @@ import com.tmk.core.monitoring.entity.DailyActivityStat;
 import com.tmk.core.port.out.persistence.DailyActivityStatPort;
 import com.tmk.infra.jpa.repository.DailyActivityStatJpaRepository;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +29,10 @@ public class DailyActivityStatPersistenceAdapter implements DailyActivityStatPor
     @Override
     public List<DailyActivityStat> findByStatDateBetweenOrderByStatDateAsc(LocalDate from, LocalDate to) {
         return dailyActivityStatJpaRepository.findByStatDateBetweenOrderByStatDateAsc(from, to);
+    }
+
+    @Override
+    public void increaseUserPageAccessAttemptCount(LocalDate statDate, int value, OffsetDateTime now) {
+        dailyActivityStatJpaRepository.increaseUserPageAccessAttemptCount(statDate, value, now);
     }
 }

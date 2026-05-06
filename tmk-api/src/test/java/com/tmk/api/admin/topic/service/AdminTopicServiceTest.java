@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import com.tmk.api.admin.topic.result.AdminTopicResult;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
+import com.tmk.core.port.out.persistence.PublicQuestionPort;
 import com.tmk.core.port.out.persistence.TopicPort;
 import com.tmk.core.topic.entity.Topic;
 import java.time.OffsetDateTime;
@@ -25,6 +26,9 @@ class AdminTopicServiceTest {
 
     @Mock
     private TopicPort topicPort;
+
+    @Mock
+    private PublicQuestionPort publicQuestionPort;
 
     @InjectMocks
     private AdminTopicService adminTopicService;
@@ -47,7 +51,7 @@ class AdminTopicServiceTest {
 
         AdminTopicResult result = adminTopicService.createTopic(101L, "SPRING");
 
-        assertThat(result).isEqualTo(new AdminTopicResult(1L, "SPRING", true, now));
+        assertThat(result).isEqualTo(new AdminTopicResult(1L, "SPRING", true, 0L, now));
         then(topicPort).should().existsByName("SPRING");
         then(topicPort).should().save(any(Topic.class));
     }

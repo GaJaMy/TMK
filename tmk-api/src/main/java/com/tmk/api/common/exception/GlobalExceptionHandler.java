@@ -6,6 +6,7 @@ import com.tmk.core.exception.ErrorCode;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,6 +25,17 @@ public class GlobalExceptionHandler {
     /** @RequestBody @Valid 실패 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        var fieldErrors = e.getBindingResult().getFieldErrors();
+        String message = fieldErrors.stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse(ErrorCode.INVALID_INPUT.getMessage());
+        return ApiResponse.fail(ErrorCode.INVALID_INPUT, message);
+    }
+
+    /** @ModelAttribute 바인딩 실패 */
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBindException(BindException e) {
         var fieldErrors = e.getBindingResult().getFieldErrors();
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())

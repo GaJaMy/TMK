@@ -10,4 +10,6 @@ public interface DocumentChunkPort {
     List<DocumentChunk> findAllByDocumentIdOrderByChunkIndexAsc(Long documentId);
 
     long countByDocumentId(Long documentId);
+
+    void deleteAllByDocumentId(Long documentId);
 }

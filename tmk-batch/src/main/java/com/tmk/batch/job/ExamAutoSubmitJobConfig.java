@@ -2,10 +2,12 @@ package com.tmk.batch.job;
 
 import com.tmk.core.exam.entity.Exam;
 import com.tmk.core.exam.entity.ExamQuestion;
-import com.tmk.core.exam.service.ExamGradingService;
 import com.tmk.core.port.out.persistence.ExamPort;
-import com.tmk.core.port.out.persistence.QuestionPort;
-import com.tmk.core.question.entity.Question;
+import com.tmk.core.port.out.persistence.PrivateQuestionPort;
+import com.tmk.core.port.out.persistence.PublicQuestionPort;
+import com.tmk.core.question.entity.PrivateQuestion;
+import com.tmk.core.question.entity.PublicQuestion;
+import com.tmk.core.question.entity.QuestionScope;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +23,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Configuration
 @RequiredArgsConstructor
-public class ExamAutoSubmitJob {
+public class ExamAutoSubmitJobConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(ExamAutoSubmitJob.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamAutoSubmitJobConfig.class);
 
     private final ExamPort examPort;
-    private final QuestionPort questionPort;
-    private final ExamGradingService examGradingService;
+    private final PublicQuestionPort publicQuestionPort;
+    private final PrivateQuestionPort privateQuestionPort;
 
     @Bean
     public Job examAutoSubmitJob(JobRepository jobRepository, Step examAutoSubmitStep) {
@@ -49,18 +50,8 @@ public class ExamAutoSubmitJob {
 
                     for (Exam exam : expiredExams) {
                         try {
-                            List<Long> questionIds = exam.getExamQuestions().stream()
-                                    .map(ExamQuestion::getQuestionId)
-                                    .toList();
-
-                            List<Question> questions = questionIds.stream()
-                                    .map(questionPort::findById)
-                                    .filter(Optional::isPresent)
-                                    .map(Optional::get)
-                                    .toList();
-
-                            examGradingService.grade(exam, questions);
-                            exam.submit();
+                            gradeExamQuestions(exam);
+                            exam.submit(OffsetDateTime.now());
                             examPort.save(exam);
                             processedCount++;
                         } catch (Exception e) {
@@ -72,5 +63,35 @@ public class ExamAutoSubmitJob {
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();
+    }
+
+    private void gradeExamQuestions(Exam exam) {
+        List<ExamQuestion> examQuestions = exam.getExamQuestions();
+        for (ExamQuestion examQuestion : examQuestions) {
+            boolean correct = switch (examQuestion.getQuestionScope()) {
+                case PUBLIC -> isPublicQuestionCorrect(examQuestion);
+                case PRIVATE -> isPrivateQuestionCorrect(examQuestion);
+            };
+            examQuestion.grade(correct);
+        }
+    }
+
+    private boolean isPublicQuestionCorrect(ExamQuestion examQuestion) {
+        PublicQuestion publicQuestion = publicQuestionPort.findById(examQuestion.getPublicQuestionId())
+                .orElse(null);
+        return publicQuestion != null && isAnswerCorrect(examQuestion.getMyAnswer(), publicQuestion.getAnswer());
+    }
+
+    private boolean isPrivateQuestionCorrect(ExamQuestion examQuestion) {
+        PrivateQuestion privateQuestion = privateQuestionPort.findById(examQuestion.getPrivateQuestionId())
+                .orElse(null);
+        return privateQuestion != null && isAnswerCorrect(examQuestion.getMyAnswer(), privateQuestion.getAnswer());
+    }
+
+    private boolean isAnswerCorrect(String myAnswer, String answer) {
+        if (myAnswer == null || answer == null) {
+            return false;
+        }
+        return myAnswer.trim().equalsIgnoreCase(answer.trim());
     }
 }

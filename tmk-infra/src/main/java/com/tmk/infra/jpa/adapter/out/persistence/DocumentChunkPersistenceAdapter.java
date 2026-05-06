@@ -27,4 +27,9 @@ public class DocumentChunkPersistenceAdapter implements DocumentChunkPort {
     public long countByDocumentId(Long documentId) {
         return documentChunkJpaRepository.countByDocument_Id(documentId);
     }
+
+    @Override
+    public void deleteAllByDocumentId(Long documentId) {
+        documentChunkJpaRepository.deleteAllByDocument_Id(documentId);
+    }
 }

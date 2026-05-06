@@ -252,6 +252,12 @@ CREATE TABLE exam
             (started_at IS NULL AND expired_at IS NULL)
             OR
             (started_at IS NOT NULL AND expired_at IS NOT NULL)
+        ),
+    CONSTRAINT chk_exam_started_before_expired
+        CHECK (
+            started_at IS NULL
+            OR expired_at IS NULL
+            OR started_at < expired_at
         )
 );
 

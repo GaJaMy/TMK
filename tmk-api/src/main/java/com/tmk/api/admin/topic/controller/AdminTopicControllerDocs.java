@@ -8,12 +8,22 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AdminTopicControllerDocs {
+
+    @Operation(summary = "Topic 목록 조회", description = "관리자 공용 문제 관리에 사용할 Topic 목록을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    ResponseEntity<ApiResponse<List<AdminTopicResponse>>> getTopics();
 
     @Operation(summary = "Topic 생성", description = "현재 로그인한 관리자가 새 Topic을 생성합니다.")
     @ApiResponses({

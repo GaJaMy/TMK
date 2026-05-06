@@ -105,7 +105,10 @@ openai:
   api-key: {OPENAI_API_KEY}
 
 jwt:
-  secret: {JWT_SECRET}
+  admin:
+    secret: {ADMIN_JWT_SECRET}
+  user:
+    secret: {USER_JWT_SECRET}
 ```
 
 ### 실행

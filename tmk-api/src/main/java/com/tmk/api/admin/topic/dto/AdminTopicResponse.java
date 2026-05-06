@@ -7,6 +7,7 @@ public record AdminTopicResponse(
         Long topicId,
         String name,
         boolean active,
+        long questionCount,
         OffsetDateTime createdAt
 ) {
 
@@ -15,6 +16,7 @@ public record AdminTopicResponse(
                 result.topicId(),
                 result.name(),
                 result.active(),
+                result.questionCount(),
                 result.createdAt()
         );
     }

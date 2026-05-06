@@ -2,6 +2,8 @@ package com.tmk.api.admin.question.controller;
 
 import com.tmk.api.admin.question.dto.AdminPublicQuestionDetailResponse;
 import com.tmk.api.admin.question.dto.AdminPublicQuestionSummaryResponse;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkDeleteRequest;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkStatusChangeRequest;
 import com.tmk.api.admin.question.request.AdminPublicQuestionCreateRequest;
 import com.tmk.api.admin.question.request.AdminPublicQuestionStatusChangeRequest;
 import com.tmk.api.admin.question.usecase.AdminPublicQuestionUseCase;
@@ -69,12 +71,30 @@ public class AdminPublicQuestionController implements AdminPublicQuestionControl
         return ApiResponse.ok(adminPublicQuestionUseCase.changePublicQuestionStatus(questionId, request));
     }
 
+    @PatchMapping(ApiVersion.V1 + "/questions/status")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> changePublicQuestionStatuses(
+            @Valid @RequestBody AdminPublicQuestionBulkStatusChangeRequest request
+    ) {
+        adminPublicQuestionUseCase.changePublicQuestionStatuses(request);
+        return ApiResponse.noContent();
+    }
+
     @DeleteMapping(ApiVersion.V1 + "/questions/{questionId}")
     @Override
     public ResponseEntity<ApiResponse<Void>> deletePublicQuestion(
             @PathVariable("questionId") Long questionId
     ) {
         adminPublicQuestionUseCase.deletePublicQuestion(questionId);
+        return ApiResponse.noContent();
+    }
+
+    @DeleteMapping(ApiVersion.V1 + "/questions")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> deletePublicQuestions(
+            @Valid @RequestBody AdminPublicQuestionBulkDeleteRequest request
+    ) {
+        adminPublicQuestionUseCase.deletePublicQuestions(request);
         return ApiResponse.noContent();
     }
 }

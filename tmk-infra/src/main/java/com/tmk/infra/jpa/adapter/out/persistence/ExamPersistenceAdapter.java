@@ -1,6 +1,7 @@
 package com.tmk.infra.jpa.adapter.out.persistence;
 
 import com.tmk.core.exam.entity.Exam;
+import com.tmk.core.exam.entity.ExamStatus;
 import com.tmk.core.port.out.persistence.ExamPort;
 import com.tmk.infra.jpa.repository.ExamJpaRepository;
 import java.time.OffsetDateTime;
@@ -28,6 +29,14 @@ public class ExamPersistenceAdapter implements ExamPort {
     @Override
     public Optional<Exam> findByIdAndUserId(Long examId, Long userId) {
         return examJpaRepository.findByIdAndUserId(examId, userId);
+    }
+
+    @Override
+    public List<Exam> findAvailableByUserIdOrderByCreatedAtDesc(Long userId) {
+        return examJpaRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(
+                userId,
+                List.of(ExamStatus.CREATED, ExamStatus.IN_PROGRESS)
+        );
     }
 
     @Override

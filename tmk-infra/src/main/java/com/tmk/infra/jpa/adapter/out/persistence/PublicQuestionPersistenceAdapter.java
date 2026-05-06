@@ -33,6 +33,11 @@ public class PublicQuestionPersistenceAdapter implements PublicQuestionPort {
     }
 
     @Override
+    public List<PublicQuestion> saveAll(List<PublicQuestion> publicQuestions) {
+        return publicQuestionJpaRepository.saveAll(publicQuestions);
+    }
+
+    @Override
     public Optional<PublicQuestion> findById(Long publicQuestionId) {
         return publicQuestionJpaRepository.findById(publicQuestionId);
     }
@@ -40,6 +45,11 @@ public class PublicQuestionPersistenceAdapter implements PublicQuestionPort {
     @Override
     public List<PublicQuestion> findAll() {
         return publicQuestionJpaRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Override
+    public List<PublicQuestion> findAllByIds(List<Long> publicQuestionIds) {
+        return publicQuestionJpaRepository.findAllById(publicQuestionIds);
     }
 
     @Override
@@ -92,6 +102,11 @@ public class PublicQuestionPersistenceAdapter implements PublicQuestionPort {
     }
 
     @Override
+    public long countByTopicId(Long topicId) {
+        return publicQuestionJpaRepository.countByTopicId(topicId);
+    }
+
+    @Override
     public long countActiveByTopicId(Long topicId) {
         return publicQuestionJpaRepository.countByTopicIdAndActiveTrue(topicId);
     }
@@ -99,6 +114,11 @@ public class PublicQuestionPersistenceAdapter implements PublicQuestionPort {
     @Override
     public void deleteById(Long publicQuestionId) {
         publicQuestionJpaRepository.deleteById(publicQuestionId);
+    }
+
+    @Override
+    public void deleteAllByIds(List<Long> publicQuestionIds) {
+        publicQuestionJpaRepository.deleteAllByIdInBatch(publicQuestionIds);
     }
 
     private BooleanExpression topicIdEq(Long topicId) {

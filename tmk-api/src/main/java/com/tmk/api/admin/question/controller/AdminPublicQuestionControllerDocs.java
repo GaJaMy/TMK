@@ -2,6 +2,8 @@ package com.tmk.api.admin.question.controller;
 
 import com.tmk.api.admin.question.dto.AdminPublicQuestionDetailResponse;
 import com.tmk.api.admin.question.dto.AdminPublicQuestionSummaryResponse;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkDeleteRequest;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkStatusChangeRequest;
 import com.tmk.api.admin.question.request.AdminPublicQuestionCreateRequest;
 import com.tmk.api.admin.question.request.AdminPublicQuestionStatusChangeRequest;
 import com.tmk.api.common.ApiResponse;
@@ -71,6 +73,18 @@ public interface AdminPublicQuestionControllerDocs {
             @Valid @RequestBody AdminPublicQuestionStatusChangeRequest request
     );
 
+    @Operation(summary = "공용 문제 일괄 상태 변경", description = "여러 공용 문제의 활성/비활성 상태를 한 번에 변경합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "변경 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 오류"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "공용 문제 없음")
+    })
+    ResponseEntity<ApiResponse<Void>> changePublicQuestionStatuses(
+            @Valid @RequestBody AdminPublicQuestionBulkStatusChangeRequest request
+    );
+
     @Operation(summary = "공용 문제 삭제", description = "공용 문제를 삭제합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
@@ -80,5 +94,17 @@ public interface AdminPublicQuestionControllerDocs {
     })
     ResponseEntity<ApiResponse<Void>> deletePublicQuestion(
             @PathVariable("questionId") Long questionId
+    );
+
+    @Operation(summary = "공용 문제 일괄 삭제", description = "여러 공용 문제를 한 번에 삭제합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 오류"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "공용 문제 없음")
+    })
+    ResponseEntity<ApiResponse<Void>> deletePublicQuestions(
+            @Valid @RequestBody AdminPublicQuestionBulkDeleteRequest request
     );
 }

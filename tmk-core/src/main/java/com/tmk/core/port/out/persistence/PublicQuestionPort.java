@@ -11,9 +11,13 @@ public interface PublicQuestionPort {
 
     PublicQuestion save(PublicQuestion publicQuestion);
 
+    List<PublicQuestion> saveAll(List<PublicQuestion> publicQuestions);
+
     Optional<PublicQuestion> findById(Long publicQuestionId);
 
     List<PublicQuestion> findAll();
+
+    List<PublicQuestion> findAllByIds(List<Long> publicQuestionIds);
 
     List<PublicQuestionSearchResult> search(
             Long topicId,
@@ -28,7 +32,11 @@ public interface PublicQuestionPort {
 
     List<PublicQuestion> findAllActiveByTopicIdLimit(Long topicId, int limit);
 
+    long countByTopicId(Long topicId);
+
     long countActiveByTopicId(Long topicId);
 
     void deleteById(Long publicQuestionId);
+
+    void deleteAllByIds(List<Long> publicQuestionIds);
 }

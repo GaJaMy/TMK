@@ -38,15 +38,15 @@
         <section class="exam-status-card">
             <div class="exam-card-head">
                 <div>
-                    <span class="feature-index">IN PROGRESS</span>
-                    <h2>현재 진행중인 시험</h2>
-                    <p>시험은 한 번에 하나만 진행할 수 있으며, 이탈해도 시험 시간은 서버에서 계속 감소합니다.</p>
+                    <span class="feature-index">ACTIVE</span>
+                    <h2>생성 및 진행중 시험</h2>
+                    <p>생성된 시험과 현재 진행중인 시험을 함께 확인할 수 있습니다. 생성된 시험은 목록의 버튼으로 바로 시작합니다.</p>
                 </div>
             </div>
 
             <div class="exam-empty-state" id="examEmptyState">
-                <strong>진행중인 시험이 없습니다.</strong>
-                <p>진행중인 시험이 생기면 이 영역에 남은 시간과 재진입 버튼이 표시됩니다.</p>
+                <strong>생성되거나 진행중인 시험이 없습니다.</strong>
+                <p>시험을 생성하면 이 영역에 생성된 시험과 진행중인 시험이 함께 표시됩니다.</p>
             </div>
 
             <div class="exam-active-state" id="examActiveState" hidden>
@@ -55,6 +55,14 @@
                     <p id="examActiveMeta">남은 시간과 시험 정보가 여기에 표시됩니다.</p>
                 </div>
                 <button type="button" class="primary-cta primary-cta-confirm exam-resume-button" id="resumeExamButton">재진입</button>
+            </div>
+
+            <div class="exam-created-section" id="examCreatedSection" hidden>
+                <div class="exam-created-head">
+                    <strong>시작 가능한 시험</strong>
+                    <p>생성된 시험을 확인하고 각 row의 버튼으로 시험을 시작할 수 있습니다.</p>
+                </div>
+                <div class="history-linear-list" id="examCreatedList"></div>
             </div>
         </section>
 
@@ -67,11 +75,8 @@
                 <form class="exam-entry-form" data-exam-start-form data-exam-source="PUBLIC">
                     <label class="user-field">
                         <span>Topic</span>
-                        <select class="exam-select" name="sourceLabel">
+                        <select class="exam-select" name="sourceId">
                             <option value="">Topic을 선택하세요</option>
-                            <option value="Java">Java</option>
-                            <option value="Spring">Spring</option>
-                            <option value="Database">Database</option>
                         </select>
                     </label>
 
@@ -85,7 +90,7 @@
                         <input type="number" name="durationMinutes" min="1" placeholder="예: 30">
                     </label>
 
-                    <button type="submit" class="primary-cta primary-cta-block">공용문제 시험 시작</button>
+                    <button type="submit" class="primary-cta primary-cta-block">공용문제 시험 생성</button>
                 </form>
             </article>
 
@@ -97,11 +102,8 @@
                 <form class="exam-entry-form" data-exam-start-form data-exam-source="PRIVATE">
                     <label class="user-field">
                         <span>문서 / 문제 묶음</span>
-                        <select class="exam-select" name="sourceLabel">
+                        <select class="exam-select" name="sourceId">
                             <option value="">문서 또는 문제 묶음을 선택하세요</option>
-                            <option value="운영체제 정리.md">운영체제 정리.md</option>
-                            <option value="Spring Boot 핵심.pdf">Spring Boot 핵심.pdf</option>
-                            <option value="데이터베이스 요약.md">데이터베이스 요약.md</option>
                         </select>
                     </label>
 
@@ -115,12 +117,31 @@
                         <input type="number" name="durationMinutes" min="1" placeholder="예: 30">
                     </label>
 
-                    <button type="submit" class="primary-cta primary-cta-block">개인문제 시험 시작</button>
+                    <button type="submit" class="primary-cta primary-cta-block">개인문제 시험 생성</button>
                 </form>
             </article>
         </section>
+
+        <div class="user-status-card" id="examCreateStatus" aria-live="polite">
+            시험 생성 후 예약 시작 시각과 현재 상태를 이 영역에서 확인합니다.
+        </div>
     </section>
 </main>
+<div class="modal-backdrop" id="examStartDialog" hidden>
+    <div class="user-modal-card">
+        <div class="modal-head">
+            <div>
+                <span class="feature-index">NOTICE</span>
+                <h2 id="examStartDialogTitle">시험을 시작할 수 없습니다.</h2>
+                <p id="examStartDialogMessage">시험 시작 조건을 확인한 뒤 다시 시도해 주세요.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeExamStartDialog" aria-label="다이얼로그 닫기">×</button>
+        </div>
+        <div class="confirm-modal-actions">
+            <button type="button" class="primary-cta primary-cta-block" id="confirmExamStartDialog">확인</button>
+        </div>
+    </div>
+</div>
 <script src="./assets/app.js"></script>
 </body>
 </html>

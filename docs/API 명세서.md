@@ -109,7 +109,7 @@ Authorization: Bearer {accessToken}
 
 ### 1.1 회원가입
 
-**POST** `/auth/register`
+**POST** `/api/auth/v1/register`
 
 ```json
 {
@@ -140,7 +140,7 @@ Authorization: Bearer {accessToken}
 
 ### 1.2 로그인
 
-**POST** `/auth/login`
+**POST** `/api/auth/v1/login`
 
 ```json
 {
@@ -166,7 +166,7 @@ Authorization: Bearer {accessToken}
 
 ### 1.3 토큰 재발급
 
-**POST** `/auth/reissue`
+**POST** `/api/auth/v1/reissue`
 
 ```json
 {
@@ -176,12 +176,12 @@ Authorization: Bearer {accessToken}
 
 ### 1.4 로그아웃
 
-**POST** `/auth/logout`
+**POST** `/api/auth/v1/logout`
 🔒 인증 필요
 
 ### 1.5 비밀번호 재설정
 
-**POST** `/auth/reset-password`
+**POST** `/api/auth/v1/reset-password`
 
 아이디 존재 여부를 먼저 확인한 뒤, 확인된 경우에만 새 비밀번호를 입력해 재설정합니다.
 
@@ -253,6 +253,25 @@ Authorization: Bearer {accessToken}
 **GET** `/my/documents`
 🔒 인증 필요
 
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": [
+    {
+      "documentId": 11,
+      "title": "Spring Notes.pdf",
+      "status": "PROCESSING",
+      "generatedQuestionCount": 0,
+      "createdAt": "2026-05-06T10:00:00+09:00",
+      "updatedAt": "2026-05-06T10:00:00+09:00"
+    }
+  ]
+}
+```
+
 ### 3.3 내 문서 상태 조회
 
 **GET** `/my/documents/{documentId}/status`
@@ -273,22 +292,34 @@ Authorization: Bearer {accessToken}
 }
 ```
 
+### 3.4 내 문서 상태 SSE 구독
+
+**GET** `/my/documents/{documentId}/events?accessToken={accessToken}`
+
+브라우저 `EventSource`는 `Authorization` 헤더를 직접 붙일 수 없어서, SSE 구독 시에는 `accessToken`을 쿼리 파라미터로 전달합니다.
+
+**Event Name**
+
+`document-status`
+
+**Event Data**
+
+```json
+{
+  "documentId": 11,
+  "title": "Spring Notes.pdf",
+  "status": "COMPLETED",
+  "generatedQuestionCount": 12,
+  "createdAt": "2026-05-06T10:00:00+09:00",
+  "updatedAt": "2026-05-06T10:01:20+09:00"
+}
+```
+
 ---
 
 ## 4. 문제 조회 API
 
-### 4.1 내 문서 기반 문제 조회
-
-**GET** `/my/questions`
-🔒 인증 필요
-
-**Query**
-
-| 파라미터 | 설명 |
-|----------|------|
-| documentId | 특정 문서 기반 문제만 조회 |
-
-### 4.2 공용 문제 목록 조회
+### 4.1 공용 문제 목록 조회
 
 **GET** `/questions/public`
 🔒 인증 필요
@@ -369,19 +400,24 @@ Authorization: Bearer {accessToken}
   "msg": "ok",
   "data": {
     "examId": 101,
+    "title": "Spring - 시험",
+    "sourceType": "PUBLIC_TOPIC",
+    "totalQuestions": 10,
+    "timeLimitMinutes": 30,
     "startedAt": "2026-04-27T10:00:00+09:00",
     "expiredAt": "2026-04-27T10:30:00+09:00",
-    "status": "IN_PROGRESS"
+    "status": "IN_PROGRESS",
+    "remainingSeconds": 1800
   }
 }
 ```
 
-### 5.3 진행중 시험 조회
+### 5.3 시험 목록 조회
 
-**GET** `/exams/in-progress`
+**GET** `/exams`
 🔒 인증 필요
 
-현재 로그인 사용자의 진행중 시험을 조회합니다. 시험 화면 이탈 후 재진입할 때 사용하는 API입니다.
+현재 로그인 사용자의 `CREATED`, `IN_PROGRESS` 시험 목록을 조회합니다. 시험 홈 화면에서 생성된 시험과 진행중 시험을 함께 표시할 때 사용합니다.
 
 **Response**
 
@@ -389,18 +425,36 @@ Authorization: Bearer {accessToken}
 {
   "errorCode": "SUCCESS",
   "msg": "ok",
-  "data": {
-    "examId": 101,
-    "sourceType": "PUBLIC_TOPIC",
-    "status": "IN_PROGRESS",
-    "startedAt": "2026-04-27T10:00:00+09:00",
-    "expiredAt": "2026-04-27T10:30:00+09:00",
-    "remainingSeconds": 1240
-  }
+  "data": [
+    {
+      "examId": 102,
+      "title": "운영체제 정리.md - 시험",
+      "sourceType": "PRIVATE_DOCUMENT",
+      "totalQuestions": 12,
+      "timeLimitMinutes": 20,
+      "status": "CREATED",
+      "createdAt": "2026-04-27T09:58:00+09:00",
+      "startedAt": null,
+      "expiredAt": null,
+      "remainingSeconds": 0
+    },
+    {
+      "examId": 101,
+      "title": "Spring - 시험",
+      "sourceType": "PUBLIC_TOPIC",
+      "totalQuestions": 10,
+      "timeLimitMinutes": 30,
+      "status": "IN_PROGRESS",
+      "createdAt": "2026-04-27T09:50:00+09:00",
+      "startedAt": "2026-04-27T10:00:00+09:00",
+      "expiredAt": "2026-04-27T10:30:00+09:00",
+      "remainingSeconds": 1240
+    }
+  ]
 }
 ```
 
-진행중 시험이 없으면 `data`는 `null`입니다.
+생성되거나 진행중인 시험이 없으면 `data`는 빈 배열입니다.
 
 ### 5.4 시험 문제 조회
 
@@ -469,7 +523,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.1 관리자 로그인
 
-**POST** `/admin/auth/login`
+**POST** `/admin/auth/v1/login`
 
 관리자 웹 로그인 전용 API입니다. 일반 사용자 계정은 로그인에 성공하더라도 `AUTH_004` 또는 `AUTH_007`로 차단할 수 있습니다.
 
@@ -495,7 +549,39 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-### 6.2 관리자 목록 조회
+### 6.2 관리자 토큰 재발급
+
+**POST** `/admin/auth/v1/reissue`
+
+```json
+{
+  "refreshToken": "jwt-refresh-token"
+}
+```
+
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": {
+    "accessToken": "jwt-access-token",
+    "refreshToken": "jwt-refresh-token",
+    "expiresIn": 1800,
+    "role": "ADMIN"
+  }
+}
+```
+
+### 6.3 관리자 로그아웃
+
+**POST** `/admin/auth/v1/logout`
+🔒 ADMIN
+
+현재 access token을 블랙리스트 처리하고 refresh token을 삭제합니다.
+
+### 6.4 관리자 목록 조회
 
 **GET** `/admin/users`
 🔒 ADMIN
@@ -564,10 +650,10 @@ Authorization: Bearer {accessToken}
 
 ### 6.6 관리자 Topic 목록 조회
 
-**GET** `/admin/topics`
+**GET** `/admin/v1/topics`
 🔒 ADMIN
 
-공용문제 관리 > Topic 관리 탭에서 사용합니다.
+공용문제 관리 > Topic 관리 탭과 문제 등록 다이얼로그의 Topic 선택 목록에서 사용합니다.
 
 **Response**
 
@@ -579,6 +665,7 @@ Authorization: Bearer {accessToken}
     {
       "topicId": 1,
       "name": "Java",
+      "active": true,
       "questionCount": 12,
       "createdAt": "2026-04-27T09:00:00+09:00"
     }

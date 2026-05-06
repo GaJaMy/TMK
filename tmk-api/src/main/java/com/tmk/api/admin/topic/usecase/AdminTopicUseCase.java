@@ -4,6 +4,7 @@ import com.tmk.api.admin.topic.dto.AdminTopicResponse;
 import com.tmk.api.admin.topic.request.AdminTopicCreateRequest;
 import com.tmk.api.admin.topic.result.AdminTopicResult;
 import com.tmk.api.admin.topic.service.AdminTopicService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminTopicUseCase {
 
     private final AdminTopicService adminTopicService;
+
+    @Transactional(readOnly = true)
+    public List<AdminTopicResponse> getTopics() {
+        List<AdminTopicResult> results = adminTopicService.getTopics();
+        return results.stream()
+                .map(AdminTopicResponse::from)
+                .toList();
+    }
 
     @Transactional
     public AdminTopicResponse createTopic(Long createdByAdminId, AdminTopicCreateRequest request) {

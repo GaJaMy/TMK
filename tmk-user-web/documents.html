@@ -46,6 +46,11 @@
                 </div>
 
                 <form id="documentUploadForm" class="document-upload-form">
+                    <label class="user-field">
+                        <span>문서 제목</span>
+                        <input id="documentTitleInput" name="documentTitle" type="text" placeholder="예: Spring Notes" required>
+                    </label>
+
                     <label class="document-dropzone" for="documentFileInput">
                         <input id="documentFileInput" name="documentFileInput" type="file" accept=".pdf,.md,application/pdf,text/markdown,text/plain" required>
                         <span class="document-dropzone-step">1. 업로드할 문서 선택</span>
@@ -96,8 +101,24 @@
             </article>
         </section>
 
+        <section class="document-history-card">
+            <div class="document-card-head">
+                <div>
+                    <span class="feature-index">MY DOCUMENTS</span>
+                    <h2>내 문서 목록</h2>
+                    <p id="documentListStatus">등록된 문서와 현재 생성 상태를 확인합니다.</p>
+                </div>
+            </div>
+
+            <div class="document-history-empty" id="documentListEmptyState">
+                아직 등록된 문서가 없습니다.
+            </div>
+
+            <ul class="document-history-list" id="documentList"></ul>
+        </section>
+
         <div class="user-status-card" id="documentUploadStatus" aria-live="polite">
-            문서 등록 API 연동 전입니다. 현재는 업로드 이후 상태 변화만 확인할 수 있습니다.
+            문서를 업로드하면 문제 생성 준비 상태로 등록됩니다.
         </div>
     </section>
 </main>

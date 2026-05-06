@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 import com.tmk.api.admin.question.result.AdminPublicQuestionDetailResult;
 import com.tmk.api.admin.question.result.AdminPublicQuestionResult;
@@ -299,6 +300,76 @@ class AdminPublicQuestionServiceTest {
     }
 
     @Test
+    void changePublicQuestionStatusesActivatesQuestionsWhenAllQuestionsExist() {
+        OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
+        PublicQuestion firstQuestion = PublicQuestion.builder()
+                .id(1001L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(false)
+                .content("question-1")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.EASY)
+                .answer("answer-1")
+                .explanation("explanation-1")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+        PublicQuestion secondQuestion = PublicQuestion.builder()
+                .id(1002L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(false)
+                .content("question-2")
+                .type(QuestionType.TRUE_FALSE)
+                .difficulty(Difficulty.NORMAL)
+                .answer("answer-2")
+                .explanation("explanation-2")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+        List<Long> questionIds = List.of(1001L, 1002L);
+
+        given(publicQuestionPort.findAllByIds(questionIds)).willReturn(List.of(firstQuestion, secondQuestion));
+
+        adminPublicQuestionService.changePublicQuestionStatuses(questionIds, true);
+
+        assertThat(firstQuestion.isActive()).isTrue();
+        assertThat(secondQuestion.isActive()).isTrue();
+        then(publicQuestionPort).should().saveAll(List.of(firstQuestion, secondQuestion));
+    }
+
+    @Test
+    void changePublicQuestionStatusesThrowsWhenAnyQuestionDoesNotExist() {
+        List<Long> questionIds = List.of(1001L, 1002L);
+        OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
+        PublicQuestion firstQuestion = PublicQuestion.builder()
+                .id(1001L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(false)
+                .content("question-1")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.EASY)
+                .answer("answer-1")
+                .explanation("explanation-1")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+
+        given(publicQuestionPort.findAllByIds(questionIds)).willReturn(List.of(firstQuestion));
+
+        assertThatThrownBy(() -> adminPublicQuestionService.changePublicQuestionStatuses(questionIds, true))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.PUBLIC_QUESTION_NOT_FOUND.getMessage());
+
+        then(publicQuestionPort).should(never()).saveAll(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
     void deletePublicQuestionDeletesWhenQuestionExists() {
         OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
         PublicQuestion question = PublicQuestion.builder()
@@ -330,5 +401,73 @@ class AdminPublicQuestionServiceTest {
         assertThatThrownBy(() -> adminPublicQuestionService.deletePublicQuestion(1001L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.PUBLIC_QUESTION_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void deletePublicQuestionsDeletesWhenAllQuestionsExist() {
+        OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
+        PublicQuestion firstQuestion = PublicQuestion.builder()
+                .id(1001L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(true)
+                .content("question-1")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.EASY)
+                .answer("answer-1")
+                .explanation("explanation-1")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+        PublicQuestion secondQuestion = PublicQuestion.builder()
+                .id(1002L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(true)
+                .content("question-2")
+                .type(QuestionType.TRUE_FALSE)
+                .difficulty(Difficulty.NORMAL)
+                .answer("answer-2")
+                .explanation("explanation-2")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+        List<Long> questionIds = List.of(1001L, 1002L);
+
+        given(publicQuestionPort.findAllByIds(questionIds)).willReturn(List.of(firstQuestion, secondQuestion));
+
+        adminPublicQuestionService.deletePublicQuestions(questionIds);
+
+        then(publicQuestionPort).should().deleteAllByIds(questionIds);
+    }
+
+    @Test
+    void deletePublicQuestionsThrowsWhenAnyQuestionDoesNotExist() {
+        List<Long> questionIds = List.of(1001L, 1002L);
+        OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
+        PublicQuestion firstQuestion = PublicQuestion.builder()
+                .id(1001L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(true)
+                .content("question-1")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.EASY)
+                .answer("answer-1")
+                .explanation("explanation-1")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of())
+                .build();
+
+        given(publicQuestionPort.findAllByIds(questionIds)).willReturn(List.of(firstQuestion));
+
+        assertThatThrownBy(() -> adminPublicQuestionService.deletePublicQuestions(questionIds))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.PUBLIC_QUESTION_NOT_FOUND.getMessage());
+
+        then(publicQuestionPort).should(never()).deleteAllByIds(questionIds);
     }
 }

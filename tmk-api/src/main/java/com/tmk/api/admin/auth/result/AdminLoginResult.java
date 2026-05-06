@@ -5,6 +5,7 @@ public record AdminLoginResult(
         String username,
         String accessToken,
         String refreshToken,
-        long expiresIn
+        long expiresIn,
+        String role
 ) {
 }

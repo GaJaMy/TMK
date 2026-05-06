@@ -22,6 +22,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    public static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
+
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
     private final TokenBlacklistPort tokenBlacklistPort;
@@ -45,6 +47,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            request.setAttribute(ACCESS_TOKEN_ATTRIBUTE, token);
+
             String role = claims.get("role", String.class);
             Long principalId = claims.get("principalId", Long.class);
             String principalType = claims.get("principalType", String.class);
@@ -58,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     principalType
             );
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);

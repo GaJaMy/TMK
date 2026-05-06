@@ -18,9 +18,8 @@ public class BatchScheduler {
 
     private final JobLauncher jobLauncher;
     private final Job examAutoSubmitJob;
-    private final Job expiredVerificationCleanJob;
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 1000)
     public void runExamAutoSubmit() {
         try {
             JobParameters params = new JobParametersBuilder()
@@ -29,18 +28,6 @@ public class BatchScheduler {
             jobLauncher.run(examAutoSubmitJob, params);
         } catch (Exception e) {
             log.error("ExamAutoSubmitJob execution failed", e);
-        }
-    }
-
-    @Scheduled(cron = "0 0 3 * * *")
-    public void runExpiredVerificationClean() {
-        try {
-            JobParameters params = new JobParametersBuilder()
-                    .addLong("timestamp", System.currentTimeMillis())
-                    .toJobParameters();
-            jobLauncher.run(expiredVerificationCleanJob, params);
-        } catch (Exception e) {
-            log.error("ExpiredVerificationCleanJob execution failed", e);
         }
     }
 }

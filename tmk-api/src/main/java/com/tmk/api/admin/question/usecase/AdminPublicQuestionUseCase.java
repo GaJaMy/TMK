@@ -3,6 +3,8 @@ package com.tmk.api.admin.question.usecase;
 import com.tmk.api.admin.question.dto.AdminPublicQuestionDetailResponse;
 import com.tmk.api.admin.question.result.AdminPublicQuestionDetailResult;
 import com.tmk.api.admin.question.request.AdminPublicQuestionCreateRequest;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkDeleteRequest;
+import com.tmk.api.admin.question.request.AdminPublicQuestionBulkStatusChangeRequest;
 import com.tmk.api.admin.question.request.AdminPublicQuestionStatusChangeRequest;
 import com.tmk.api.admin.question.dto.AdminPublicQuestionSummaryResponse;
 import com.tmk.api.admin.question.result.AdminPublicQuestionResult;
@@ -68,7 +70,17 @@ public class AdminPublicQuestionUseCase {
     }
 
     @Transactional
+    public void changePublicQuestionStatuses(AdminPublicQuestionBulkStatusChangeRequest request) {
+        adminPublicQuestionService.changePublicQuestionStatuses(request.questionIds(), request.active());
+    }
+
+    @Transactional
     public void deletePublicQuestion(Long questionId) {
         adminPublicQuestionService.deletePublicQuestion(questionId);
+    }
+
+    @Transactional
+    public void deletePublicQuestions(AdminPublicQuestionBulkDeleteRequest request) {
+        adminPublicQuestionService.deletePublicQuestions(request.questionIds());
     }
 }

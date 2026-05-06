@@ -2,6 +2,7 @@ package com.tmk.core.port.out.persistence;
 
 import com.tmk.core.monitoring.entity.DailyActivityStat;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,4 +13,6 @@ public interface DailyActivityStatPort {
     Optional<DailyActivityStat> findByStatDate(LocalDate statDate);
 
     List<DailyActivityStat> findByStatDateBetweenOrderByStatDateAsc(LocalDate from, LocalDate to);
+
+    void increaseUserPageAccessAttemptCount(LocalDate statDate, int value, OffsetDateTime now);
 }

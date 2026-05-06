@@ -7,14 +7,16 @@ public record AdminTopicResult(
         Long topicId,
         String name,
         boolean active,
+        long questionCount,
         OffsetDateTime createdAt
 ) {
 
-    public static AdminTopicResult from(Topic topic) {
+    public static AdminTopicResult from(Topic topic, long questionCount) {
         return new AdminTopicResult(
                 topic.getId(),
                 topic.getName(),
                 topic.isActive(),
+                questionCount,
                 topic.getCreatedAt()
         );
     }

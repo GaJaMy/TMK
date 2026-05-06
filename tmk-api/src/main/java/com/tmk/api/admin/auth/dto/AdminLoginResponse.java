@@ -7,7 +7,8 @@ public record AdminLoginResponse(
         String username,
         String accessToken,
         String refreshToken,
-        long expiresIn
+        long expiresIn,
+        String role
 ) {
 
     public static AdminLoginResponse from(AdminLoginResult result) {
@@ -16,7 +17,8 @@ public record AdminLoginResponse(
                 result.username(),
                 result.accessToken(),
                 result.refreshToken(),
-                result.expiresIn()
+                result.expiresIn(),
+                result.role()
         );
     }
 }

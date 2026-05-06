@@ -19,6 +19,9 @@ public interface ExamJpaRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findByUserIdAndStatus(Long userId, ExamStatus status);
 
     @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByUserIdAndStatusInOrderByCreatedAtDesc(Long userId, List<ExamStatus> statuses);
+
+    @EntityGraph(attributePaths = "examQuestions")
     List<Exam> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     @EntityGraph(attributePaths = "examQuestions")

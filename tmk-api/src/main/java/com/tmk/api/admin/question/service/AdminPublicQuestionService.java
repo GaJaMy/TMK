@@ -107,11 +107,46 @@ public class AdminPublicQuestionService {
     }
 
     @Transactional
+    public void changePublicQuestionStatuses(List<Long> questionIds, boolean active) {
+        List<Long> distinctQuestionIds = questionIds.stream()
+                .distinct()
+                .toList();
+        List<PublicQuestion> publicQuestions = publicQuestionPort.findAllByIds(distinctQuestionIds);
+        if (publicQuestions.size() != distinctQuestionIds.size()) {
+            throw new BusinessException(ErrorCode.PUBLIC_QUESTION_NOT_FOUND);
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+        for (PublicQuestion publicQuestion : publicQuestions) {
+            if (active) {
+                publicQuestion.activate(now);
+            } else {
+                publicQuestion.deactivate(now);
+            }
+        }
+
+        publicQuestionPort.saveAll(publicQuestions);
+    }
+
+    @Transactional
     public void deletePublicQuestion(Long questionId) {
         publicQuestionPort.findById(questionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PUBLIC_QUESTION_NOT_FOUND));
 
         publicQuestionPort.deleteById(questionId);
+    }
+
+    @Transactional
+    public void deletePublicQuestions(List<Long> questionIds) {
+        List<Long> distinctQuestionIds = questionIds.stream()
+                .distinct()
+                .toList();
+        List<PublicQuestion> publicQuestions = publicQuestionPort.findAllByIds(distinctQuestionIds);
+        if (publicQuestions.size() != distinctQuestionIds.size()) {
+            throw new BusinessException(ErrorCode.PUBLIC_QUESTION_NOT_FOUND);
+        }
+
+        publicQuestionPort.deleteAllByIds(distinctQuestionIds);
     }
 
     private List<PublicQuestionOption> createOptions(List<String> options) {

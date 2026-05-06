@@ -1,12 +1,12 @@
 -- =============================================================
 -- TMK (Test My Knowledge) DDL
--- DB      : PostgreSQL
--- Version : v1.0.0
--- Date    : 2026-03-10
--- Note    : 외래키 제약조건 미적용 (애플리케이션 레벨에서 무결성 관리)
+-- DB      : PostgreSQL 14+
+-- Version : v3.0.0
+-- Date    : 2026-04-27
+-- Basis   : TMK(Test My Knowledge).md, ERD 설계.md, API 명세서.md
+-- Note    : 목표 요구사항 기준 스키마, DB 외래키 제약은 두지 않음
 -- =============================================================
 
--- pgvector 확장 활성화 (벡터 타입 및 HNSW 인덱스 사용을 위해 필수)
 CREATE EXTENSION IF NOT EXISTS vector;
 
 
@@ -15,53 +15,63 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- =============================================================
 CREATE TABLE "user"
 (
-    id            BIGSERIAL    PRIMARY KEY,
-    email         VARCHAR(255) NOT NULL,
-    password      VARCHAR(255),
-    provider      VARCHAR(20)  NOT NULL,
-    provider_id   VARCHAR(255),
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id           BIGSERIAL    PRIMARY KEY,
+    username     VARCHAR(50)  NOT NULL,
+    password     VARCHAR(255) NOT NULL,
+    active       BOOLEAN      NOT NULL DEFAULT TRUE,
+    country_code VARCHAR(10)  NOT NULL,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_user_email
-        UNIQUE (email),
-    CONSTRAINT chk_user_provider
-        CHECK (provider IN ('LOCAL', 'GOOGLE', 'KAKAO', 'NAVER'))
+    CONSTRAINT uq_user_username UNIQUE (username)
 );
 
-COMMENT ON TABLE  "user"                IS '사용자';
-COMMENT ON COLUMN "user".id             IS 'PK';
-COMMENT ON COLUMN "user".email      IS '이메일 (로그인 식별자)';
-COMMENT ON COLUMN "user".password   IS 'bcrypt 암호화 비밀번호. 소셜 로그인 시 NULL';
-COMMENT ON COLUMN "user".provider   IS '가입 경로 (LOCAL, GOOGLE, KAKAO, NAVER)';
-COMMENT ON COLUMN "user".provider_id    IS '소셜 로그인 제공자 사용자 식별자';
-COMMENT ON COLUMN "user".created_at     IS '생성 일시';
-COMMENT ON COLUMN "user".updated_at     IS '수정 일시';
+COMMENT ON TABLE "user" IS '일반 사용자 계정';
+COMMENT ON COLUMN "user".username IS '로그인 아이디';
+COMMENT ON COLUMN "user".password IS 'bcrypt 암호화 비밀번호';
+COMMENT ON COLUMN "user".active IS '계정 활성 여부';
+COMMENT ON COLUMN "user".country_code IS '문제/정답/해설 생성 언어 결정을 위한 국가 코드';
 
 
 -- =============================================================
--- TABLE: email_verification
+-- TABLE: admin
 -- =============================================================
-CREATE TABLE email_verification
+CREATE TABLE admin
 (
-    id         BIGSERIAL    PRIMARY KEY,
-    email      VARCHAR(255) NOT NULL,
-    code       VARCHAR(10)  NOT NULL,
-    verified   BOOLEAN      NOT NULL DEFAULT FALSE,
-    expired_at TIMESTAMPTZ  NOT NULL,
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id                  BIGSERIAL    PRIMARY KEY,
+    username            VARCHAR(50)  NOT NULL,
+    password            VARCHAR(255) NOT NULL,
+    active              BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_by_admin_id BIGINT,
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_email_verification_email
-        UNIQUE (email)
+    CONSTRAINT uq_admin_username UNIQUE (username)
 );
 
-COMMENT ON TABLE  email_verification            IS '이메일 인증';
-COMMENT ON COLUMN email_verification.id         IS 'PK';
-COMMENT ON COLUMN email_verification.email      IS '인증 대상 이메일';
-COMMENT ON COLUMN email_verification.code       IS '인증 코드 (6자리)';
-COMMENT ON COLUMN email_verification.verified   IS '인증 완료 여부';
-COMMENT ON COLUMN email_verification.expired_at IS '인증 코드 만료 일시';
-COMMENT ON COLUMN email_verification.created_at IS '생성 일시';
+COMMENT ON TABLE admin IS '관리자 계정';
+COMMENT ON COLUMN admin.created_by_admin_id IS '이 계정을 생성한 관리자 ID';
+
+
+-- =============================================================
+-- TABLE: topic
+-- =============================================================
+CREATE TABLE topic
+(
+    id                  BIGSERIAL    PRIMARY KEY,
+    name                VARCHAR(100) NOT NULL,
+    description         TEXT,
+    active              BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_by_admin_id BIGINT       NOT NULL,
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_topic_name UNIQUE (name)
+);
+
+COMMENT ON TABLE topic IS '공용 문제 Topic';
+COMMENT ON COLUMN topic.active IS 'Topic 활성 여부';
+COMMENT ON COLUMN topic.created_by_admin_id IS '생성한 관리자 ID';
 
 
 -- =============================================================
@@ -69,22 +79,28 @@ COMMENT ON COLUMN email_verification.created_at IS '생성 일시';
 -- =============================================================
 CREATE TABLE document
 (
-    id         BIGSERIAL    PRIMARY KEY,
-    title      VARCHAR(500) NOT NULL,
-    source     VARCHAR(500) NOT NULL,
-    status     VARCHAR(20)  NOT NULL DEFAULT 'PROCESSING',
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id                       BIGSERIAL     PRIMARY KEY,
+    user_id                  BIGINT        NOT NULL,
+    title                    VARCHAR(500)  NOT NULL,
+    source_type              VARCHAR(20)   NOT NULL,
+    source_reference         VARCHAR(1000) NOT NULL,
+    status                   VARCHAR(20)   NOT NULL,
+    generated_question_count INTEGER       NOT NULL DEFAULT 0,
+    created_at               TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at               TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
+    CONSTRAINT chk_document_source_type
+        CHECK (source_type IN ('PDF_UPLOAD', 'MD_UPLOAD')),
     CONSTRAINT chk_document_status
-        CHECK (status IN ('PROCESSING', 'COMPLETED', 'FAILED'))
+        CHECK (status IN ('PROCESSING', 'COMPLETED', 'FAILED')),
+    CONSTRAINT chk_document_generated_question_count
+        CHECK (generated_question_count >= 0)
 );
 
-COMMENT ON TABLE  document            IS '문서 (문제 생성 기반 원본, 내부 API로만 등록)';
-COMMENT ON COLUMN document.id         IS 'PK';
-COMMENT ON COLUMN document.title      IS '문서 제목';
-COMMENT ON COLUMN document.source     IS 'PDF 파일 저장 경로. 재처리 시 이 경로를 통해 PDF를 재파싱';
-COMMENT ON COLUMN document.status     IS '처리 상태 (PROCESSING: 처리 중, COMPLETED: 완료, FAILED: 실패)';
-COMMENT ON COLUMN document.created_at IS '생성 일시';
+COMMENT ON TABLE document IS '사용자 문서 메타데이터';
+COMMENT ON COLUMN document.source_reference IS '업로드 파일명 또는 저장 경로 참조값';
+COMMENT ON COLUMN document.status IS '문서 처리 상태';
+COMMENT ON COLUMN document.generated_question_count IS '생성된 개인 문제 수';
 
 
 -- =============================================================
@@ -93,74 +109,110 @@ COMMENT ON COLUMN document.created_at IS '생성 일시';
 CREATE TABLE document_chunk
 (
     id          BIGSERIAL    PRIMARY KEY,
-    document_id BIGINT       NOT NULL,   -- ref: document.id (FK 제약조건 미적용)
+    document_id BIGINT       NOT NULL,
     chunk_index SMALLINT     NOT NULL,
     content     TEXT         NOT NULL,
     embedding   vector(1536) NOT NULL,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_document_chunk_document_id_chunk_index UNIQUE (document_id, chunk_index),
+    CONSTRAINT chk_document_chunk_index
+        CHECK (chunk_index >= 0)
 );
 
-COMMENT ON TABLE  document_chunk             IS '문서 청크 및 임베딩 벡터 (pgvector)';
-COMMENT ON COLUMN document_chunk.id          IS 'PK';
-COMMENT ON COLUMN document_chunk.document_id IS '원본 문서 ID (ref: document.id)';
-COMMENT ON COLUMN document_chunk.chunk_index IS '문서 내 청크 순서 (0부터 시작)';
-COMMENT ON COLUMN document_chunk.content     IS '청크 원문 텍스트';
-COMMENT ON COLUMN document_chunk.embedding   IS 'OpenAI text-embedding-3-small 임베딩 벡터 (1536차원)';
-COMMENT ON COLUMN document_chunk.created_at  IS '생성 일시';
+COMMENT ON TABLE document_chunk IS '문서 청크 및 임베딩';
 
 
 -- =============================================================
--- TABLE: question
+-- TABLE: private_question
 -- =============================================================
-CREATE TABLE question
+CREATE TABLE private_question
 (
-    id          BIGSERIAL   PRIMARY KEY,
-    document_id BIGINT      NOT NULL,   -- ref: document.id (FK 제약조건 미적용)
-    content     TEXT        NOT NULL,
-    type        VARCHAR(30) NOT NULL,
-    difficulty  VARCHAR(10) NOT NULL,
-    answer      TEXT        NOT NULL,
-    explanation TEXT        NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id            BIGSERIAL   PRIMARY KEY,
+    user_id       BIGINT      NOT NULL,
+    document_id   BIGINT      NOT NULL,
+    content       TEXT        NOT NULL,
+    type          VARCHAR(30) NOT NULL,
+    difficulty    VARCHAR(10) NOT NULL,
+    answer        TEXT        NOT NULL,
+    explanation   TEXT        NOT NULL,
+    language_code VARCHAR(10) NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_question_type
-        CHECK (type IN ('MULTIPLE_CHOICE', 'FILL_IN_BLANK', 'IMPLEMENTATION')),
-    CONSTRAINT chk_question_difficulty
+    CONSTRAINT chk_private_question_type
+        CHECK (type IN ('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'TRUE_FALSE')),
+    CONSTRAINT chk_private_question_difficulty
         CHECK (difficulty IN ('EASY', 'NORMAL', 'HARD'))
 );
 
-COMMENT ON TABLE  question             IS '문제';
-COMMENT ON COLUMN question.id          IS 'PK';
-COMMENT ON COLUMN question.document_id IS '기반 문서 ID (ref: document.id)';
-COMMENT ON COLUMN question.content     IS '문제 내용';
-COMMENT ON COLUMN question.type        IS '문제 유형 (MULTIPLE_CHOICE, FILL_IN_BLANK, IMPLEMENTATION)';
-COMMENT ON COLUMN question.difficulty  IS '난이도 (EASY, NORMAL, HARD)';
-COMMENT ON COLUMN question.answer      IS '정답';
-COMMENT ON COLUMN question.explanation IS '해설';
-COMMENT ON COLUMN question.created_at  IS '생성 일시';
-COMMENT ON COLUMN question.updated_at  IS '수정 일시';
+COMMENT ON TABLE private_question IS '사용자 문서에서 AI가 생성한 개인 문제';
+COMMENT ON COLUMN private_question.language_code IS '문제/정답/해설 생성 언어 코드';
 
 
 -- =============================================================
--- TABLE: question_option
+-- TABLE: private_question_option
 -- =============================================================
-CREATE TABLE question_option
+CREATE TABLE private_question_option
 (
-    id            BIGSERIAL PRIMARY KEY,
-    question_id   BIGINT    NOT NULL,   -- ref: question.id (FK 제약조건 미적용)
-    option_number SMALLINT  NOT NULL,
-    content       TEXT      NOT NULL,
+    id                  BIGSERIAL PRIMARY KEY,
+    private_question_id BIGINT    NOT NULL,
+    option_number       SMALLINT  NOT NULL,
+    content             TEXT      NOT NULL,
 
-    CONSTRAINT chk_question_option_number
+    CONSTRAINT uq_private_question_option_question_id_option_number
+        UNIQUE (private_question_id, option_number),
+    CONSTRAINT chk_private_question_option_number
         CHECK (option_number BETWEEN 1 AND 5)
 );
 
-COMMENT ON TABLE  question_option               IS '문제 선택지 (객관식 전용)';
-COMMENT ON COLUMN question_option.id            IS 'PK';
-COMMENT ON COLUMN question_option.question_id   IS '문제 ID (ref: question.id)';
-COMMENT ON COLUMN question_option.option_number IS '선택지 번호 (1~5)';
-COMMENT ON COLUMN question_option.content       IS '선택지 내용';
+COMMENT ON TABLE private_question_option IS '개인 문제 선택지';
+
+
+-- =============================================================
+-- TABLE: public_question
+-- =============================================================
+CREATE TABLE public_question
+(
+    id                  BIGSERIAL   PRIMARY KEY,
+    topic_id            BIGINT      NOT NULL,
+    created_by_admin_id BIGINT      NOT NULL,
+    active              BOOLEAN     NOT NULL DEFAULT TRUE,
+    content             TEXT        NOT NULL,
+    type                VARCHAR(30) NOT NULL,
+    difficulty          VARCHAR(10) NOT NULL,
+    answer              TEXT        NOT NULL,
+    explanation         TEXT        NOT NULL,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_public_question_type
+        CHECK (type IN ('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'TRUE_FALSE')),
+    CONSTRAINT chk_public_question_difficulty
+        CHECK (difficulty IN ('EASY', 'NORMAL', 'HARD'))
+);
+
+COMMENT ON TABLE public_question IS '관리자가 직접 등록한 공용 문제';
+COMMENT ON COLUMN public_question.active IS '공용 문제 활성 여부';
+
+
+-- =============================================================
+-- TABLE: public_question_option
+-- =============================================================
+CREATE TABLE public_question_option
+(
+    id                 BIGSERIAL PRIMARY KEY,
+    public_question_id BIGINT    NOT NULL,
+    option_number      SMALLINT  NOT NULL,
+    content            TEXT      NOT NULL,
+
+    CONSTRAINT uq_public_question_option_question_id_option_number
+        UNIQUE (public_question_id, option_number),
+    CONSTRAINT chk_public_question_option_number
+        CHECK (option_number BETWEEN 1 AND 5)
+);
+
+COMMENT ON TABLE public_question_option IS '공용 문제 선택지';
 
 
 -- =============================================================
@@ -168,34 +220,51 @@ COMMENT ON COLUMN question_option.content       IS '선택지 내용';
 -- =============================================================
 CREATE TABLE exam
 (
-    id              BIGSERIAL   PRIMARY KEY,
-    user_id         BIGINT      NOT NULL,   -- ref: user.id (FK 제약조건 미적용)
-    total_questions SMALLINT    NOT NULL,
-    time_limit      SMALLINT    NOT NULL DEFAULT 30,
-    status          VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS',
-    started_at      TIMESTAMPTZ NOT NULL,
-    expired_at      TIMESTAMPTZ NOT NULL,
-    submitted_at    TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id                 BIGSERIAL   PRIMARY KEY,
+    user_id            BIGINT      NOT NULL,
+    topic_id           BIGINT,
+    document_id        BIGINT,
+    source_type        VARCHAR(30) NOT NULL,
+    total_questions    SMALLINT    NOT NULL,
+    time_limit_minutes SMALLINT    NOT NULL,
+    status             VARCHAR(20) NOT NULL,
+    started_at         TIMESTAMPTZ,
+    expired_at         TIMESTAMPTZ,
+    submitted_at       TIMESTAMPTZ,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+    CONSTRAINT chk_exam_source_type
+        CHECK (source_type IN ('PUBLIC_TOPIC', 'PRIVATE_DOCUMENT')),
     CONSTRAINT chk_exam_status
-        CHECK (status IN ('IN_PROGRESS', 'SUBMITTED')),
+        CHECK (status IN ('CREATED', 'IN_PROGRESS', 'SUBMITTED')),
     CONSTRAINT chk_exam_total_questions
-        CHECK (total_questions >= 10),
-    CONSTRAINT chk_exam_time_limit
-        CHECK (time_limit > 0)
+        CHECK (total_questions > 0),
+    CONSTRAINT chk_exam_time_limit_minutes
+        CHECK (time_limit_minutes > 0),
+    CONSTRAINT chk_exam_source_target
+        CHECK (
+            (source_type = 'PUBLIC_TOPIC' AND topic_id IS NOT NULL AND document_id IS NULL)
+            OR
+            (source_type = 'PRIVATE_DOCUMENT' AND topic_id IS NULL AND document_id IS NOT NULL)
+        ),
+    CONSTRAINT chk_exam_started_and_expired_pair
+        CHECK (
+            (started_at IS NULL AND expired_at IS NULL)
+            OR
+            (started_at IS NOT NULL AND expired_at IS NOT NULL)
+        ),
+    CONSTRAINT chk_exam_started_before_expired
+        CHECK (
+            started_at IS NULL
+            OR expired_at IS NULL
+            OR started_at < expired_at
+        )
 );
 
-COMMENT ON TABLE  exam                  IS '시험';
-COMMENT ON COLUMN exam.id               IS 'PK';
-COMMENT ON COLUMN exam.user_id          IS '응시 사용자 ID (ref: user.id)';
-COMMENT ON COLUMN exam.total_questions  IS '총 문제 수 (최소 10)';
-COMMENT ON COLUMN exam.time_limit       IS '시험 제한 시간 (분, 기본 30)';
-COMMENT ON COLUMN exam.status           IS '시험 상태 (IN_PROGRESS, SUBMITTED)';
-COMMENT ON COLUMN exam.started_at       IS '시험 시작 일시';
-COMMENT ON COLUMN exam.expired_at       IS '시험 만료 일시';
-COMMENT ON COLUMN exam.submitted_at     IS '제출 일시. 미제출 시 NULL';
-COMMENT ON COLUMN exam.created_at       IS '생성 일시';
+COMMENT ON TABLE exam IS '시험 세션';
+COMMENT ON COLUMN exam.source_type IS '시험 출처 유형';
+COMMENT ON COLUMN exam.time_limit_minutes IS '사용자 지정 시험 시간(분)';
+COMMENT ON COLUMN exam.expired_at IS '시험 재진입 시 남은 시간 계산 기준 시각';
 
 
 -- =============================================================
@@ -203,80 +272,187 @@ COMMENT ON COLUMN exam.created_at       IS '생성 일시';
 -- =============================================================
 CREATE TABLE exam_question
 (
-    id          BIGSERIAL PRIMARY KEY,
-    exam_id     BIGINT    NOT NULL,   -- ref: exam.id (FK 제약조건 미적용)
-    question_id BIGINT    NOT NULL,   -- ref: question.id (FK 제약조건 미적용)
-    order_num   SMALLINT  NOT NULL,
-    my_answer   TEXT,
-    is_correct  BOOLEAN
+    id                  BIGSERIAL PRIMARY KEY,
+    exam_id             BIGINT      NOT NULL,
+    public_question_id  BIGINT,
+    private_question_id BIGINT,
+    question_scope      VARCHAR(20) NOT NULL,
+    order_num           SMALLINT    NOT NULL,
+    my_answer           TEXT,
+    is_correct          BOOLEAN,
+
+    CONSTRAINT chk_exam_question_scope
+        CHECK (question_scope IN ('PUBLIC', 'PRIVATE')),
+    CONSTRAINT chk_exam_question_order_num
+        CHECK (order_num > 0),
+    CONSTRAINT uq_exam_question_exam_id_order_num
+        UNIQUE (exam_id, order_num),
+    CONSTRAINT chk_exam_question_reference
+        CHECK (
+            (question_scope = 'PUBLIC' AND public_question_id IS NOT NULL AND private_question_id IS NULL)
+            OR
+            (question_scope = 'PRIVATE' AND public_question_id IS NULL AND private_question_id IS NOT NULL)
+        )
 );
 
-COMMENT ON TABLE  exam_question             IS '시험 문제 (시험-문제 연결 및 답안/채점)';
-COMMENT ON COLUMN exam_question.id          IS 'PK';
-COMMENT ON COLUMN exam_question.exam_id     IS '시험 ID (ref: exam.id)';
-COMMENT ON COLUMN exam_question.question_id IS '문제 ID (ref: question.id)';
-COMMENT ON COLUMN exam_question.order_num   IS '문제 출제 순서';
-COMMENT ON COLUMN exam_question.my_answer   IS '사용자 제출 답안. 미응답 시 NULL';
-COMMENT ON COLUMN exam_question.is_correct  IS '정답 여부. 채점 전 NULL';
+COMMENT ON TABLE exam_question IS '시험 문항, 답안, 채점 결과';
 
 
 -- =============================================================
--- INDEX
+-- TABLE: daily_activity_stat
 -- =============================================================
+CREATE TABLE daily_activity_stat
+(
+    id                               BIGSERIAL   PRIMARY KEY,
+    stat_date                        DATE        NOT NULL,
+    user_page_access_attempt_count   INTEGER     NOT NULL DEFAULT 0,
+    exam_run_count                   INTEGER     NOT NULL DEFAULT 0,
+    document_registration_count      INTEGER     NOT NULL DEFAULT 0,
+    generated_private_question_count INTEGER     NOT NULL DEFAULT 0,
+    created_at                       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at                       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
--- user
-CREATE INDEX idx_user_provider_provider_id
-    ON "user" (provider, provider_id)
-    WHERE provider_id IS NOT NULL;
+    CONSTRAINT uq_daily_activity_stat_date UNIQUE (stat_date),
+    CONSTRAINT chk_daily_activity_stat_user_page_access_attempt_count
+        CHECK (user_page_access_attempt_count >= 0),
+    CONSTRAINT chk_daily_activity_stat_exam_run_count
+        CHECK (exam_run_count >= 0),
+    CONSTRAINT chk_daily_activity_stat_document_registration_count
+        CHECK (document_registration_count >= 0),
+    CONSTRAINT chk_daily_activity_stat_generated_private_question_count
+        CHECK (generated_private_question_count >= 0)
+);
 
--- email_verification
-CREATE INDEX idx_email_verification_expired_at
-    ON email_verification (expired_at);
+COMMENT ON TABLE daily_activity_stat IS '관리자 모니터링용 일별 집계';
 
--- document
-CREATE INDEX idx_document_source
-    ON document (source);
+
+-- =============================================================
+-- INDEX: user
+-- =============================================================
+CREATE INDEX idx_user_active
+    ON "user" (active);
+
+
+-- =============================================================
+-- INDEX: admin
+-- =============================================================
+CREATE INDEX idx_admin_active
+    ON admin (active);
+
+CREATE INDEX idx_admin_created_by_admin_id
+    ON admin (created_by_admin_id);
+
+
+-- =============================================================
+-- INDEX: topic
+-- =============================================================
+CREATE INDEX idx_topic_active
+    ON topic (active);
+
+CREATE INDEX idx_topic_created_by_admin_id
+    ON topic (created_by_admin_id);
+
+
+-- =============================================================
+-- INDEX: document
+-- =============================================================
+CREATE INDEX idx_document_user_id_created_at
+    ON document (user_id, created_at DESC);
 
 CREATE INDEX idx_document_status
-    ON document (status)
-    WHERE status IN ('PROCESSING', 'FAILED');
+    ON document (status);
 
--- document_chunk
+
+-- =============================================================
+-- INDEX: document_chunk
+-- =============================================================
 CREATE INDEX idx_document_chunk_document_id
     ON document_chunk (document_id);
 
--- HNSW 벡터 유사도 인덱스 (코사인 유사도)
--- m: 노드당 연결 수 (높을수록 정확도↑ 메모리↑)
--- ef_construction: 인덱스 빌드 시 탐색 범위 (높을수록 품질↑ 빌드 시간↑)
 CREATE INDEX idx_document_chunk_embedding_hnsw
     ON document_chunk USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 
--- question
-CREATE INDEX idx_question_document_id
-    ON question (document_id);
 
-CREATE INDEX idx_question_type_difficulty
-    ON question (type, difficulty);
+-- =============================================================
+-- INDEX: private_question
+-- =============================================================
+CREATE INDEX idx_private_question_user_id
+    ON private_question (user_id);
 
--- question_option
-CREATE INDEX idx_question_option_question_id
-    ON question_option (question_id);
+CREATE INDEX idx_private_question_document_id
+    ON private_question (document_id);
 
--- exam
-CREATE INDEX idx_exam_user_id
-    ON exam (user_id);
+CREATE INDEX idx_private_question_difficulty
+    ON private_question (difficulty);
 
-CREATE INDEX idx_exam_user_id_status
-    ON exam (user_id, status);
+
+-- =============================================================
+-- INDEX: private_question_option
+-- =============================================================
+CREATE INDEX idx_private_question_option_question_id
+    ON private_question_option (private_question_id);
+
+
+-- =============================================================
+-- INDEX: public_question
+-- =============================================================
+CREATE INDEX idx_public_question_topic_id
+    ON public_question (topic_id);
+
+CREATE INDEX idx_public_question_active
+    ON public_question (active);
+
+CREATE INDEX idx_public_question_type_difficulty
+    ON public_question (type, difficulty);
+
+CREATE INDEX idx_public_question_created_by_admin_id
+    ON public_question (created_by_admin_id);
+
+
+-- =============================================================
+-- INDEX: public_question_option
+-- =============================================================
+CREATE INDEX idx_public_question_option_question_id
+    ON public_question_option (public_question_id);
+
+
+-- =============================================================
+-- INDEX: exam
+-- =============================================================
+CREATE INDEX idx_exam_user_id_created_at
+    ON exam (user_id, created_at DESC);
+
+CREATE INDEX idx_exam_topic_id
+    ON exam (topic_id);
+
+CREATE INDEX idx_exam_document_id
+    ON exam (document_id);
 
 CREATE INDEX idx_exam_expired_at_in_progress
     ON exam (expired_at)
     WHERE status = 'IN_PROGRESS';
 
--- exam_question
+CREATE UNIQUE INDEX uq_exam_user_single_in_progress
+    ON exam (user_id)
+    WHERE status = 'IN_PROGRESS';
+
+
+-- =============================================================
+-- INDEX: exam_question
+-- =============================================================
 CREATE INDEX idx_exam_question_exam_id_order
     ON exam_question (exam_id, order_num);
 
-CREATE INDEX idx_exam_question_question_id
-    ON exam_question (question_id);
+CREATE INDEX idx_exam_question_public_question_id
+    ON exam_question (public_question_id);
+
+CREATE INDEX idx_exam_question_private_question_id
+    ON exam_question (private_question_id);
+
+
+-- =============================================================
+-- INDEX: daily_activity_stat
+-- =============================================================
+CREATE INDEX idx_daily_activity_stat_created_at
+    ON daily_activity_stat (created_at DESC);

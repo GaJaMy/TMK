@@ -86,7 +86,9 @@
                         </tbody>
                     </table>
                     </div>
-
+                    <div class="status-card" id="questionPageStatus" aria-live="polite">
+                        공용 문제 / Topic 관리 API를 불러오는 중입니다.
+                    </div>
                 </section>
             </section>
 
@@ -247,6 +249,11 @@
                 <span>해설</span>
                 <textarea id="newQuestionExplanation" name="newQuestionExplanation" class="form-textarea" placeholder="해설을 입력하세요" required></textarea>
             </label>
+
+            <div class="field" id="questionOptionsSection">
+                <span>선택지</span>
+                <div class="detail-grid detail-grid-tight" id="questionOptionsContainer"></div>
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="secondary-button" id="cancelQuestionModal">취소</button>

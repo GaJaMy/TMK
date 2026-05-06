@@ -44,19 +44,19 @@
         <section class="metric-grid">
             <article class="metric-card">
                 <span class="metric-label">사용자 웹 접근 시도</span>
-                <strong class="metric-value">-</strong>
+                <strong class="metric-value" id="accessAttemptMetric">-</strong>
             </article>
             <article class="metric-card">
                 <span class="metric-label">시험 진행 횟수</span>
-                <strong class="metric-value">-</strong>
+                <strong class="metric-value" id="examRunMetric">-</strong>
             </article>
             <article class="metric-card">
                 <span class="metric-label">사용자 문서 등록</span>
-                <strong class="metric-value">-</strong>
+                <strong class="metric-value" id="documentRegistrationMetric">-</strong>
             </article>
             <article class="metric-card">
                 <span class="metric-label">생성된 사용자 문제</span>
-                <strong class="metric-value">-</strong>
+                <strong class="metric-value" id="questionGenerationMetric">-</strong>
             </article>
         </section>
 
@@ -68,7 +68,7 @@
                         <h2>접근 시도 추이</h2>
                     </div>
                 </div>
-                <div class="chart-empty">
+                <div class="chart-empty" id="accessAttemptsChart">
                     아직 표시할 데이터가 없습니다.
                 </div>
             </article>
@@ -80,7 +80,7 @@
                         <h2>시험 진행 추이</h2>
                     </div>
                 </div>
-                <div class="chart-empty">
+                <div class="chart-empty" id="examRunsChart">
                     아직 표시할 데이터가 없습니다.
                 </div>
             </article>
@@ -92,7 +92,7 @@
                         <h2>문서 등록 추이</h2>
                     </div>
                 </div>
-                <div class="chart-empty">
+                <div class="chart-empty" id="documentRegistrationsChart">
                     아직 표시할 데이터가 없습니다.
                 </div>
             </article>
@@ -104,7 +104,7 @@
                         <h2>사용자 문제 생성 추이</h2>
                     </div>
                 </div>
-                <div class="chart-empty">
+                <div class="chart-empty" id="questionGenerationsChart">
                     아직 표시할 데이터가 없습니다.
                 </div>
             </article>

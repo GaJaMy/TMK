@@ -23,6 +23,8 @@ public interface PublicQuestionJpaRepository extends JpaRepository<PublicQuestio
 
     List<PublicQuestion> findAllByOrderByCreatedAtDesc();
 
+    long countByTopicId(Long topicId);
+
     long countByTopicIdAndActiveTrue(Long topicId);
 
     boolean existsByTopicId(Long topicId);
