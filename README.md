@@ -17,6 +17,13 @@
 
 ---
 
+## 개발 메모
+
+- **AI 에이전트 활용 개발**: OpenAI Codex 기반 AI 에이전트를 활용해 API 설계 보조, 화면 연동, 문서 정리, 테스트 보강 작업을 함께 진행
+- **데모용 프론트 포함**: `tmk-user-web`, `tmk-admin-web`에 사용자/관리자 흐름을 확인할 수 있는 데모용 웹 화면을 구현
+
+---
+
 ## 기술 스택
 
 채용 관점에서 이 프로젝트의 핵심 기술은 아래 조합입니다.
@@ -32,6 +39,12 @@
 - `QueryDSL`
 - `Apache PDFBox`
 
+개발 도구 및 개발 방식:
+
+- `Docker`
+- `GitHub Actions`
+- `OpenAI Codex`
+
 | 분류 | 기술 | 포인트 |
 |------|------|------|
 | Language | Java 21 | 최신 LTS 기반 |
@@ -45,6 +58,8 @@
 | AI | OpenAI API | 문서 임베딩, 문제/정답/해설 생성 |
 | Query | QueryDSL | 관리자 검색/목록 조건 조회 |
 | Document Parsing | Apache PDFBox | PDF 텍스트 추출 |
+| DevOps | Docker, GitHub Actions | 이미지 빌드, staging 배포 자동화 |
+| AI-Assisted Development | OpenAI Codex | API 구현 보조, 테스트 보강, 문서 정리 |
 | Build | Gradle Multi-module | `tmk-core`, `tmk-infra`, `tmk-api`, `tmk-batch` 분리 |
 
 ---
