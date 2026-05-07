@@ -19,14 +19,14 @@ public class OpenAiProperties {
     @Getter
     @Setter
     public static class Embedding {
-        private String model = "text-embedding-3-small";
+        private String model;
     }
 
     @Getter
     @Setter
     public static class Chat {
-        private String model = "gpt-4o-mini";
-        private double temperature = 0.7;
-        private int maxTokens = 4096;
+        private String model;
+        private double temperature;
+        private int maxTokens;
     }
 }

@@ -56,12 +56,11 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/landing/stats",
                                 "/my/documents/*/events",
                                 "/admin/v1/documents/*/events",
                                 "/admin/auth/v1/login",
                                 "/admin/auth/v1/reissue",
-                                "/api/auth/v1/verification/send",
-                                "/api/auth/v1/verification/verify",
                                 "/api/auth/v1/register",
                                 "/api/auth/v1/login",
                                 "/api/auth/v1/reissue",
@@ -93,7 +92,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(false);

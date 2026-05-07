@@ -1,10 +1,18 @@
 package com.tmk.api.user.exam.usecase;
 
+import com.tmk.api.user.exam.command.ExamAnswerSaveCommand;
 import com.tmk.api.user.exam.dto.ExamCreateResponse;
+import com.tmk.api.user.exam.dto.ExamDetailResponse;
+import com.tmk.api.user.exam.dto.ExamHistorySummaryResponse;
+import com.tmk.api.user.exam.dto.ExamResultDetailResponse;
 import com.tmk.api.user.exam.dto.ExamSummaryResponse;
 import com.tmk.api.user.exam.dto.ExamStartResponse;
+import com.tmk.api.user.exam.request.ExamAnswerSaveRequest;
 import com.tmk.api.user.exam.request.ExamCreateRequest;
 import com.tmk.api.user.exam.result.ExamCreateResult;
+import com.tmk.api.user.exam.result.ExamDetailResult;
+import com.tmk.api.user.exam.result.ExamHistorySummaryResult;
+import com.tmk.api.user.exam.result.ExamResultDetailResult;
 import com.tmk.api.user.exam.result.ExamSummaryResult;
 import com.tmk.api.user.exam.result.ExamStartResult;
 import com.tmk.api.user.exam.service.ExamService;
@@ -27,6 +35,40 @@ public class ExamUseCase {
         return results.stream()
                 .map(ExamSummaryResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExamHistorySummaryResponse> getExamHistory(Long userId) {
+        List<ExamHistorySummaryResult> results = examService.getExamHistory(userId);
+        return results.stream()
+                .map(ExamHistorySummaryResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public ExamDetailResponse getExam(Long userId, Long examId) {
+        ExamDetailResult result = examService.getExam(userId, examId);
+        return ExamDetailResponse.from(result);
+    }
+
+    @Transactional(readOnly = true)
+    public ExamResultDetailResponse getExamResult(Long userId, Long examId) {
+        ExamResultDetailResult result = examService.getExamResult(userId, examId);
+        return ExamResultDetailResponse.from(result);
+    }
+
+    @Transactional
+    public void saveAnswers(Long userId, Long examId, List<ExamAnswerSaveRequest> requests) {
+        List<ExamAnswerSaveRequest> answerRequests = requests;
+        List<ExamAnswerSaveCommand> commands = answerRequests.stream()
+                .map(request -> new ExamAnswerSaveCommand(request.questionId(), request.answer()))
+                .toList();
+        examService.saveAnswers(userId, examId, commands);
+    }
+
+    @Transactional
+    public void submitExam(Long userId, Long examId) {
+        examService.submitExam(userId, examId);
     }
 
     @Transactional

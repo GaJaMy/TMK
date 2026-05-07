@@ -1,6 +1,7 @@
 package com.tmk.infra.jpa.adapter.out.persistence;
 
 import com.tmk.core.monitoring.entity.DailyActivityStat;
+import com.tmk.core.port.out.persistence.DailyActivityStatPort.DailyActivityStatSummary;
 import com.tmk.core.port.out.persistence.DailyActivityStatPort;
 import com.tmk.infra.jpa.repository.DailyActivityStatJpaRepository;
 import java.time.LocalDate;
@@ -32,7 +33,27 @@ public class DailyActivityStatPersistenceAdapter implements DailyActivityStatPor
     }
 
     @Override
+    public DailyActivityStatSummary findSummary() {
+        return dailyActivityStatJpaRepository.findSummary();
+    }
+
+    @Override
     public void increaseUserPageAccessAttemptCount(LocalDate statDate, int value, OffsetDateTime now) {
         dailyActivityStatJpaRepository.increaseUserPageAccessAttemptCount(statDate, value, now);
+    }
+
+    @Override
+    public void increaseExamRunCount(LocalDate statDate, int value, OffsetDateTime now) {
+        dailyActivityStatJpaRepository.increaseExamRunCount(statDate, value, now);
+    }
+
+    @Override
+    public void increaseDocumentRegistrationCount(LocalDate statDate, int value, OffsetDateTime now) {
+        dailyActivityStatJpaRepository.increaseDocumentRegistrationCount(statDate, value, now);
+    }
+
+    @Override
+    public void increaseGeneratedPrivateQuestionCount(LocalDate statDate, int value, OffsetDateTime now) {
+        dailyActivityStatJpaRepository.increaseGeneratedPrivateQuestionCount(statDate, value, now);
     }
 }

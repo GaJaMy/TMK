@@ -2,7 +2,9 @@
 
 > 작성일: 2026-04-27
 > 버전: v2.0.0
-> Base URL: `/api/v1`
+> 사용자 인증 Base URL: `/api/auth/v1`
+> 사용자 기능 Base URL: `/`
+> 관리자 Base URL: `/admin/v1`
 
 ---
 
@@ -40,18 +42,18 @@ Authorization: Bearer {accessToken}
 
 | 코드 | HTTP | 설명 |
 |------|------|------|
-| AUTH_001 | 401 | 유효하지 않은 토큰 |
-| AUTH_002 | 401 | 만료된 토큰 |
-| AUTH_003 | 401 | 인증 필요 |
-| AUTH_004 | 403 | 권한 없음 |
-| AUTH_005 | 409 | 이미 사용 중인 아이디 |
-| AUTH_006 | 401 | 아이디 또는 비밀번호 불일치 |
-| AUTH_007 | 403 | admin만 admin 계정을 생성 가능 |
-| AUTH_008 | 401 | 유효하지 않은 리프레시 토큰 |
-| AUTH_009 | 403 | 비활성화된 계정 |
-| AUTH_010 | 404 | 관리자를 찾을 수 없음 |
-| AUTH_011 | 404 | 일치하는 사용자 계정을 찾을 수 없음 |
-| AUTH_012 | 422 | 비밀번호 재설정 요청 형식 오류 |
+| AUTH_001 | 401 | 유효하지 않은 액세스 토큰 |
+| AUTH_002 | 401 | 만료된 액세스 토큰 |
+| AUTH_003 | 401 | 유효하지 않은 리프레시 토큰 |
+| AUTH_004 | 401 | 인증 필요 |
+| AUTH_005 | 403 | 권한 없음 |
+| AUTH_006 | 409 | 이미 사용 중인 아이디 |
+| AUTH_007 | 401 | 아이디 또는 비밀번호 불일치 |
+| AUTH_008 | 404 | 사용자 계정을 찾을 수 없음 |
+| AUTH_009 | 404 | 관리자 계정을 찾을 수 없음 |
+| AUTH_010 | 403 | 비활성 사용자 계정 |
+| AUTH_011 | 403 | 비활성 관리자 계정 |
+| AUTH_012 | 404 | 비밀번호 재설정 대상 계정을 찾을 수 없음 |
 
 ### TOPIC
 
@@ -60,41 +62,41 @@ Authorization: Bearer {accessToken}
 | TOPIC_001 | 404 | Topic을 찾을 수 없음 |
 | TOPIC_002 | 409 | 이미 존재하는 Topic 이름 |
 | TOPIC_003 | 409 | 공용 문제와 연결된 Topic은 삭제할 수 없음 |
-| TOPIC_004 | 422 | 잘못된 Topic 생성 요청 |
+| TOPIC_004 | 409 | 비활성 Topic |
 
 ### DOCUMENT
 
 | 코드 | HTTP | 설명 |
 |------|------|------|
 | DOCUMENT_001 | 404 | 문서를 찾을 수 없음 |
-| DOCUMENT_002 | 400 | PDF 또는 MD 파일만 업로드 가능 |
-| DOCUMENT_003 | 422 | 읽을 수 없는 문서 또는 잘못된 문서 형식 |
-| DOCUMENT_004 | 403 | 다른 사용자의 문서에 접근할 수 없음 |
+| DOCUMENT_002 | 409 | 문서 처리가 아직 완료되지 않음 |
+| DOCUMENT_003 | 500 | 문서 처리 실패 |
+| DOCUMENT_004 | 400 | 지원하지 않는 문서 형식 |
 
 ### QUESTION
 
 | 코드 | HTTP | 설명 |
 |------|------|------|
-| QUESTION_001 | 404 | 문제를 찾을 수 없음 |
-| QUESTION_002 | 422 | 시험을 생성할 문제가 부족함 |
-| QUESTION_003 | 422 | 잘못된 문제 생성 요청 |
-| QUESTION_004 | 409 | 이미 비활성화된 문제 |
-| QUESTION_005 | 409 | 이미 활성화된 문제 |
-| QUESTION_006 | 422 | 객관식 선택지 개수 오류 |
-| QUESTION_007 | 422 | 참/거짓 선택지 개수 오류 |
-| QUESTION_008 | 422 | 단답형 정답 형식 오류 |
-| QUESTION_009 | 403 | 다른 사용자의 개인 문제에 접근할 수 없음 |
+| QUESTION_001 | 404 | 개인 문제를 찾을 수 없음 |
+| QUESTION_002 | 404 | 공용 문제를 찾을 수 없음 |
+| QUESTION_003 | 422 | 시험에 사용할 개인 문제가 부족함 |
+| QUESTION_004 | 422 | 시험에 사용할 공용 문제가 부족함 |
+| QUESTION_005 | 400 | 문제 유형에 맞는 선택지 수가 아님 |
+| QUESTION_006 | 409 | 비활성 공용 문제 |
 
 ### EXAM
 
 | 코드 | HTTP | 설명 |
 |------|------|------|
 | EXAM_001 | 404 | 시험을 찾을 수 없음 |
-| EXAM_002 | 409 | 이미 제출된 시험 |
-| EXAM_003 | 410 | 시험 시간 만료 |
-| EXAM_004 | 400 | 잘못된 시험 생성 조건 |
-| EXAM_005 | 409 | 이미 시작된 시험 |
-| EXAM_006 | 403 | 다른 사용자의 시험에 접근할 수 없음 |
+| EXAM_002 | 409 | 이미 시작된 시험 |
+| EXAM_003 | 409 | 진행 중인 시험이 아님 |
+| EXAM_004 | 410 | 시험 시간 만료 |
+| EXAM_005 | 409 | 이미 제출된 시험 |
+| EXAM_006 | 409 | 이미 진행 중인 시험이 있음 |
+| EXAM_007 | 404 | 시험 문항을 찾을 수 없음 |
+| EXAM_008 | 500 | 시험 문항 참조 정보 오류 |
+| EXAM_009 | 409 | 시험 결과를 아직 조회할 수 없음 |
 
 ### MONITORING
 
@@ -317,23 +319,6 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 4. 문제 조회 API
-
-### 4.1 공용 문제 목록 조회
-
-**GET** `/questions/public`
-🔒 인증 필요
-
-관리자 웹의 `공용문제 관리 > 문제 관리` 탭에서 사용한다.
-
-**Query**
-
-| 파라미터 | 설명 |
-|----------|------|
-| topicId | Topic 기준 필터 |
-
----
-
 ## 5. 시험 API
 
 ### 5.1 시험 생성
@@ -500,20 +485,52 @@ Authorization: Bearer {accessToken}
 **POST** `/exams/{examId}/submit`
 🔒 인증 필요
 
-### 5.6 시험 결과 조회
+### 5.7 시험 결과 조회
 
 **GET** `/exams/{examId}/result`
 🔒 인증 필요
 
-### 5.7 시험 히스토리 조회
+### 5.8 시험 히스토리 조회
 
 **GET** `/exams/history`
 🔒 인증 필요
 
-### 5.8 시험 히스토리 상세 조회
+제출 완료된 시험만 반환합니다.
 
-**GET** `/exams/history/{examId}`
-🔒 인증 필요
+**Response**
+
+```json
+{
+  "errorCode": "SUCCESS",
+  "msg": "ok",
+  "data": [
+    {
+      "examId": 101,
+      "title": "Spring - 시험",
+      "sourceType": "PUBLIC_TOPIC",
+      "totalQuestions": 10,
+      "timeLimitMinutes": 30,
+      "submittedAt": "2026-04-27T10:31:00+09:00",
+      "correctCount": 7,
+      "score": 70,
+      "pass": true
+    },
+    {
+      "examId": 102,
+      "title": "운영체제 정리.md - 시험",
+      "sourceType": "PRIVATE_DOCUMENT",
+      "totalQuestions": 12,
+      "timeLimitMinutes": 20,
+      "submittedAt": "2026-04-26T22:14:00+09:00",
+      "correctCount": 5,
+      "score": 41,
+      "pass": false
+    }
+  ]
+}
+```
+
+시험 히스토리 상세는 별도 경로를 두지 않고 `GET /exams/{examId}/result`를 재사용합니다.
 
 ---
 
@@ -541,6 +558,8 @@ Authorization: Bearer {accessToken}
   "errorCode": "SUCCESS",
   "msg": "ok",
   "data": {
+    "adminId": 1,
+    "username": "admin-master",
     "accessToken": "jwt-access-token",
     "refreshToken": "jwt-refresh-token",
     "expiresIn": 1800,
@@ -566,6 +585,8 @@ Authorization: Bearer {accessToken}
   "errorCode": "SUCCESS",
   "msg": "ok",
   "data": {
+    "adminId": 1,
+    "username": "admin-master",
     "accessToken": "jwt-access-token",
     "refreshToken": "jwt-refresh-token",
     "expiresIn": 1800,
@@ -583,7 +604,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.4 관리자 목록 조회
 
-**GET** `/admin/users`
+**GET** `/admin/v1/users`
 🔒 ADMIN
 
 관리자 관리 페이지의 목록 표에서 사용합니다.
@@ -596,7 +617,7 @@ Authorization: Bearer {accessToken}
   "msg": "ok",
   "data": [
     {
-      "userId": 101,
+      "adminId": 101,
       "username": "admin-master",
       "active": true,
       "createdAt": "2026-04-27T09:00:00+09:00"
@@ -607,7 +628,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.3 관리자 계정 생성
 
-**POST** `/admin/users`
+**POST** `/admin/v1/users`
 🔒 ADMIN
 
 ```json
@@ -624,7 +645,7 @@ Authorization: Bearer {accessToken}
   "errorCode": "SUCCESS",
   "msg": "ok",
   "data": {
-    "userId": 102,
+    "adminId": 102,
     "username": "admin2",
     "active": true,
     "createdAt": "2026-04-27T10:00:00+09:00"
@@ -634,7 +655,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.4 관리자 계정 상태 변경
 
-**PATCH** `/admin/users/{userId}/status`
+**PATCH** `/admin/v1/users/{userId}/status`
 🔒 ADMIN
 
 ```json
@@ -645,7 +666,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.5 관리자 계정 삭제
 
-**DELETE** `/admin/users/{userId}`
+**DELETE** `/admin/v1/users/{userId}`
 🔒 ADMIN
 
 ### 6.6 관리자 Topic 목록 조회
@@ -675,7 +696,7 @@ Authorization: Bearer {accessToken}
 
 ### 6.7 Topic 생성
 
-**POST** `/admin/topics`
+**POST** `/admin/v1/topics`
 🔒 ADMIN
 
 ```json
@@ -686,14 +707,14 @@ Authorization: Bearer {accessToken}
 
 ### 6.8 Topic 삭제
 
-**DELETE** `/admin/topics/{topicId}`
+**DELETE** `/admin/v1/topics/{topicId}`
 🔒 ADMIN
 
 Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 규칙으로 정의합니다.
 
 ### 6.9 공용 문제 목록 조회
 
-**GET** `/admin/questions`
+**GET** `/admin/v1/questions`
 🔒 ADMIN
 
 공용문제 관리 > 문제 관리 탭의 목록 표에서 사용합니다.
@@ -730,7 +751,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.10 공용 문제 상세 조회
 
-**GET** `/admin/questions/{questionId}`
+**GET** `/admin/v1/questions/{questionId}`
 🔒 ADMIN
 
 공용문제 관리 페이지에서 행 클릭 시 열리는 상세 다이얼로그에서 사용합니다.
@@ -759,7 +780,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.11 공용 문제 등록
 
-**POST** `/admin/questions`
+**POST** `/admin/v1/questions`
 🔒 ADMIN
 
 ```json
@@ -781,7 +802,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.12 공용 문제 상태 변경
 
-**PATCH** `/admin/questions/{questionId}/status`
+**PATCH** `/admin/v1/questions/{questionId}/status`
 🔒 ADMIN
 
 ```json
@@ -792,12 +813,12 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.13 공용 문제 삭제
 
-**DELETE** `/admin/questions/{questionId}`
+**DELETE** `/admin/v1/questions/{questionId}`
 🔒 ADMIN
 
 ### 6.14 공용 문제 일괄 상태 변경
 
-**PATCH** `/admin/questions/bulk/status`
+**PATCH** `/admin/v1/questions/status`
 🔒 ADMIN
 
 ```json
@@ -809,7 +830,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.15 공용 문제 일괄 삭제
 
-**DELETE** `/admin/questions/bulk`
+**DELETE** `/admin/v1/questions`
 🔒 ADMIN
 
 ```json
@@ -820,7 +841,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.16 사용자 웹 접근 시도 통계 조회
 
-**GET** `/admin/monitoring/access-attempts`
+**GET** `/admin/v1/monitoring/access-attempts`
 🔒 ADMIN
 
 **Query**
@@ -833,7 +854,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.17 시험 진행 통계 조회
 
-**GET** `/admin/monitoring/exam-runs`
+**GET** `/admin/v1/monitoring/exam-runs`
 🔒 ADMIN
 
 **Query**
@@ -846,7 +867,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.18 사용자 문서 등록 통계 조회
 
-**GET** `/admin/monitoring/document-registrations`
+**GET** `/admin/v1/monitoring/document-registrations`
 🔒 ADMIN
 
 **Query**
@@ -859,7 +880,7 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
 
 ### 6.19 사용자 문제 생성 통계 조회
 
-**GET** `/admin/monitoring/question-generations`
+**GET** `/admin/v1/monitoring/question-generations`
 🔒 ADMIN
 
 **Query**
@@ -890,6 +911,26 @@ Topic 삭제 시 연결된 공용 문제 처리 정책은 별도 비즈니스 �
         "count": 156
       }
     ]
+  }
+}
+```
+
+### 6.20 랜딩 페이지 누적 통계 조회
+
+**GET** `/landing/stats`
+
+로그인 전 랜딩 페이지에서 서비스 누적 이용 현황을 보여주기 위한 공개 API입니다.
+
+#### Response
+```json
+{
+  "code": 200,
+  "msg": "OK",
+  "data": {
+    "userPageAccessAttemptCount": 1240,
+    "examRunCount": 318,
+    "documentRegistrationCount": 205,
+    "generatedPrivateQuestionCount": 4821
   }
 }
 ```

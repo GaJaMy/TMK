@@ -3,19 +3,14 @@ services:
     image: pgvector/pgvector:pg17
     container_name: tmk-dev-postgres
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-tmk}
-      POSTGRES_USER: ${POSTGRES_USER:-tmk}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tmk}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tmk} -d ${POSTGRES_DB:-tmk}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - tmk-dev-network
 
@@ -23,33 +18,10 @@ services:
     image: redis:7-alpine
     container_name: tmk-dev-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
-    environment:
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    command:
-      - sh
-      - -c
-      - |
-        if [ -n "$$REDIS_PASSWORD" ]; then
-          exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD";
-        else
-          exec redis-server --appendonly yes;
-        fi
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-dev-data:/data
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          if [ -n "$$REDIS_PASSWORD" ]; then
-            redis-cli -a "$$REDIS_PASSWORD" ping;
-          else
-            redis-cli ping;
-          fi
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - tmk-dev-network
 

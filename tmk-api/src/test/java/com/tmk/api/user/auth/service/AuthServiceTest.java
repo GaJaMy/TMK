@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.api.security.UserAuthenticationProvider;
 import com.tmk.api.security.jwt.JwtProvider;
+import com.tmk.api.monitoring.event.UserWebAccessAttemptedEvent;
 import com.tmk.api.user.auth.result.LoginResult;
 import com.tmk.api.user.auth.result.RegisterResult;
 import com.tmk.core.exception.BusinessException;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -51,6 +53,9 @@ class AuthServiceTest {
 
     @Mock
     private TokenBlacklistPort tokenBlacklistPort;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private AuthService authService;
@@ -128,6 +133,7 @@ class AuthServiceTest {
                 "user-refresh-token",
                 java.time.Duration.ofMillis(604800000L)
         );
+        then(applicationEventPublisher).should().publishEvent(new UserWebAccessAttemptedEvent(1L));
     }
 
     @Test

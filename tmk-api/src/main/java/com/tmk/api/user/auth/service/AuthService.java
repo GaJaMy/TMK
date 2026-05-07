@@ -1,5 +1,6 @@
 package com.tmk.api.user.auth.service;
 
+import com.tmk.api.monitoring.event.UserWebAccessAttemptedEvent;
 import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.api.security.UserAuthenticationProvider;
 import com.tmk.api.security.jwt.JwtProvider;
@@ -17,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.time.Duration;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +37,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenPort refreshTokenPort;
     private final TokenBlacklistPort tokenBlacklistPort;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public RegisterResult register(String username, String password, String countryCode) {
@@ -83,6 +86,7 @@ public class AuthService {
                 refreshToken,
                 Duration.ofMillis(jwtProvider.getRefreshTokenExpiry(AuthenticatedPrincipal.USER_PRINCIPAL_TYPE))
         );
+        applicationEventPublisher.publishEvent(new UserWebAccessAttemptedEvent(userDetails.getPrincipalId()));
 
         return new LoginResult(
                 userDetails.getPrincipalId(),

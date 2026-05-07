@@ -4,8 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.verify;
 
+import com.tmk.api.monitoring.event.ExamStartedEvent;
+import com.tmk.api.user.exam.command.ExamAnswerSaveCommand;
 import com.tmk.api.user.exam.result.ExamCreateResult;
+import com.tmk.api.user.exam.result.ExamDetailResult;
+import com.tmk.api.user.exam.result.ExamResultDetailResult;
 import com.tmk.api.user.exam.result.ExamSummaryResult;
 import com.tmk.api.user.exam.result.ExamStartResult;
 import com.tmk.core.document.entity.Document;
@@ -25,6 +31,8 @@ import com.tmk.core.port.out.persistence.TopicPort;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.PrivateQuestion;
 import com.tmk.core.question.entity.PublicQuestion;
+import com.tmk.core.question.entity.PublicQuestionOption;
+import com.tmk.core.question.entity.QuestionScope;
 import com.tmk.core.question.entity.QuestionType;
 import com.tmk.core.topic.entity.Topic;
 import java.time.OffsetDateTime;
@@ -35,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ExamServiceTest {
@@ -53,6 +62,9 @@ class ExamServiceTest {
 
     @Mock
     private PrivateQuestionPort privateQuestionPort;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private ExamService examService;
@@ -227,6 +239,538 @@ class ExamServiceTest {
     }
 
     @Test
+    void getExamReturnsInProgressExamQuestions() {
+        OffsetDateTime now = OffsetDateTime.now();
+        Topic topic = Topic.builder()
+                .id(1L)
+                .name("Spring")
+                .active(true)
+                .build();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1001L)
+                .publicQuestionId(11L)
+                .questionScope(QuestionScope.PUBLIC)
+                .orderNum((short) 1)
+                .myAnswer("Bean")
+                .build();
+        PublicQuestion publicQuestion = PublicQuestion.builder()
+                .id(11L)
+                .topicId(1L)
+                .createdByAdminId(1L)
+                .content("Spring Container가 관리하는 객체를 무엇이라고 하나요?")
+                .type(QuestionType.MULTIPLE_CHOICE)
+                .difficulty(Difficulty.NORMAL)
+                .answer("Bean")
+                .explanation("설명")
+                .active(true)
+                .options(List.of(
+                        PublicQuestionOption.create((short) 1, "Bean"),
+                        PublicQuestionOption.create((short) 2, "Entity"),
+                        PublicQuestionOption.create((short) 3, "Repository"),
+                        PublicQuestionOption.create((short) 4, "Service"),
+                        PublicQuestionOption.create((short) 5, "Component")
+                ))
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(5))
+                .expiredAt(now.plusMinutes(25))
+                .createdAt(now.minusMinutes(10))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(topicPort.findById(1L)).willReturn(Optional.of(topic));
+        given(publicQuestionPort.findById(11L)).willReturn(Optional.of(publicQuestion));
+
+        ExamDetailResult result = examService.getExam(7L, 101L);
+
+        assertThat(result.examId()).isEqualTo(101L);
+        assertThat(result.title()).isEqualTo("Spring - 시험");
+        assertThat(result.questions()).hasSize(1);
+        assertThat(result.questions().getFirst().examQuestionId()).isEqualTo(1001L);
+        assertThat(result.questions().getFirst().options()).hasSize(5);
+        assertThat(result.questions().getFirst().myAnswer()).isEqualTo("Bean");
+    }
+
+    @Test
+    void getExamAutoSubmitsExpiredExamAndThrowsExpired() {
+        OffsetDateTime now = OffsetDateTime.now();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1002L)
+                .privateQuestionId(21L)
+                .questionScope(QuestionScope.PRIVATE)
+                .orderNum((short) 1)
+                .myAnswer("answer")
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .documentId(11L)
+                .sourceType(ExamSourceType.PRIVATE_DOCUMENT)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 10)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(20))
+                .expiredAt(now.minusMinutes(10))
+                .createdAt(now.minusMinutes(25))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        PrivateQuestion privateQuestion = PrivateQuestion.builder()
+                .id(21L)
+                .userId(7L)
+                .documentId(11L)
+                .content("private question")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("answer")
+                .explanation("explanation")
+                .languageCode("KR")
+                .options(List.of())
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(privateQuestionPort.findById(21L)).willReturn(Optional.of(privateQuestion));
+        given(examPort.save(any(Exam.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        assertThatThrownBy(() -> examService.getExam(7L, 101L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.EXAM_EXPIRED.getMessage());
+
+        verify(examPort).save(exam);
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.SUBMITTED);
+    }
+
+    @Test
+    void saveAnswersStoresMyAnswer() {
+        OffsetDateTime now = OffsetDateTime.now();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1003L)
+                .publicQuestionId(11L)
+                .questionScope(QuestionScope.PUBLIC)
+                .orderNum((short) 1)
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(5))
+                .expiredAt(now.plusMinutes(25))
+                .createdAt(now.minusMinutes(10))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        PublicQuestion publicQuestion = PublicQuestion.builder()
+                .id(11L)
+                .topicId(1L)
+                .createdByAdminId(1L)
+                .content("public question")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("Bean")
+                .explanation("explanation")
+                .active(true)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(publicQuestionPort.findById(11L)).willReturn(Optional.of(publicQuestion));
+        given(examPort.save(any(Exam.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        examService.saveAnswers(7L, 101L, List.of(new ExamAnswerSaveCommand(1003L, "Bean")));
+
+        verify(examPort).save(exam);
+        assertThat(exam.getExamQuestions().getFirst().getMyAnswer()).isEqualTo("Bean");
+    }
+
+    @Test
+    void saveAnswersAutoSubmitsExpiredExamAndThrowsExpired() {
+        OffsetDateTime now = OffsetDateTime.now();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1004L)
+                .privateQuestionId(21L)
+                .questionScope(QuestionScope.PRIVATE)
+                .orderNum((short) 1)
+                .myAnswer("before")
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .documentId(11L)
+                .sourceType(ExamSourceType.PRIVATE_DOCUMENT)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 10)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(20))
+                .expiredAt(now.minusMinutes(10))
+                .createdAt(now.minusMinutes(25))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        PrivateQuestion privateQuestion = PrivateQuestion.builder()
+                .id(21L)
+                .userId(7L)
+                .documentId(11L)
+                .content("private question")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("before")
+                .explanation("explanation")
+                .languageCode("KR")
+                .options(List.of())
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(privateQuestionPort.findById(21L)).willReturn(Optional.of(privateQuestion));
+        given(examPort.save(any(Exam.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        assertThatThrownBy(() -> examService.saveAnswers(
+                7L,
+                101L,
+                List.of(new ExamAnswerSaveCommand(1004L, "after"))
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.EXAM_EXPIRED.getMessage());
+
+        verify(examPort).save(exam);
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.SUBMITTED);
+        assertThat(exam.getExamQuestions().getFirst().getMyAnswer()).isEqualTo("before");
+    }
+
+    @Test
+    void submitExamGradesAndSubmitsInProgressExam() {
+        OffsetDateTime now = OffsetDateTime.now();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1005L)
+                .publicQuestionId(11L)
+                .questionScope(QuestionScope.PUBLIC)
+                .orderNum((short) 1)
+                .myAnswer("Bean")
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(5))
+                .expiredAt(now.plusMinutes(25))
+                .createdAt(now.minusMinutes(10))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        PublicQuestion publicQuestion = PublicQuestion.builder()
+                .id(11L)
+                .topicId(1L)
+                .createdByAdminId(1L)
+                .content("public question")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("Bean")
+                .explanation("explanation")
+                .active(true)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(publicQuestionPort.findById(11L)).willReturn(Optional.of(publicQuestion));
+        given(examPort.save(any(Exam.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        examService.submitExam(7L, 101L);
+
+        verify(examPort).save(exam);
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.SUBMITTED);
+        assertThat(exam.getSubmittedAt()).isNotNull();
+        assertThat(exam.getExamQuestions().getFirst().getCorrect()).isTrue();
+    }
+
+    @Test
+    void submitExamAutoSubmitsExpiredExamAndThrowsExpired() {
+        OffsetDateTime now = OffsetDateTime.now();
+        ExamQuestion examQuestion = ExamQuestion.builder()
+                .id(1006L)
+                .privateQuestionId(21L)
+                .questionScope(QuestionScope.PRIVATE)
+                .orderNum((short) 1)
+                .myAnswer("before")
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .documentId(11L)
+                .sourceType(ExamSourceType.PRIVATE_DOCUMENT)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 10)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(20))
+                .expiredAt(now.minusMinutes(10))
+                .createdAt(now.minusMinutes(25))
+                .examQuestions(List.of(examQuestion))
+                .build();
+        PrivateQuestion privateQuestion = PrivateQuestion.builder()
+                .id(21L)
+                .userId(7L)
+                .documentId(11L)
+                .content("private question")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("before")
+                .explanation("explanation")
+                .languageCode("KR")
+                .options(List.of())
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(privateQuestionPort.findById(21L)).willReturn(Optional.of(privateQuestion));
+        given(examPort.save(any(Exam.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        assertThatThrownBy(() -> examService.submitExam(7L, 101L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.EXAM_EXPIRED.getMessage());
+
+        verify(examPort).save(exam);
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.SUBMITTED);
+        assertThat(exam.getSubmittedAt()).isNotNull();
+    }
+
+    @Test
+    void getExamResultReturnsSubmittedExamResult() {
+        OffsetDateTime now = OffsetDateTime.now();
+        Topic topic = Topic.builder()
+                .id(1L)
+                .name("Spring")
+                .active(true)
+                .build();
+        ExamQuestion correctQuestion = ExamQuestion.builder()
+                .id(1007L)
+                .publicQuestionId(11L)
+                .questionScope(QuestionScope.PUBLIC)
+                .orderNum((short) 1)
+                .myAnswer("Bean")
+                .correct(true)
+                .build();
+        ExamQuestion wrongQuestion = ExamQuestion.builder()
+                .id(1008L)
+                .publicQuestionId(12L)
+                .questionScope(QuestionScope.PUBLIC)
+                .orderNum((short) 2)
+                .myAnswer("Repository")
+                .correct(false)
+                .build();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 2)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.SUBMITTED)
+                .startedAt(now.minusMinutes(30))
+                .expiredAt(now.minusMinutes(5))
+                .submittedAt(now.minusMinutes(4))
+                .createdAt(now.minusMinutes(35))
+                .examQuestions(List.of(correctQuestion, wrongQuestion))
+                .build();
+        PublicQuestion firstQuestion = PublicQuestion.builder()
+                .id(11L)
+                .topicId(1L)
+                .createdByAdminId(1L)
+                .content("첫 번째 문제")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.NORMAL)
+                .answer("Bean")
+                .explanation("첫 번째 해설")
+                .active(true)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        PublicQuestion secondQuestion = PublicQuestion.builder()
+                .id(12L)
+                .topicId(1L)
+                .createdByAdminId(1L)
+                .content("두 번째 문제")
+                .type(QuestionType.SHORT_ANSWER)
+                .difficulty(Difficulty.HARD)
+                .answer("Component")
+                .explanation("두 번째 해설")
+                .active(true)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+        given(topicPort.findById(1L)).willReturn(Optional.of(topic));
+        given(publicQuestionPort.findById(11L)).willReturn(Optional.of(firstQuestion));
+        given(publicQuestionPort.findById(12L)).willReturn(Optional.of(secondQuestion));
+
+        ExamResultDetailResult result = examService.getExamResult(7L, 101L);
+
+        assertThat(result.title()).isEqualTo("Spring - 시험");
+        assertThat(result.summary().correctCount()).isEqualTo(1);
+        assertThat(result.summary().wrongCount()).isEqualTo(1);
+        assertThat(result.summary().score()).isEqualTo(50);
+        assertThat(result.questions()).hasSize(2);
+        assertThat(result.questions().getFirst().correct()).isTrue();
+        assertThat(result.questions().get(1).correctAnswer()).isEqualTo("Component");
+    }
+
+    @Test
+    void getExamResultThrowsWhenExamIsNotSubmitted() {
+        OffsetDateTime now = OffsetDateTime.now();
+        Exam exam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 2)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.IN_PROGRESS)
+                .startedAt(now.minusMinutes(10))
+                .expiredAt(now.plusMinutes(20))
+                .createdAt(now.minusMinutes(15))
+                .examQuestions(List.of())
+                .build();
+        given(examPort.findByIdAndUserId(101L, 7L)).willReturn(Optional.of(exam));
+
+        assertThatThrownBy(() -> examService.getExamResult(7L, 101L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.EXAM_RESULT_NOT_READY.getMessage());
+    }
+
+    @Test
+    void getExamHistoryReturnsSubmittedExamSummaries() {
+        OffsetDateTime now = OffsetDateTime.now();
+        Topic topic = Topic.builder()
+                .id(1L)
+                .name("Spring")
+                .active(true)
+                .build();
+        Document document = Document.builder()
+                .id(11L)
+                .userId(7L)
+                .title("운영체제 정리.md")
+                .sourceType(DocumentSourceType.MD_UPLOAD)
+                .sourceReference("/tmp/os.md")
+                .status(DocumentStatus.COMPLETED)
+                .generatedQuestionCount(10)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+        Exam submittedPublicExam = Exam.builder()
+                .id(101L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 2)
+                .timeLimitMinutes((short) 30)
+                .status(ExamStatus.SUBMITTED)
+                .startedAt(now.minusMinutes(40))
+                .expiredAt(now.minusMinutes(10))
+                .submittedAt(now.minusMinutes(8))
+                .createdAt(now.minusMinutes(45))
+                .examQuestions(List.of(
+                        ExamQuestion.builder()
+                                .id(1009L)
+                                .publicQuestionId(11L)
+                                .questionScope(QuestionScope.PUBLIC)
+                                .orderNum((short) 1)
+                                .correct(true)
+                                .build(),
+                        ExamQuestion.builder()
+                                .id(1010L)
+                                .publicQuestionId(12L)
+                                .questionScope(QuestionScope.PUBLIC)
+                                .orderNum((short) 2)
+                                .correct(false)
+                                .build()
+                ))
+                .build();
+        Exam submittedPrivateExam = Exam.builder()
+                .id(102L)
+                .userId(7L)
+                .documentId(11L)
+                .sourceType(ExamSourceType.PRIVATE_DOCUMENT)
+                .totalQuestions((short) 1)
+                .timeLimitMinutes((short) 20)
+                .status(ExamStatus.SUBMITTED)
+                .startedAt(now.minusMinutes(80))
+                .expiredAt(now.minusMinutes(50))
+                .submittedAt(now.minusMinutes(49))
+                .createdAt(now.minusMinutes(85))
+                .examQuestions(List.of(
+                        ExamQuestion.builder()
+                                .id(1011L)
+                                .privateQuestionId(21L)
+                                .questionScope(QuestionScope.PRIVATE)
+                                .orderNum((short) 1)
+                                .correct(true)
+                                .build()
+                ))
+                .build();
+        Exam createdExam = Exam.builder()
+                .id(103L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 5)
+                .timeLimitMinutes((short) 10)
+                .status(ExamStatus.CREATED)
+                .createdAt(now.minusMinutes(5))
+                .examQuestions(List.of())
+                .build();
+        given(examPort.findHistoryByUserIdOrderByCreatedAtDesc(7L))
+                .willReturn(List.of(createdExam, submittedPrivateExam, submittedPublicExam));
+        given(topicPort.findById(1L)).willReturn(Optional.of(topic));
+        given(documentPort.findByIdAndUserId(11L, 7L)).willReturn(Optional.of(document));
+
+        var results = examService.getExamHistory(7L);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.getFirst().examId()).isEqualTo(102L);
+        assertThat(results.getFirst().title()).isEqualTo("운영체제 정리.md - 시험");
+        assertThat(results.getFirst().correctCount()).isEqualTo(1);
+        assertThat(results.getFirst().score()).isEqualTo(100);
+        assertThat(results.getFirst().pass()).isTrue();
+        assertThat(results.get(1).examId()).isEqualTo(101L);
+        assertThat(results.get(1).title()).isEqualTo("Spring - 시험");
+        assertThat(results.get(1).score()).isEqualTo(50);
+        assertThat(results.get(1).pass()).isFalse();
+    }
+
+    @Test
+    void getExamHistoryReturnsEmptyListWhenThereIsNoSubmittedExam() {
+        OffsetDateTime now = OffsetDateTime.now();
+        Exam createdExam = Exam.builder()
+                .id(103L)
+                .userId(7L)
+                .topicId(1L)
+                .sourceType(ExamSourceType.PUBLIC_TOPIC)
+                .totalQuestions((short) 5)
+                .timeLimitMinutes((short) 10)
+                .status(ExamStatus.CREATED)
+                .createdAt(now.minusMinutes(5))
+                .examQuestions(List.of())
+                .build();
+        given(examPort.findHistoryByUserIdOrderByCreatedAtDesc(7L)).willReturn(List.of(createdExam));
+
+        var results = examService.getExamHistory(7L);
+
+        assertThat(results).isEmpty();
+    }
+
+    @Test
     void startExamStartsCreatedExamImmediately() {
         OffsetDateTime now = OffsetDateTime.now();
         Topic topic = Topic.builder()
@@ -258,6 +802,7 @@ class ExamServiceTest {
         assertThat(result.startedAt()).isNotNull();
         assertThat(result.expiredAt()).isEqualTo(result.startedAt().plusMinutes(30));
         assertThat(result.remainingSeconds()).isPositive();
+        then(applicationEventPublisher).should().publishEvent(new ExamStartedEvent(7L));
     }
 
     @Test

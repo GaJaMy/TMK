@@ -11,6 +11,7 @@ COPY build.gradle .
 
 # Copy submodule build files
 COPY tmk-core/build.gradle tmk-core/
+COPY tmk-infra/build.gradle tmk-infra/
 COPY tmk-api/build.gradle tmk-api/
 COPY tmk-batch/build.gradle tmk-batch/
 
@@ -19,6 +20,7 @@ RUN ./gradlew dependencies --no-daemon || true
 
 # Copy all source code
 COPY tmk-core/src tmk-core/src
+COPY tmk-infra/src tmk-infra/src
 COPY tmk-api/src tmk-api/src
 COPY tmk-batch/src tmk-batch/src
 
@@ -41,9 +43,6 @@ RUN chown appuser:appgroup app.jar
 USER appuser
 
 EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080 || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
 

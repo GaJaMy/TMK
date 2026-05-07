@@ -12,7 +12,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      JWT_SECRET: test-secret-for-ci
+      ADMIN_JWT_SECRET: test-admin-secret-for-ci-12345678901234567890123456789012
+      USER_JWT_SECRET: test-user-secret-for-ci-12345678901234567890123456789012
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,21 +105,14 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
             POSTGRES_PORT=${{ secrets.PROD_POSTGRES_PORT }}
             REDIS_PORT=${{ secrets.PROD_REDIS_PORT }}
-            REDIS_PASSWORD=${{ secrets.PROD_REDIS_PASSWORD }}
             API_PORT=${{ secrets.PROD_API_PORT }}
             DOCUMENT_STORAGE_DIR=${{ secrets.PROD_DOCUMENT_STORAGE_DIR }}
             DOCKERHUB_NAMESPACE=${{ secrets.PROD_DOCKERHUB_NAMESPACE }}
-            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            ADMIN_JWT_SECRET=${{ secrets.PROD_ADMIN_JWT_SECRET }}
+            USER_JWT_SECRET=${{ secrets.PROD_USER_JWT_SECRET }}
             OPENAI_API_KEY=${{ secrets.PROD_OPENAI_API_KEY }}
             OPENAI_EMBEDDING_MODEL=${{ secrets.PROD_OPENAI_EMBEDDING_MODEL }}
             OPENAI_CHAT_MODEL=${{ secrets.PROD_OPENAI_CHAT_MODEL }}
-            MAIL_HOST=${{ secrets.PROD_MAIL_HOST }}
-            MAIL_PORT=${{ secrets.PROD_MAIL_PORT }}
-            MAIL_USERNAME=${{ secrets.PROD_MAIL_USERNAME }}
-            MAIL_PASSWORD=${{ secrets.PROD_MAIL_PASSWORD }}
-            SWAGGER_ENABLED=${{ secrets.PROD_SWAGGER_ENABLED }}
-            BATCH_JOB_ENABLED=${{ secrets.PROD_BATCH_JOB_ENABLED }}
-            BATCH_INITIALIZE_SCHEMA=${{ secrets.PROD_BATCH_INITIALIZE_SCHEMA }}
             IMAGE_TAG=${{ github.sha }}
             EOF
 

@@ -18,27 +18,31 @@ spring:
         format_sql: true
     show-sql: false
 
+  flyway:
+    enabled: true
+    locations:
+      - classpath:db/migration
+
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
 
 server:
   port: 8080
 
 openai:
-  api-key: ${OPENAI_API_KEY:}
+  api-key: ${OPENAI_API_KEY}
   embedding:
-    model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+    model: ${OPENAI_EMBEDDING_MODEL}
   chat:
-    model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
-    temperature: ${OPENAI_CHAT_TEMPERATURE:0.7}
-    max-tokens: ${OPENAI_CHAT_MAX_TOKENS:4096}
+    model: ${OPENAI_CHAT_MODEL}
+    temperature: ${OPENAI_CHAT_TEMPERATURE}
+    max-tokens: ${OPENAI_CHAT_MAX_TOKENS}
 
 app:
   document:
-    storage-dir: ${DOCUMENT_STORAGE_DIR:./tmk-api/uploads}
+    storage-dir: ${DOCUMENT_STORAGE_DIR}
 
 jwt:
   admin:

@@ -1,5 +1,7 @@
 package com.tmk.api.admin.question.result;
 
+import com.tmk.api.question.support.QuestionAnswerSupport;
+import com.tmk.api.question.support.QuestionAnswerSupport.QuestionOptionCandidate;
 import com.tmk.core.question.entity.Difficulty;
 import com.tmk.core.question.entity.PublicQuestion;
 import com.tmk.core.question.entity.QuestionType;
@@ -26,6 +28,9 @@ public record AdminPublicQuestionDetailResult(
                 .sorted(java.util.Comparator.comparingInt(option -> option.getOptionNumber()))
                 .map(option -> option.getContent())
                 .toList();
+        List<QuestionOptionCandidate> candidates = questionOptions.stream()
+                .map(option -> new QuestionOptionCandidate(option.getOptionNumber(), option.getContent()))
+                .toList();
 
         return new AdminPublicQuestionDetailResult(
                 question.getId(),
@@ -34,7 +39,7 @@ public record AdminPublicQuestionDetailResult(
                 question.getDifficulty(),
                 question.getTopicId(),
                 topicName,
-                question.getAnswer(),
+                QuestionAnswerSupport.toDisplayAnswer(question.getType(), question.getAnswer(), candidates),
                 question.getExplanation(),
                 options,
                 question.isActive(),

@@ -2,6 +2,8 @@ package com.tmk.api.admin.question.service;
 
 import com.tmk.api.admin.question.result.AdminPublicQuestionResult;
 import com.tmk.api.admin.question.result.AdminPublicQuestionDetailResult;
+import com.tmk.api.question.support.QuestionAnswerSupport;
+import com.tmk.api.question.support.QuestionAnswerSupport.QuestionOptionCandidate;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
 import com.tmk.core.port.out.persistence.PublicQuestionPort;
@@ -71,13 +73,14 @@ public class AdminPublicQuestionService {
 
         OffsetDateTime now = OffsetDateTime.now();
         List<PublicQuestionOption> questionOptions = createOptions(options);
+        String normalizedAnswer = normalizeAnswer(type, answer, questionOptions);
         PublicQuestion savedQuestion = publicQuestionPort.save(PublicQuestion.create(
                 topicId,
                 createdByAdminId,
                 content,
                 type,
                 difficulty,
-                answer,
+                normalizedAnswer,
                 explanation,
                 questionOptions,
                 now
@@ -155,5 +158,12 @@ public class AdminPublicQuestionService {
             questionOptions.add(PublicQuestionOption.create((short) (i + 1), options.get(i)));
         }
         return questionOptions;
+    }
+
+    private String normalizeAnswer(QuestionType type, String answer, List<PublicQuestionOption> options) {
+        List<QuestionOptionCandidate> candidates = options.stream()
+                .map(option -> new QuestionOptionCandidate(option.getOptionNumber(), option.getContent()))
+                .toList();
+        return QuestionAnswerSupport.normalizeStoredAnswer(type, answer, candidates);
     }
 }

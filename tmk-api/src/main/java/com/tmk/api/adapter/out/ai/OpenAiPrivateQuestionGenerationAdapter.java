@@ -68,8 +68,23 @@ public class OpenAiPrivateQuestionGenerationAdapter implements PrivateQuestionGe
                                     - TRUE_FALSE must have exactly 2 options.
                                     - SHORT_ANSWER must have no options.
                                     - For SHORT_ANSWER, always return "options": [].
+                                    - SHORT_ANSWER must ask for exactly one specific answer, not a list, set, range, explanation, or multiple facts.
+                                    - SHORT_ANSWER must be answerable with one short canonical answer such as a single term, concept name, keyword, value, or short phrase.
+                                    - Do not create SHORT_ANSWER questions that require explanation, description, reasoning process, or sentence-length answers.
+                                    - Do not create SHORT_ANSWER questions that ask "how many", "which ones", "what are the types", "describe", "explain", "list", or anything that can naturally produce multiple valid answers.
+                                    - If a fact can be answered by more than one equally correct wording, avoid making it a SHORT_ANSWER question.
+                                    - For SHORT_ANSWER, write the question so the expected answer is unambiguously one item only.
+                                    - Example of a valid SHORT_ANSWER style: "Spring 컨테이너에서 관리되는 객체를 무엇이라고 하나요?"
+                                    - Example of an invalid SHORT_ANSWER style: "Spring의 핵심 개념 몇 가지를 쓰세요."
+                                    - Example of an invalid SHORT_ANSWER style: "빈이 무엇인지 설명하세요."
                                     - For MULTIPLE_CHOICE, always return exactly 5 non-empty options.
                                     - For TRUE_FALSE, always return exactly 2 non-empty options.
+                                    - TRUE_FALSE questions must be written as a declarative statement that can be judged as true or false.
+                                    - Do not write TRUE_FALSE questions in open-question form such as "what", "which", "how", "why", "what can be used", or "what is".
+                                    - Do not use TRUE_FALSE when the wording naturally expects a term, concept, method, list, or descriptive answer.
+                                    - If the prompt would naturally be answered with a keyword or phrase, use SHORT_ANSWER or MULTIPLE_CHOICE instead of TRUE_FALSE.
+                                    - Valid TRUE_FALSE style example: "Saga 패턴은 분산 트랜잭션의 원자성을 보장하기 위해 사용될 수 있다."
+                                    - Invalid TRUE_FALSE style example: "MSA 환경에서 트랜잭션의 원자성을 보장하기 위한 방법으로 무엇을 사용할 수 있는가?"
                                     - Do not return 4-option or 6-option multiple choice questions.
                                     - Do not return any question if you cannot satisfy the type/option-count rule exactly.
                                     - Exclude invalid questions instead of returning malformed questions.

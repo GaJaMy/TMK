@@ -60,6 +60,8 @@ const questionCreateForm = document.getElementById("questionCreateForm");
 const questionOptionsSection = document.getElementById("questionOptionsSection");
 const questionOptionsContainer = document.getElementById("questionOptionsContainer");
 const questionTypeSelect = document.getElementById("newQuestionType");
+const questionAnswerInput = document.getElementById("newQuestionAnswer");
+const questionAnswerSelect = document.getElementById("newQuestionAnswerSelect");
 const questionDetailModal = document.getElementById("questionDetailModal");
 const closeQuestionDetailModalButton = document.getElementById("closeQuestionDetailModal");
 const cancelQuestionDetailModalButton = document.getElementById("cancelQuestionDetailModal");
@@ -465,7 +467,7 @@ const loadAdmins = async () => {
     try {
         const admins = await request("/admin/v1/users");
         renderAdminRows(admins);
-        setAdminCreateStatus("관리자 목록을 불러왔습니다.", "is-success");
+        setAdminCreateStatus("관리자 목록을 확인했습니다.", "is-success");
     } catch (error) {
         setAdminCreateStatus(`관리자 목록 조회 실패: ${getErrorMessage(error)}`, "is-warning");
     }
@@ -558,18 +560,18 @@ const loadQuestions = async () => {
 };
 
 const loadQuestionPage = async () => {
-    setQuestionPageStatus("공용 문제와 Topic 목록을 불러오는 중입니다.");
+    setQuestionPageStatus("공용 문제와 Topic을 불러오는 중입니다.");
     try {
         await loadTopics();
         await loadQuestions();
-        setQuestionPageStatus("공용 문제와 Topic 목록을 불러왔습니다.", "is-success");
+        setQuestionPageStatus("공용 문제와 Topic을 확인했습니다.", "is-success");
     } catch (error) {
         setQuestionPageStatus(`질문 관리 데이터 조회 실패: ${getErrorMessage(error)}`, "is-warning");
     }
 };
 
 const updateQuestionOptionInputs = () => {
-    if (!questionTypeSelect || !questionOptionsSection || !questionOptionsContainer) {
+    if (!questionTypeSelect || !questionOptionsSection || !questionOptionsContainer || !questionAnswerInput || !questionAnswerSelect) {
         return;
     }
 
@@ -579,10 +581,20 @@ const updateQuestionOptionInputs = () => {
 
     if (type === "SHORT_ANSWER") {
         questionOptionsSection.hidden = true;
+        questionAnswerInput.hidden = false;
+        questionAnswerInput.required = true;
+        questionAnswerSelect.hidden = true;
+        questionAnswerSelect.required = false;
+        questionAnswerSelect.innerHTML = "";
         return;
     }
 
     questionOptionsSection.hidden = false;
+    questionAnswerInput.hidden = true;
+    questionAnswerInput.required = false;
+    questionAnswerInput.value = "";
+    questionAnswerSelect.hidden = false;
+    questionAnswerSelect.required = true;
     const optionCount = type === "TRUE_FALSE" ? 2 : 5;
     const defaultOptions = type === "TRUE_FALSE" ? ["참", "거짓"] : ["", "", "", "", ""];
 
@@ -604,6 +616,23 @@ const updateQuestionOptionInputs = () => {
     }
 
     questionOptionsContainer.innerHTML = fields.join("");
+    renderQuestionAnswerOptions(type, defaultOptions);
+};
+
+const renderQuestionAnswerOptions = (type, options) => {
+    if (!questionAnswerSelect) {
+        return;
+    }
+
+    if (type === "SHORT_ANSWER") {
+        questionAnswerSelect.innerHTML = "";
+        return;
+    }
+
+    const choices = type === "TRUE_FALSE"
+        ? options.map((option) => `<option value="${option}">${option}</option>`)
+        : options.map((option, index) => `<option value="${index + 1}">${index + 1}번</option>`);
+    questionAnswerSelect.innerHTML = choices.join("");
 };
 
 const collectQuestionOptions = () => {
@@ -619,6 +648,18 @@ const collectQuestionOptions = () => {
     return Array.from(document.querySelectorAll(".question-option-input"))
         .map((input) => input.value.trim())
         .filter(Boolean);
+};
+
+const getQuestionAnswerValue = () => {
+    if (!questionTypeSelect || !questionAnswerInput || !questionAnswerSelect) {
+        return "";
+    }
+
+    const type = QUESTION_TYPE_VALUES[questionTypeSelect.value];
+    if (type === "SHORT_ANSWER") {
+        return questionAnswerInput.value.trim();
+    }
+    return questionAnswerSelect.value.trim();
 };
 
 const applyQuestionFilter = () => {
@@ -911,7 +952,7 @@ if (questionCreateForm) {
         const type = QUESTION_TYPE_VALUES[document.getElementById("newQuestionType").value];
         const difficulty = DIFFICULTY_VALUES[document.getElementById("newQuestionLevel").value];
         const topicId = Number(document.getElementById("newQuestionTopic").value);
-        const answer = document.getElementById("newQuestionAnswer").value.trim();
+        const answer = getQuestionAnswerValue();
         const explanation = document.getElementById("newQuestionExplanation").value.trim();
         const options = collectQuestionOptions();
 

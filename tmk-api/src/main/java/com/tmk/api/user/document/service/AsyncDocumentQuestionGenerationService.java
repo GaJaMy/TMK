@@ -1,5 +1,8 @@
 package com.tmk.api.user.document.service;
 
+import com.tmk.api.monitoring.event.PrivateQuestionsGeneratedEvent;
+import com.tmk.api.question.support.QuestionAnswerSupport;
+import com.tmk.api.question.support.QuestionAnswerSupport.QuestionOptionCandidate;
 import com.tmk.api.user.document.result.DocumentStatusResult;
 import com.tmk.core.document.entity.Document;
 import com.tmk.core.document.entity.DocumentChunk;
@@ -23,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -46,6 +50,7 @@ public class AsyncDocumentQuestionGenerationService {
     private final FileStoragePort fileStoragePort;
     private final DocumentSseService documentSseService;
     private final PlatformTransactionManager transactionManager;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Async
     public void processDocumentAsync(Long documentId) {
@@ -159,18 +164,7 @@ public class AsyncDocumentQuestionGenerationService {
             OffsetDateTime now
     ) {
         return drafts.stream()
-                .map(draft -> PrivateQuestion.create(
-                        userAccount.getId(),
-                        document.getId(),
-                        draft.content(),
-                        draft.type(),
-                        draft.difficulty(),
-                        draft.answer(),
-                        draft.explanation(),
-                        userAccount.getCountryCode(),
-                        createOptions(draft.options()),
-                        now
-                ))
+                .map(draft -> createPrivateQuestion(document, userAccount, draft, now))
                 .toList();
     }
 
@@ -263,6 +257,31 @@ public class AsyncDocumentQuestionGenerationService {
         return questionOptions;
     }
 
+    private PrivateQuestion createPrivateQuestion(
+            Document document,
+            UserAccount userAccount,
+            PrivateQuestionDraft draft,
+            OffsetDateTime now
+    ) {
+        List<PrivateQuestionOption> questionOptions = createOptions(draft.options());
+        List<QuestionOptionCandidate> candidates = questionOptions.stream()
+                .map(option -> new QuestionOptionCandidate(option.getOptionNumber(), option.getContent()))
+                .toList();
+        String normalizedAnswer = QuestionAnswerSupport.normalizeStoredAnswer(draft.type(), draft.answer(), candidates);
+        return PrivateQuestion.create(
+                userAccount.getId(),
+                document.getId(),
+                draft.content(),
+                draft.type(),
+                draft.difficulty(),
+                normalizedAnswer,
+                draft.explanation(),
+                userAccount.getCountryCode(),
+                questionOptions,
+                now
+        );
+    }
+
     private StatusNotification completeDocument(
             Long documentId,
             List<DocumentChunk> documentChunks,
@@ -279,6 +298,9 @@ public class AsyncDocumentQuestionGenerationService {
             privateQuestionPort.saveAll(privateQuestions);
             targetDocument.complete(privateQuestions.size(), OffsetDateTime.now());
             documentPort.save(targetDocument);
+            applicationEventPublisher.publishEvent(
+                    new PrivateQuestionsGeneratedEvent(targetDocument.getUserId(), privateQuestions.size())
+            );
             return new StatusNotification(targetDocument.getUserId(), DocumentStatusResult.from(targetDocument));
         });
     }

@@ -1,5 +1,6 @@
 package com.tmk.api.user.document.usecase;
 
+import com.tmk.api.monitoring.event.DocumentRegisteredEvent;
 import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.api.security.jwt.JwtProvider;
 import com.tmk.api.user.document.dto.DocumentStatusResponse;
@@ -19,6 +20,7 @@ import io.jsonwebtoken.JwtException;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +35,7 @@ public class DocumentUseCase {
     private final DocumentSseService documentSseService;
     private final JwtProvider jwtProvider;
     private final TokenBlacklistPort tokenBlacklistPort;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public DocumentUploadResponse uploadDocument(Long userId, DocumentUploadRequest request) {
@@ -45,6 +48,7 @@ public class DocumentUseCase {
                 file.getOriginalFilename(),
                 fileBytes
         );
+        applicationEventPublisher.publishEvent(new DocumentRegisteredEvent(userId));
         asyncDocumentQuestionGenerationService.processDocumentAsync(result.documentId());
         return DocumentUploadResponse.from(result);
     }

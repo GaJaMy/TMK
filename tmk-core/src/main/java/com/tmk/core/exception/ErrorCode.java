@@ -48,6 +48,7 @@ public enum ErrorCode {
     EXAM_IN_PROGRESS_ALREADY_EXISTS("EXAM_006", "이미 진행 중인 시험이 있습니다.", 409),
     EXAM_QUESTION_NOT_FOUND("EXAM_007", "시험 문항을 찾을 수 없습니다.", 404),
     EXAM_QUESTION_REFERENCE_INVALID("EXAM_008", "시험 문항 참조 정보가 올바르지 않습니다.", 500),
+    EXAM_RESULT_NOT_READY("EXAM_009", "시험 결과를 아직 조회할 수 없습니다.", 409),
 
     INVALID_MONITORING_PERIOD("MONITORING_001", "모니터링 조회 기간이 올바르지 않습니다.", 400);
 

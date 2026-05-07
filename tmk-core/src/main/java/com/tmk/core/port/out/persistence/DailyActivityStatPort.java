@@ -14,5 +14,21 @@ public interface DailyActivityStatPort {
 
     List<DailyActivityStat> findByStatDateBetweenOrderByStatDateAsc(LocalDate from, LocalDate to);
 
+    DailyActivityStatSummary findSummary();
+
     void increaseUserPageAccessAttemptCount(LocalDate statDate, int value, OffsetDateTime now);
+
+    void increaseExamRunCount(LocalDate statDate, int value, OffsetDateTime now);
+
+    void increaseDocumentRegistrationCount(LocalDate statDate, int value, OffsetDateTime now);
+
+    void increaseGeneratedPrivateQuestionCount(LocalDate statDate, int value, OffsetDateTime now);
+
+    record DailyActivityStatSummary(
+            long userPageAccessAttemptCount,
+            long examRunCount,
+            long documentRegistrationCount,
+            long generatedPrivateQuestionCount
+    ) {
+    }
 }

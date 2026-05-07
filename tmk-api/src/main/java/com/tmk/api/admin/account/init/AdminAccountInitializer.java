@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminAccountInitializer implements ApplicationRunner {
 
     private static final String INITIAL_ADMIN_USERNAME = "mansa0805";
-    private static final String INITIAL_ADMIN_PASSWORD = "wpfkem!@34";
+    private static final String INITIAL_ADMIN_PASSWORD = "qwe123123!";
 
     private final AdminAccountPort adminAccountPort;
     private final PasswordEncoderPort passwordEncoderPort;

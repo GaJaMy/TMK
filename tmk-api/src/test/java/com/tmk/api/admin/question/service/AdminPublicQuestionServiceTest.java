@@ -104,7 +104,7 @@ class AdminPublicQuestionServiceTest {
                 .content("question-1")
                 .type(QuestionType.MULTIPLE_CHOICE)
                 .difficulty(Difficulty.EASY)
-                .answer("answer")
+                .answer("1")
                 .explanation("explanation")
                 .createdAt(now)
                 .updatedAt(now)
@@ -135,7 +135,7 @@ class AdminPublicQuestionServiceTest {
                 Difficulty.EASY,
                 1L,
                 "Spring",
-                "answer",
+                "option-1",
                 "explanation",
                 List.of("option-1", "option-2"),
                 true,
@@ -172,7 +172,7 @@ class AdminPublicQuestionServiceTest {
                 .content("question-1")
                 .type(QuestionType.MULTIPLE_CHOICE)
                 .difficulty(Difficulty.EASY)
-                .answer("answer")
+                .answer("1")
                 .explanation("explanation")
                 .createdAt(now)
                 .updatedAt(now)
@@ -194,14 +194,62 @@ class AdminPublicQuestionServiceTest {
                 "question-1",
                 QuestionType.MULTIPLE_CHOICE,
                 Difficulty.EASY,
-                "answer",
+                "1",
                 "explanation",
                 List.of("option-1", "option-2", "option-3", "option-4", "option-5")
         );
 
         assertThat(result.questionId()).isEqualTo(1001L);
         assertThat(result.topicName()).isEqualTo("Spring");
+        assertThat(result.answer()).isEqualTo("option-1");
         assertThat(result.options()).containsExactly("option-1", "option-2", "option-3", "option-4", "option-5");
+    }
+
+    @Test
+    void createPublicQuestionNormalizesTrueFalseAnswerToStoredOptionNumber() {
+        OffsetDateTime now = OffsetDateTime.parse("2026-04-27T09:00:00+09:00");
+        Topic topic = Topic.builder()
+                .id(1L)
+                .name("Spring")
+                .description(null)
+                .active(true)
+                .createdByAdminId(101L)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        PublicQuestion question = PublicQuestion.builder()
+                .id(1002L)
+                .topicId(1L)
+                .createdByAdminId(101L)
+                .active(true)
+                .content("question-2")
+                .type(QuestionType.TRUE_FALSE)
+                .difficulty(Difficulty.EASY)
+                .answer("2")
+                .explanation("explanation")
+                .createdAt(now)
+                .updatedAt(now)
+                .options(List.of(
+                        PublicQuestionOption.create((short) 1, "참"),
+                        PublicQuestionOption.create((short) 2, "거짓")
+                ))
+                .build();
+
+        given(topicPort.findById(1L)).willReturn(Optional.of(topic));
+        given(publicQuestionPort.save(org.mockito.ArgumentMatchers.any(PublicQuestion.class))).willReturn(question);
+
+        AdminPublicQuestionDetailResult result = adminPublicQuestionService.createPublicQuestion(
+                101L,
+                1L,
+                "question-2",
+                QuestionType.TRUE_FALSE,
+                Difficulty.EASY,
+                "거짓",
+                "explanation",
+                List.of("참", "거짓")
+        );
+
+        assertThat(result.answer()).isEqualTo("거짓");
     }
 
     @Test

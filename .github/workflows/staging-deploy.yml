@@ -11,8 +11,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      JWT_SECRET: test-secret-for-ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,8 +52,8 @@ jobs:
           target: api
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.API_IMAGE_TAG }}-${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.API_IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:${{ secrets.STAGING_API_IMAGE_TAG }}-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:${{ secrets.STAGING_API_IMAGE_TAG }}
 
       - name: Build and push batch image
         uses: docker/build-push-action@v6
@@ -65,8 +63,8 @@ jobs:
           target: batch
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.BATCH_IMAGE_TAG }}-${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:${{ secrets.BATCH_IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:${{ secrets.STAGING_BATCH_IMAGE_TAG }}-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:${{ secrets.STAGING_BATCH_IMAGE_TAG }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -81,7 +79,7 @@ jobs:
           host: ${{ secrets.VULTR_HOST }}
           username: ${{ secrets.VULTR_USER }}
           key: ${{ secrets.VULTR_SSH_KEY }}
-          source: "docker-compose.staging.yml,docker/postgres/init.sql"
+          source: "docker-compose.staging.yml"
           target: ${{ secrets.STAGING_DEPLOY_PATH }}
           strip_components: 0
 
@@ -95,7 +93,6 @@ jobs:
             set -eu
 
             DEPLOY_PATH="${{ secrets.STAGING_DEPLOY_PATH }}"
-            mkdir -p "$DEPLOY_PATH/docker/postgres"
             cd "$DEPLOY_PATH"
 
             cat > .env.staging <<EOF
@@ -103,16 +100,19 @@ jobs:
             POSTGRES_USER=${{ secrets.STAGING_POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.STAGING_POSTGRES_PASSWORD }}
             POSTGRES_PORT=${{ secrets.STAGING_POSTGRES_PORT }}
+            REDIS_HOST=${{ secrets.STAGING_REDIS_HOST }}
             REDIS_PORT=${{ secrets.STAGING_REDIS_PORT }}
-            REDIS_PASSWORD=${{ secrets.STAGING_REDIS_PASSWORD }}
-            DOCUMENT_STORAGE_DIR=${{ secrets.STAGING_DOCUMENT_STORAGE_DIR }}
-            DOCKERHUB_NAMESPACE=${{ secrets.STAGING_DOCKERHUB_NAMESPACE }}
-            JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
+            ADMIN_JWT_SECRET=${{ secrets.STAGING_ADMIN_JWT_SECRET }}
+            USER_JWT_SECRET=${{ secrets.STAGING_USER_JWT_SECRET }}
             OPENAI_API_KEY=${{ secrets.STAGING_OPENAI_API_KEY }}
             OPENAI_EMBEDDING_MODEL=${{ secrets.STAGING_OPENAI_EMBEDDING_MODEL }}
             OPENAI_CHAT_MODEL=${{ secrets.STAGING_OPENAI_CHAT_MODEL }}
-            API_IMAGE_TAG=${{ secrets.API_IMAGE_TAG }}
-            BATCH_IMAGE_TAG=${{ secrets.BATCH_IMAGE_TAG }}
+            OPENAI_CHAT_TEMPERATURE=${{ secrets.STAGING_OPENAI_CHAT_TEMPERATURE }}
+            OPENAI_CHAT_MAX_TOKENS=${{ secrets.STAGING_OPENAI_CHAT_MAX_TOKENS }}
+            DOCUMENT_STORAGE_DIR=${{ secrets.STAGING_DOCUMENT_STORAGE_DIR }}
+            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            API_IMAGE_TAG=${{ secrets.STAGING_API_IMAGE_TAG }}-${{ github.sha }}
+            BATCH_IMAGE_TAG=${{ secrets.STAGING_BATCH_IMAGE_TAG }}-${{ github.sha }}
             EOF
 
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
