@@ -1,0 +1,17 @@
+tmk-hd.duckdns.org {
+    handle /api/* {
+        reverse_proxy tmk-api:8080
+    }
+
+    root * /srv/tmk-user-web
+    file_server
+}
+
+tmk-hd-admin.duckdns.org {
+    handle /admin/* {
+        reverse_proxy tmk-api:8080
+    }
+
+    root * /srv/tmk-admin-web
+    file_server
+}

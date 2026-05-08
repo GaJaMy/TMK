@@ -22,6 +22,24 @@ services:
     networks:
       - tmk-prod-network
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: tmk-prod-caddy
+    restart: unless-stopped
+    depends_on:
+      - tmk-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./tmk-user-web:/srv/tmk-user-web:ro
+      - ./tmk-admin-web:/srv/tmk-admin-web:ro
+      - caddy-prod-data:/data
+      - caddy-prod-config:/config
+    networks:
+      - tmk-prod-network
+
   tmk-api:
     image: ${DOCKERHUB_USERNAME}/tmk:api
     container_name: tmk-prod-api
@@ -72,3 +90,5 @@ volumes:
   postgres-prod-data:
   redis-prod-data:
   api-prod-uploads:
+  caddy-prod-data:
+  caddy-prod-config:
