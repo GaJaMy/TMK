@@ -1,4 +1,4 @@
-# TMK (Test My Knowledge)
+﻿# TMK (Test My Knowledge)
 
 > **AI 기반 자동 문제 생성 및 지능형 시험 플랫폼**
 > 버전: 0.0.1-SNAPSHOT | 상태: MVP 개발 중
@@ -288,14 +288,14 @@ ADMIN이 Topic 생성
 | 서버 | 관리자 계정 생성 | 구현됨 | `POST /admin/v1/users` |
 | 서버 | 관리자 계정 활성/비활성 | 구현됨 | `PATCH /admin/v1/users/{userId}/status` |
 | 서버 | 관리자 계정 삭제 | 구현됨 | `DELETE /admin/v1/users/{userId}` |
-| 서버 | 문서 업로드 등록 (`PDF`) | 구현됨 | `POST /my/documents/upload` |
-| 서버 | 문서 업로드 등록 (`.md`) | 구현됨 | `POST /my/documents/upload` |
-| 서버 | 문서 목록 조회 | 구현됨 | `GET /my/documents` |
-| 서버 | 문서 상태 조회 | 구현됨 | `GET /my/documents/{documentId}/status` |
+| 서버 | 문서 업로드 등록 (`PDF`) | 구현됨 | `POST /api/my/documents/upload` |
+| 서버 | 문서 업로드 등록 (`.md`) | 구현됨 | `POST /api/my/documents/upload` |
+| 서버 | 문서 목록 조회 | 구현됨 | `GET /api/my/documents` |
+| 서버 | 문서 상태 조회 | 구현됨 | `GET /api/my/documents/{documentId}/status` |
 | 서버 | 문서 텍스트 추출 / 청킹 | 구현됨 | 업로드 후 비동기 문서 처리 서비스 |
 | 서버 | 임베딩 생성 / 저장 | 구현됨 | pgvector `document_chunk` 저장 |
 | 서버 | 개인 문제 AI 생성 | 구현됨 | 업로드 후 비동기 생성 |
-| 서버 | Topic 목록 조회 | 구현됨 | 사용자 `GET /topics`, 관리자 `GET /admin/v1/topics` |
+| 서버 | Topic 목록 조회 | 구현됨 | 사용자 `GET /api/topics`, 관리자 `GET /admin/v1/topics` |
 | 서버 | Topic 생성 | 구현됨 | `POST /admin/v1/topics` |
 | 서버 | Topic 삭제 | 구현됨 | `DELETE /admin/v1/topics/{topicId}` |
 | 서버 | 공용 문제 목록 조회 | 구현됨 | `GET /admin/v1/questions` |
@@ -305,17 +305,17 @@ ADMIN이 Topic 생성
 | 서버 | 공용 문제 삭제 | 구현됨 | `DELETE /admin/v1/questions/{questionId}` |
 | 서버 | 공용 문제 일괄 활성/비활성 | 구현됨 | `PATCH /admin/v1/questions/status` |
 | 서버 | 공용 문제 일괄 삭제 | 구현됨 | `DELETE /admin/v1/questions` |
-| 서버 | 공용문제 시험 생성 | 구현됨 | `POST /exams` |
-| 서버 | 개인문제 시험 생성 | 구현됨 | `POST /exams` |
-| 서버 | 시험 시작 | 구현됨 | `POST /exams/{examId}/start` |
-| 서버 | 생성/진행중 시험 목록 조회 | 구현됨 | `GET /exams` |
-| 서버 | 시험 재진입 | 구현됨 | `/exams`, `/exams/{examId}` 기준 |
-| 서버 | 시험 문제 조회 | 구현됨 | `GET /exams/{examId}` |
-| 서버 | 답안 저장 / 수정 | 구현됨 | `PUT /exams/{examId}/answers` |
-| 서버 | 시험 최종 제출 | 구현됨 | `POST /exams/{examId}/submit` |
+| 서버 | 공용문제 시험 생성 | 구현됨 | `POST /api/exams` |
+| 서버 | 개인문제 시험 생성 | 구현됨 | `POST /api/exams` |
+| 서버 | 시험 시작 | 구현됨 | `POST /api/exams/{examId}/start` |
+| 서버 | 생성/진행중 시험 목록 조회 | 구현됨 | `GET /api/exams` |
+| 서버 | 시험 재진입 | 구현됨 | `/api/exams`, `/api/exams/{examId}` 기준 |
+| 서버 | 시험 문제 조회 | 구현됨 | `GET /api/exams/{examId}` |
+| 서버 | 답안 저장 / 수정 | 구현됨 | `PUT /api/exams/{examId}/answers` |
+| 서버 | 시험 최종 제출 | 구현됨 | `POST /api/exams/{examId}/submit` |
 | 서버 | 시험 시간 만료 검증 | 구현됨 | API 검증 + batch 자동 제출 |
-| 서버 | 시험 이력 목록 조회 | 구현됨 | `GET /exams/history` |
-| 서버 | 시험 이력 상세 조회 | 구현됨 | `GET /exams/{examId}/result` 재사용 |
+| 서버 | 시험 이력 목록 조회 | 구현됨 | `GET /api/exams/history` |
+| 서버 | 시험 이력 상세 조회 | 구현됨 | `GET /api/exams/{examId}/result` 재사용 |
 | 서버 | 사용자 웹 접근 통계 조회 | 구현됨 | `GET /admin/v1/monitoring/access-attempts` |
 | 서버 | 시험 진행 통계 조회 | 구현됨 | `GET /admin/v1/monitoring/exam-runs` |
 | 서버 | 문서 등록 통계 조회 | 구현됨 | `GET /admin/v1/monitoring/document-registrations` |

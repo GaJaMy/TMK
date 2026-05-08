@@ -1,4 +1,4 @@
-# TMK (Test My Knowledge) API 명세서
+﻿# TMK (Test My Knowledge) API 명세서
 
 > 작성일: 2026-04-27
 > 버전: v2.0.0
@@ -200,7 +200,7 @@ Authorization: Bearer {accessToken}
 
 ### 2.1 공용 Topic 목록 조회
 
-**GET** `/topics`
+**GET** `/api/topics`
 🔒 인증 필요
 
 공용 문제 기반 시험 시작 시 사용할 Topic 목록을 조회합니다.
@@ -228,7 +228,7 @@ Authorization: Bearer {accessToken}
 
 ### 3.1 문서 업로드 등록
 
-**POST** `/my/documents/upload`
+**POST** `/api/my/documents/upload`
 🔒 인증 필요
 `multipart/form-data`
 
@@ -252,7 +252,7 @@ Authorization: Bearer {accessToken}
 
 ### 3.2 내 문서 목록 조회
 
-**GET** `/my/documents`
+**GET** `/api/my/documents`
 🔒 인증 필요
 
 **Response**
@@ -276,7 +276,7 @@ Authorization: Bearer {accessToken}
 
 ### 3.3 내 문서 상태 조회
 
-**GET** `/my/documents/{documentId}/status`
+**GET** `/api/my/documents/{documentId}/status`
 🔒 인증 필요
 
 **Response**
@@ -296,7 +296,7 @@ Authorization: Bearer {accessToken}
 
 ### 3.4 내 문서 상태 SSE 구독
 
-**GET** `/my/documents/{documentId}/events?accessToken={accessToken}`
+**GET** `/api/my/documents/{documentId}/events?accessToken={accessToken}`
 
 브라우저 `EventSource`는 `Authorization` 헤더를 직접 붙일 수 없어서, SSE 구독 시에는 `accessToken`을 쿼리 파라미터로 전달합니다.
 
@@ -323,7 +323,7 @@ Authorization: Bearer {accessToken}
 
 ### 5.1 시험 생성
 
-**POST** `/exams`
+**POST** `/api/exams`
 🔒 인증 필요
 
 사용자는 두 가지 방식으로 시험을 생성할 수 있습니다.
@@ -370,7 +370,7 @@ Authorization: Bearer {accessToken}
 
 ### 5.2 시험 시작
 
-**POST** `/exams/{examId}/start`
+**POST** `/api/exams/{examId}/start`
 🔒 인증 필요
 
 생성된 시험을 실제로 시작합니다. 이 시점에 `startedAt`, `expiredAt`이 확정됩니다.
@@ -399,7 +399,7 @@ Authorization: Bearer {accessToken}
 
 ### 5.3 시험 목록 조회
 
-**GET** `/exams`
+**GET** `/api/exams`
 🔒 인증 필요
 
 현재 로그인 사용자의 `CREATED`, `IN_PROGRESS` 시험 목록을 조회합니다. 시험 홈 화면에서 생성된 시험과 진행중 시험을 함께 표시할 때 사용합니다.
@@ -443,7 +443,7 @@ Authorization: Bearer {accessToken}
 
 ### 5.4 시험 문제 조회
 
-**GET** `/exams/{examId}`
+**GET** `/api/exams/{examId}`
 🔒 인증 필요
 
 문제 유형별 응답 규칙:
@@ -455,7 +455,7 @@ Authorization: Bearer {accessToken}
 
 ### 5.5 답안 저장
 
-**PUT** `/exams/{examId}/answers`
+**PUT** `/api/exams/{examId}/answers`
 🔒 인증 필요
 
 ```json
@@ -482,17 +482,17 @@ Authorization: Bearer {accessToken}
 
 ### 5.6 시험 제출
 
-**POST** `/exams/{examId}/submit`
+**POST** `/api/exams/{examId}/submit`
 🔒 인증 필요
 
 ### 5.7 시험 결과 조회
 
-**GET** `/exams/{examId}/result`
+**GET** `/api/exams/{examId}/result`
 🔒 인증 필요
 
 ### 5.8 시험 히스토리 조회
 
-**GET** `/exams/history`
+**GET** `/api/exams/history`
 🔒 인증 필요
 
 제출 완료된 시험만 반환합니다.
@@ -530,7 +530,7 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-시험 히스토리 상세는 별도 경로를 두지 않고 `GET /exams/{examId}/result`를 재사용합니다.
+시험 히스토리 상세는 별도 경로를 두지 않고 `GET /api/exams/{examId}/result`를 재사용합니다.
 
 ---
 
