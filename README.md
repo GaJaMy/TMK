@@ -1,4 +1,4 @@
-# TMK (Test My Knowledge)
+﻿# TMK (Test My Knowledge)
 
 > AI 기반 문제은행 플랫폼 — PDF 문서를 등록하면 자동으로 문제를 생성하고, 시험을 통해 학습 이해도를 확인할 수 있는 서비스
 
@@ -113,18 +113,18 @@ PDF 등록 → 텍스트 파싱 → 청킹 → OpenAI 임베딩(1536차원)
 | Auth | POST | `/api/auth/v1/reissue` | 토큰 재발급 | ❌ |
 | Auth | POST | `/api/auth/v1/logout` | 로그아웃 | ✅ |
 | Auth | POST | `/api/auth/v1/reset-password` | 비밀번호 재설정 | ❌ |
-| Topic | GET | `/topics` | 공용 Topic 목록 조회 | ✅ |
-| Document | POST | `/my/documents/upload` | 문서 업로드 등록 | ✅ |
-| Document | GET | `/my/documents` | 내 문서 목록 조회 | ✅ |
-| Document | GET | `/my/documents/{id}/status` | 내 문서 상태 조회 | ✅ |
-| Exam | POST | `/exams` | 시험 생성 | ✅ |
-| Exam | POST | `/exams/{id}/start` | 시험 시작 | ✅ |
-| Exam | GET | `/exams` | 생성/진행중 시험 목록 조회 | ✅ |
-| Exam | GET | `/exams/{id}` | 시험 문제 조회 | ✅ |
-| Exam | PUT | `/exams/{id}/answers` | 답안 저장 | ✅ |
-| Exam | POST | `/exams/{id}/submit` | 시험 제출 | ✅ |
-| Exam | GET | `/exams/{id}/result` | 시험 결과 조회 | ✅ |
-| Exam | GET | `/exams/history` | 시험 히스토리 목록 | ✅ |
+| Topic | GET | `/api/topics` | 공용 Topic 목록 조회 | ✅ |
+| Document | POST | `/api/my/documents/upload` | 문서 업로드 등록 | ✅ |
+| Document | GET | `/api/my/documents` | 내 문서 목록 조회 | ✅ |
+| Document | GET | `/api/my/documents/{id}/status` | 내 문서 상태 조회 | ✅ |
+| Exam | POST | `/api/exams` | 시험 생성 | ✅ |
+| Exam | POST | `/api/exams/{id}/start` | 시험 시작 | ✅ |
+| Exam | GET | `/api/exams` | 생성/진행중 시험 목록 조회 | ✅ |
+| Exam | GET | `/api/exams/{id}` | 시험 문제 조회 | ✅ |
+| Exam | PUT | `/api/exams/{id}/answers` | 답안 저장 | ✅ |
+| Exam | POST | `/api/exams/{id}/submit` | 시험 제출 | ✅ |
+| Exam | GET | `/api/exams/{id}/result` | 시험 결과 조회 | ✅ |
+| Exam | GET | `/api/exams/history` | 시험 히스토리 목록 | ✅ |
 | Admin Auth | POST | `/admin/auth/v1/login` | 관리자 로그인 | ❌ |
 | Admin Auth | POST | `/admin/auth/v1/reissue` | 관리자 토큰 재발급 | ❌ |
 | Admin Auth | POST | `/admin/auth/v1/logout` | 관리자 로그아웃 | ✅ |

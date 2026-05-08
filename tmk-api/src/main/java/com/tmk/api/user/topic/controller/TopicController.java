@@ -15,7 +15,7 @@ public class TopicController implements TopicControllerDocs {
 
     private final TopicUseCase topicUseCase;
 
-    @GetMapping("/topics")
+    @GetMapping("/api/topics")
     @Override
     public ResponseEntity<ApiResponse<List<TopicResponse>>> getTopics() {
         return ApiResponse.ok(topicUseCase.getTopics());

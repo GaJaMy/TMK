@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/exams")
+@RequestMapping("/api/exams")
 @RequiredArgsConstructor
 public class ExamController implements ExamControllerDocs {
 

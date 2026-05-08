@@ -570,7 +570,7 @@ const renderExamOverview = () => {
 };
 
 const loadAvailableExams = async () => {
-    const exams = await request("/exams");
+    const exams = await request("/api/exams");
     currentAvailableExams = Array.isArray(exams) ? exams : [];
 
     const activeExamSession = getExamSession();
@@ -677,7 +677,7 @@ const loadExamRoom = async () => {
     let examSession = getActiveExamSession();
 
     if (!examSession) {
-        const exams = await request("/exams");
+        const exams = await request("/api/exams");
         const inProgressExam = exams.find((exam) => exam.status === "IN_PROGRESS") || null;
         if (!inProgressExam) {
             renderExamRoom();
@@ -688,13 +688,13 @@ const loadExamRoom = async () => {
     }
 
     try {
-        const examDetail = await request(`/exams/${examSession.examId}`);
+        const examDetail = await request(`/api/exams/${examSession.examId}`);
         setExamSession(buildExamSessionFromDetail(examDetail));
         setExamAnswersFromServer(examDetail.questions);
         renderExamQuestions(examDetail.questions);
         renderExamRoom();
     } catch (error) {
-        const exams = await request("/exams");
+        const exams = await request("/api/exams");
         const inProgressExam = exams.find((exam) => exam.status === "IN_PROGRESS") || null;
         if (!inProgressExam || inProgressExam.examId !== examSession.examId) {
             clearExamSession();
@@ -777,7 +777,7 @@ const renderExamHistory = (historyItems) => {
 };
 
 const loadExamHistory = async () => {
-    const historyItems = await request("/exams/history");
+    const historyItems = await request("/api/exams/history");
     renderExamHistory(historyItems);
 };
 
@@ -881,7 +881,7 @@ const loadPublicTopics = async () => {
     }
 
     try {
-        const topics = await request("/topics");
+        const topics = await request("/api/topics");
         const topicOptions = topics.map((topic) => `
             <option value="${topic.topicId}">${topic.name}</option>
         `);
@@ -909,7 +909,7 @@ const loadPrivateDocumentOptions = async () => {
     }
 
     try {
-        const documents = await request("/my/documents");
+        const documents = await request("/api/my/documents");
         const completedDocuments = documents.filter((documentItem) => documentItem.status === "COMPLETED");
         const documentOptions = completedDocuments.map((documentItem) => `
             <option value="${documentItem.documentId}">${documentItem.title} (${documentItem.generatedQuestionCount}문제)</option>
@@ -1333,7 +1333,7 @@ const subscribeDocumentStatus = (documentId) => {
 
     activeDocumentId = documentId;
     const eventSource = new EventSource(
-        apiUrl(`/my/documents/${documentId}/events?accessToken=${encodeURIComponent(accessToken)}`)
+        apiUrl(`/api/my/documents/${documentId}/events?accessToken=${encodeURIComponent(accessToken)}`)
     );
 
     eventSource.addEventListener("document-status", (event) => {
@@ -1354,7 +1354,7 @@ const subscribeDocumentStatus = (documentId) => {
 };
 
 const loadDocuments = async (focusedDocumentId = null) => {
-    const documents = await request("/my/documents");
+    const documents = await request("/api/my/documents");
     if (focusedDocumentId !== null) {
         activeDocumentId = focusedDocumentId;
     } else if (!activeDocumentId && documents.length > 0) {
@@ -1416,7 +1416,7 @@ if (documentUploadForm && documentUploadStatus) {
             documentUploadStatus.textContent = "문서를 업로드하고 있습니다.";
             documentUploadStatus.classList.add("is-success");
 
-            const uploaded = await request("/my/documents/upload", {
+            const uploaded = await request("/api/my/documents/upload", {
                 method: "POST",
                 body: formData
             });
@@ -1449,7 +1449,7 @@ if (documentList) {
         }
 
         try {
-            const documentStatus = await request(`/my/documents/${documentId}/status`);
+            const documentStatus = await request(`/api/my/documents/${documentId}/status`);
             applyDocumentStatus(documentStatus);
             updateRenderedDocument(documentStatus);
 
@@ -1521,7 +1521,7 @@ if (examStartForms.length > 0) {
                         timeLimitMinutes: durationMinutes
                     };
 
-                const createdExam = await request("/exams", {
+                const createdExam = await request("/api/exams", {
                     method: "POST",
                     body: requestBody
                 });
@@ -1590,7 +1590,7 @@ if (examCreatedList) {
         }
 
         try {
-            const startedExam = await request(`/exams/${examId}/start`, {
+            const startedExam = await request(`/api/exams/${examId}/start`, {
                 method: "POST"
             });
 
@@ -1669,7 +1669,7 @@ if (examQuestionList) {
         }
 
         try {
-            await request(`/exams/${examSession.examId}/answers`, {
+            await request(`/api/exams/${examSession.examId}/answers`, {
                 method: "PUT",
                 body: [
                     {
@@ -1707,10 +1707,10 @@ if (submitExamButton) {
         }
 
         try {
-            await request(`/exams/${examSession.examId}/submit`, {
+            await request(`/api/exams/${examSession.examId}/submit`, {
                 method: "POST"
             });
-            const result = await request(`/exams/${examSession.examId}/result`);
+            const result = await request(`/api/exams/${examSession.examId}/result`);
             const historyDetailPayload = buildHistoryDetailPayloadFromResult(result);
             window.sessionStorage.setItem(HISTORY_DETAIL_KEY, JSON.stringify(historyDetailPayload));
             clearExamSession();
@@ -1720,7 +1720,7 @@ if (submitExamButton) {
             const shouldRedirect = message.includes("시험 시간이 만료");
             if (shouldRedirect) {
                 try {
-                    const result = await request(`/exams/${examSession.examId}/result`);
+                    const result = await request(`/api/exams/${examSession.examId}/result`);
                     const historyDetailPayload = buildHistoryDetailPayloadFromResult(result);
                     window.sessionStorage.setItem(HISTORY_DETAIL_KEY, JSON.stringify(historyDetailPayload));
                     clearExamSession();
@@ -1755,7 +1755,7 @@ if (historyList) {
         }
 
         try {
-            const result = await request(`/exams/${examId}/result`);
+            const result = await request(`/api/exams/${examId}/result`);
             const historyDetailPayload = buildHistoryDetailPayloadFromResult(result);
             window.sessionStorage.setItem(HISTORY_DETAIL_KEY, JSON.stringify(historyDetailPayload));
             window.location.href = "./history-detail.html";

@@ -57,7 +57,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api/landing/stats",
-                                "/my/documents/*/events",
+                                "/api/my/documents/*/events",
                                 "/admin/v1/documents/*/events",
                                 "/admin/auth/v1/login",
                                 "/admin/auth/v1/reissue",

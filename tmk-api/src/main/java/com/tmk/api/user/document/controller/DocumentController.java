@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
-@RequestMapping("/my/documents")
+@RequestMapping("/api/my/documents")
 @RequiredArgsConstructor
 public class DocumentController implements DocumentControllerDocs {
 
