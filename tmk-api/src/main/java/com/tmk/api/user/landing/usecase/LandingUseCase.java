@@ -1,8 +1,8 @@
-package com.tmk.api.landing.usecase;
+package com.tmk.api.user.landing.usecase;
 
-import com.tmk.api.landing.dto.LandingStatResponse;
-import com.tmk.api.landing.result.LandingStatResult;
-import com.tmk.api.landing.service.LandingService;
+import com.tmk.api.user.landing.dto.LandingStatResponse;
+import com.tmk.api.user.landing.result.LandingStatResult;
+import com.tmk.api.user.landing.service.LandingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

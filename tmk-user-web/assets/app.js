@@ -321,7 +321,7 @@ const loadLandingStats = async () => {
     }
 
     try {
-        const stats = await request("/landing/stats", { auth: false });
+        const stats = await request("/api/landing/stats", { auth: false });
         renderLandingStats(stats);
     } catch (error) {
         if (landingStatsStatus) {

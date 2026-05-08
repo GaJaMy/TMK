@@ -1,8 +1,8 @@
-package com.tmk.api.landing.controller;
+package com.tmk.api.user.landing.controller;
 
 import com.tmk.api.common.ApiResponse;
-import com.tmk.api.landing.dto.LandingStatResponse;
-import com.tmk.api.landing.usecase.LandingUseCase;
+import com.tmk.api.user.landing.dto.LandingStatResponse;
+import com.tmk.api.user.landing.usecase.LandingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,7 @@ public class LandingController implements LandingControllerDocs {
 
     private final LandingUseCase landingUseCase;
 
-    @GetMapping("/landing/stats")
+    @GetMapping("/api/landing/stats")
     @Override
     public ResponseEntity<ApiResponse<LandingStatResponse>> getLandingStats() {
         return ApiResponse.ok(landingUseCase.getLandingStats());
