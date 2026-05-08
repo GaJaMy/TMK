@@ -9,7 +9,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - tmk-prod-network
 
@@ -24,38 +23,39 @@ services:
       - tmk-prod-network
 
   tmk-api:
-    image: ${DOCKERHUB_NAMESPACE}/tmk-api:${IMAGE_TAG}
+    image: ${DOCKERHUB_USERNAME}/tmk:api
     container_name: tmk-prod-api
     restart: unless-stopped
     depends_on:
       - postgres
       - redis
-    ports:
-      - "${API_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
       USER_JWT_SECRET: ${USER_JWT_SECRET}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
-      OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL:-gpt-4o-mini}
-      DOCUMENT_STORAGE_DIR: ${DOCUMENT_STORAGE_DIR:-/app/uploads}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL}
+      OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL}
+      OPENAI_CHAT_TEMPERATURE: ${OPENAI_CHAT_TEMPERATURE}
+      OPENAI_CHAT_MAX_TOKENS: ${OPENAI_CHAT_MAX_TOKENS}
+      DOCUMENT_STORAGE_DIR: ${DOCUMENT_STORAGE_DIR}
     volumes:
-      - api-prod-uploads:${DOCUMENT_STORAGE_DIR:-/app/uploads}
+      - api-prod-uploads:${DOCUMENT_STORAGE_DIR}
     networks:
       - tmk-prod-network
 
   tmk-batch:
-    image: ${DOCKERHUB_NAMESPACE}/tmk-batch:${IMAGE_TAG}
+    image: ${DOCKERHUB_USERNAME}/tmk:batch
     container_name: tmk-prod-batch
     restart: unless-stopped
     depends_on:
       - postgres
+      - tmk-api
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}

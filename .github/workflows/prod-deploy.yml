@@ -11,9 +11,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      ADMIN_JWT_SECRET: test-admin-secret-for-ci-12345678901234567890123456789012
-      USER_JWT_SECRET: test-user-secret-for-ci-12345678901234567890123456789012
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,8 +52,7 @@ jobs:
           target: api
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-api:prod-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:api
 
       - name: Build and push batch image
         uses: docker/build-push-action@v6
@@ -66,8 +62,7 @@ jobs:
           target: batch
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tmk-batch:prod-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tmk:batch
 
   deploy:
     runs-on: ubuntu-latest
@@ -79,24 +74,23 @@ jobs:
       - name: Copy deployment files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          source: "docker-compose.prod.yml,docker/postgres/init.sql"
+          host: ${{ secrets.VULTR_HOST }}
+          username: ${{ secrets.VULTR_USER }}
+          key: ${{ secrets.VULTR_SSH_KEY }}
+          source: "docker-compose.prod.yml"
           target: ${{ secrets.PROD_DEPLOY_PATH }}
           strip_components: 0
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
+          host: ${{ secrets.VULTR_HOST }}
+          username: ${{ secrets.VULTR_USER }}
+          key: ${{ secrets.VULTR_SSH_KEY }}
           script: |
             set -eu
 
             DEPLOY_PATH="${{ secrets.PROD_DEPLOY_PATH }}"
-            mkdir -p "$DEPLOY_PATH/docker/postgres"
             cd "$DEPLOY_PATH"
 
             cat > .env.prod <<EOF
@@ -104,18 +98,21 @@ jobs:
             POSTGRES_USER=${{ secrets.PROD_POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
             POSTGRES_PORT=${{ secrets.PROD_POSTGRES_PORT }}
+            REDIS_HOST=${{ secrets.PROD_REDIS_HOST }}
             REDIS_PORT=${{ secrets.PROD_REDIS_PORT }}
-            API_PORT=${{ secrets.PROD_API_PORT }}
-            DOCUMENT_STORAGE_DIR=${{ secrets.PROD_DOCUMENT_STORAGE_DIR }}
-            DOCKERHUB_NAMESPACE=${{ secrets.PROD_DOCKERHUB_NAMESPACE }}
             ADMIN_JWT_SECRET=${{ secrets.PROD_ADMIN_JWT_SECRET }}
             USER_JWT_SECRET=${{ secrets.PROD_USER_JWT_SECRET }}
             OPENAI_API_KEY=${{ secrets.PROD_OPENAI_API_KEY }}
             OPENAI_EMBEDDING_MODEL=${{ secrets.PROD_OPENAI_EMBEDDING_MODEL }}
             OPENAI_CHAT_MODEL=${{ secrets.PROD_OPENAI_CHAT_MODEL }}
-            IMAGE_TAG=${{ github.sha }}
+            OPENAI_CHAT_TEMPERATURE=${{ secrets.PROD_OPENAI_CHAT_TEMPERATURE }}
+            OPENAI_CHAT_MAX_TOKENS=${{ secrets.PROD_OPENAI_CHAT_MAX_TOKENS }}
+            DOCUMENT_STORAGE_DIR=${{ secrets.PROD_DOCUMENT_STORAGE_DIR }}
+            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             EOF
 
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+            docker compose --env-file .env.prod -f docker-compose.prod.yml stop tmk-api tmk-batch || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml rm -f tmk-api tmk-batch || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull tmk-api tmk-batch
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-deps tmk-api tmk-batch
