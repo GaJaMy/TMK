@@ -1,9 +1,9 @@
-package com.tmk.api.landing.service;
+package com.tmk.api.user.landing.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import com.tmk.api.landing.result.LandingStatResult;
+import com.tmk.api.user.landing.result.LandingStatResult;
 import com.tmk.core.port.out.persistence.DailyActivityStatPort;
 import com.tmk.core.port.out.persistence.DailyActivityStatPort.DailyActivityStatSummary;
 import org.junit.jupiter.api.Test;

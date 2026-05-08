@@ -1,4 +1,4 @@
-package com.tmk.api.landing.result;
+package com.tmk.api.user.landing.result;
 
 import com.tmk.core.port.out.persistence.DailyActivityStatPort.DailyActivityStatSummary;
 

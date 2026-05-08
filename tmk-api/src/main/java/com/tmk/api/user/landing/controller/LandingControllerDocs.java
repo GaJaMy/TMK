@@ -1,7 +1,7 @@
-package com.tmk.api.landing.controller;
+package com.tmk.api.user.landing.controller;
 
 import com.tmk.api.common.ApiResponse;
-import com.tmk.api.landing.dto.LandingStatResponse;
+import com.tmk.api.user.landing.dto.LandingStatResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 

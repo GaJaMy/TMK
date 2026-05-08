@@ -1,6 +1,6 @@
-package com.tmk.api.landing.dto;
+package com.tmk.api.user.landing.dto;
 
-import com.tmk.api.landing.result.LandingStatResult;
+import com.tmk.api.user.landing.result.LandingStatResult;
 
 public record LandingStatResponse(
         long userPageAccessAttemptCount,

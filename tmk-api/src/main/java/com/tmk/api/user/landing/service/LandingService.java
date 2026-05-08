@@ -1,6 +1,6 @@
-package com.tmk.api.landing.service;
+package com.tmk.api.user.landing.service;
 
-import com.tmk.api.landing.result.LandingStatResult;
+import com.tmk.api.user.landing.result.LandingStatResult;
 import com.tmk.core.port.out.persistence.DailyActivityStatPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
