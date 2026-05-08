@@ -33,14 +33,7 @@ FROM eclipse-temurin:21-jre AS api
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-
 COPY --from=builder /app/tmk-api/build/libs/*.jar app.jar
-
-RUN chown appuser:appgroup app.jar
-
-USER appuser
 
 EXPOSE 8080
 
@@ -52,13 +45,6 @@ FROM eclipse-temurin:21-jre AS batch
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-
 COPY --from=builder /app/tmk-batch/build/libs/*.jar app.jar
-
-RUN chown appuser:appgroup app.jar
-
-USER appuser
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
