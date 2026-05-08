@@ -58,7 +58,7 @@
 | AI | OpenAI API | 문서 임베딩, 문제/정답/해설 생성 |
 | Query | QueryDSL | 관리자 검색/목록 조건 조회 |
 | Document Parsing | Apache PDFBox | PDF 텍스트 추출 |
-| DevOps | Docker, GitHub Actions | 이미지 빌드, staging 배포 자동화 |
+| DevOps | Docker, GitHub Actions | 이미지 빌드, 운영 배포 자동화 |
 | AI-Assisted Development | OpenAI Codex | API 구현 보조, 테스트 보강, 문서 정리 |
 | Build | Gradle Multi-module | `tmk-core`, `tmk-infra`, `tmk-api`, `tmk-batch` 분리 |
 
