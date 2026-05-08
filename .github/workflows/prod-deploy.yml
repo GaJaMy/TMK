@@ -77,7 +77,7 @@ jobs:
           host: ${{ secrets.VULTR_HOST }}
           username: ${{ secrets.VULTR_USER }}
           key: ${{ secrets.VULTR_SSH_KEY }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.prod.yml,docker/caddy/Caddyfile,tmk-user-web/**,tmk-admin-web/**"
           target: ${{ secrets.PROD_DEPLOY_PATH }}
           strip_components: 0
 
@@ -112,7 +112,7 @@ jobs:
             EOF
 
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-            docker compose --env-file .env.prod -f docker-compose.prod.yml stop tmk-api tmk-batch || true
-            docker compose --env-file .env.prod -f docker-compose.prod.yml rm -f tmk-api tmk-batch || true
-            docker compose --env-file .env.prod -f docker-compose.prod.yml pull tmk-api tmk-batch
-            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-deps tmk-api tmk-batch
+            docker compose --env-file .env.prod -f docker-compose.prod.yml stop tmk-api tmk-batch caddy || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml rm -f tmk-api tmk-batch caddy || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull tmk-api tmk-batch caddy
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-recreate
