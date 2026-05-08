@@ -4,6 +4,7 @@ import com.tmk.api.common.ApiResponse;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -14,11 +15,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /** 도메인 비즈니스 예외 */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+        log.warn(
+                "Business exception occurred: code={}, message={}",
+                e.getErrorCode().getCode(),
+                e.getMessage(),
+                e
+        );
         return ApiResponse.fail(e.getErrorCode());
     }
 
@@ -89,6 +97,7 @@ public class GlobalExceptionHandler {
     /** 그 외 모든 예외 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        log.error("Unhandled exception occurred", e);
         return ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 }

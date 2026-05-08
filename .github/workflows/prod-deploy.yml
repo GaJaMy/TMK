@@ -112,7 +112,7 @@ jobs:
             EOF
 
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-            docker compose --env-file .env.prod -f docker-compose.prod.yml stop tmk-api tmk-batch caddy || true
-            docker compose --env-file .env.prod -f docker-compose.prod.yml rm -f tmk-api tmk-batch caddy || true
-            docker compose --env-file .env.prod -f docker-compose.prod.yml pull tmk-api tmk-batch caddy
+            docker compose --env-file .env.prod -f docker-compose.prod.yml stop tmk-api tmk-batch || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml rm -f tmk-api tmk-batch || true
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull tmk-api tmk-batch
             docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-recreate

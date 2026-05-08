@@ -14,12 +14,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BatchScheduler {
 
+    private static final long EXAM_AUTO_SUBMIT_INTERVAL_MS = 60_000L;
+
     private static final Logger log = LoggerFactory.getLogger(BatchScheduler.class);
 
     private final JobLauncher jobLauncher;
     private final Job examAutoSubmitJob;
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = EXAM_AUTO_SUBMIT_INTERVAL_MS)
     public void runExamAutoSubmit() {
         try {
             JobParameters params = new JobParametersBuilder()
