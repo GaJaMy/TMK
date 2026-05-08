@@ -5,10 +5,10 @@ import com.tmk.api.security.AuthenticatedPrincipal;
 import com.tmk.api.security.jwt.JwtProvider;
 import com.tmk.api.user.document.dto.DocumentStatusResponse;
 import com.tmk.api.user.document.dto.DocumentUploadResponse;
+import com.tmk.api.user.document.event.DocumentUploadedEvent;
 import com.tmk.api.user.document.request.DocumentUploadRequest;
 import com.tmk.api.user.document.result.DocumentStatusResult;
 import com.tmk.api.user.document.result.DocumentUploadResult;
-import com.tmk.api.user.document.service.AsyncDocumentQuestionGenerationService;
 import com.tmk.api.user.document.service.DocumentService;
 import com.tmk.api.user.document.service.DocumentSseService;
 import com.tmk.core.exception.BusinessException;
@@ -31,7 +31,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class DocumentUseCase {
 
     private final DocumentService documentService;
-    private final AsyncDocumentQuestionGenerationService asyncDocumentQuestionGenerationService;
     private final DocumentSseService documentSseService;
     private final JwtProvider jwtProvider;
     private final TokenBlacklistPort tokenBlacklistPort;
@@ -49,7 +48,7 @@ public class DocumentUseCase {
                 fileBytes
         );
         applicationEventPublisher.publishEvent(new DocumentRegisteredEvent(userId));
-        asyncDocumentQuestionGenerationService.processDocumentAsync(result.documentId());
+        applicationEventPublisher.publishEvent(new DocumentUploadedEvent(result.documentId()));
         return DocumentUploadResponse.from(result);
     }
 
