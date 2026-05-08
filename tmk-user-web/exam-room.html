@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK Exam Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-home-body">
+<main class="exam-room-shell">
+    <aside class="exam-room-sidebar">
+        <a class="user-sidebar-brand" href="./home.html">TMK</a>
+
+        <div class="exam-room-summary" data-exam-room-content hidden>
+            <span class="feature-index">IN PROGRESS</span>
+            <h2 id="examRoomTitle">시험 진행중</h2>
+
+            <div class="exam-room-timer-box">
+                <span>남은 시험 시간</span>
+                <strong id="examRemainingTime">00:00</strong>
+            </div>
+
+            <dl class="exam-room-meta">
+                <div>
+                    <dt>시험 유형</dt>
+                    <dd id="examRoomSourceType">-</dd>
+                </div>
+                <div>
+                    <dt>문제 수</dt>
+                    <dd id="examRoomQuestionCount">-</dd>
+                </div>
+                <div>
+                    <dt>설정 시간</dt>
+                    <dd id="examRoomDuration">-</dd>
+                </div>
+                <div>
+                    <dt>답안 입력 완료</dt>
+                    <dd id="examAnsweredCount">0 / 0</dd>
+                </div>
+            </dl>
+
+            <button type="button" class="primary-cta primary-cta-block exam-submit-button" id="submitExamButton">최종 제출</button>
+        </div>
+
+        <div class="exam-room-empty" id="examRoomEmptyState">
+            <strong>진행중인 시험이 없습니다.</strong>
+            <p>시험 보기 화면으로 돌아가 새 시험을 시작하세요.</p>
+            <a class="login-home-link" href="./exams.html">시험 보기로 돌아가기</a>
+        </div>
+    </aside>
+
+    <section class="exam-room-main">
+        <header class="user-home-header" data-exam-room-content hidden>
+            <div class="user-home-copy">
+                <span class="hero-kicker">EXAM ROOM</span>
+                <h1>문제에 답안을 입력하고 확인합니다.</h1>
+                <p>각 문제는 답안을 입력한 뒤 `확인` 버튼을 눌러야 입력 완료로 표시됩니다.</p>
+            </div>
+
+            <div class="user-account-box">
+                <strong class="user-account-name" data-user-username>user</strong>
+            </div>
+        </header>
+
+        <section class="exam-question-list" id="examQuestionList" data-exam-room-content hidden></section>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>

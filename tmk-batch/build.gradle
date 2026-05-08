@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':tmk-core')
+    implementation project(':tmk-infra')
 
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

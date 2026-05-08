@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: tmk-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+    networks:
+      - tmk-prod-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tmk-prod-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-prod-data:/data
+    networks:
+      - tmk-prod-network
+
+  tmk-api:
+    image: ${DOCKERHUB_USERNAME}/tmk:api
+    container_name: tmk-prod-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      USER_JWT_SECRET: ${USER_JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL}
+      OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL}
+      OPENAI_CHAT_TEMPERATURE: ${OPENAI_CHAT_TEMPERATURE}
+      OPENAI_CHAT_MAX_TOKENS: ${OPENAI_CHAT_MAX_TOKENS}
+      DOCUMENT_STORAGE_DIR: ${DOCUMENT_STORAGE_DIR}
+    volumes:
+      - api-prod-uploads:${DOCUMENT_STORAGE_DIR}
+    networks:
+      - tmk-prod-network
+
+  tmk-batch:
+    image: ${DOCKERHUB_USERNAME}/tmk:batch
+    container_name: tmk-prod-batch
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - tmk-api
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - tmk-prod-network
+
+networks:
+  tmk-prod-network:
+    driver: bridge
+
+volumes:
+  postgres-prod-data:
+  redis-prod-data:
+  api-prod-uploads:

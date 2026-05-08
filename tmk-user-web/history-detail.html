@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMK History Detail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body class="user-home-body">
+<main class="user-home-shell">
+    <aside class="user-sidebar">
+        <a class="user-sidebar-brand" href="./home.html">TMK</a>
+
+        <nav class="user-sidebar-nav" aria-label="사용자 메뉴">
+            <a class="user-nav-item" href="./documents.html">문서 등록</a>
+            <a class="user-nav-item" href="./exams.html">시험 보기</a>
+            <a class="user-nav-item is-active" href="./history.html">시험 내역확인</a>
+        </nav>
+    </aside>
+
+    <section class="user-home-main">
+        <header class="user-home-header">
+            <div class="user-home-copy">
+                <span class="hero-kicker">DETAIL</span>
+                <h1 id="historyDetailTitle">시험 상세 결과</h1>
+                <p id="historyDetailMeta">선택한 시험의 문제별 정오와 해설을 확인합니다.</p>
+            </div>
+
+            <div class="user-account-box">
+                <strong class="user-account-name" data-user-username>user</strong>
+                <button type="button" class="user-logout-button" data-user-logout>로그아웃</button>
+            </div>
+        </header>
+
+        <div class="history-back-row">
+            <a class="login-home-link" href="./history.html">목록으로 돌아가기</a>
+        </div>
+
+        <section class="history-detail-section">
+            <div class="history-detail-list" id="historyDetailList"></div>
+        </section>
+    </section>
+</main>
+<script src="./assets/app.js"></script>
+</body>
+</html>

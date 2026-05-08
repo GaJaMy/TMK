@@ -1,0 +1,12 @@
+.git
+.gradle
+build/
+*/build/
+.idea
+*.iml
+.moai
+.claude
+.env
+docker/postgres/data
+*.md
+!README.md

@@ -11,7 +11,14 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
-    private String secret;
-    private long accessTokenExpiry;
-    private long refreshTokenExpiry;
+    private TokenProperties admin = new TokenProperties();
+    private TokenProperties user = new TokenProperties();
+
+    @Getter
+    @Setter
+    public static class TokenProperties {
+        private String secret;
+        private long accessTokenExpiry;
+        private long refreshTokenExpiry;
+    }
 }

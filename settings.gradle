@@ -1,5 +1,6 @@
 rootProject.name = 'tmk'
 
 include 'tmk-core'
+include 'tmk-infra'
 include 'tmk-api'
 include 'tmk-batch'

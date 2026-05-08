@@ -1,3 +1,9 @@
 package com.tmk.api.security.jwt;
 
-public record JwtClaims(Long userId, String email, String role) {}
+public record JwtClaims(
+        Long principalId,
+        String username,
+        String role,
+        String principalType
+) {
+}

@@ -1,5 +1,7 @@
 package com.tmk.core.exam.entity;
 
 public enum ExamStatus {
-    IN_PROGRESS, SUBMITTED, EXPIRED
+    CREATED,
+    IN_PROGRESS,
+    SUBMITTED
 }
