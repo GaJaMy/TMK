@@ -5,20 +5,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
-import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Slf4j
 @Component
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
-    private static final int MAX_BODY_LENGTH = 800;
+    private static final String REQUEST_ID_HEADER = "X-Request-Id";
+    private static final String REQUEST_ID_MDC_KEY = "requestId";
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -36,64 +35,35 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
-        ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
-
+        String requestId = resolveRequestId(request);
         long start = System.currentTimeMillis();
+        String method = request.getMethod();
+        String endpoint = buildEndpoint(request);
+
+        MDC.put(REQUEST_ID_MDC_KEY, requestId);
+        response.setHeader(REQUEST_ID_HEADER, requestId);
 
         try {
-            filterChain.doFilter(wrappedRequest, wrappedResponse);
+            filterChain.doFilter(request, response);
         } finally {
             long elapsed = System.currentTimeMillis() - start;
-            String method = wrappedRequest.getMethod();
-            String uri = wrappedRequest.getRequestURI();
-            String query = wrappedRequest.getQueryString();
-            String endpoint = query == null ? uri : uri + "?" + query;
-            int status = wrappedResponse.getStatus();
-
+            int status = response.getStatus();
             log.info("[HTTP] {} {} -> {} ({} ms)", method, endpoint, status, elapsed);
-
-            String requestBody = extractRequestBody(wrappedRequest);
-            if (!requestBody.isBlank()) {
-                log.info("[HTTP][REQUEST] {} {} body={}", method, endpoint, requestBody);
-            }
-
-            String responseBody = extractResponseBody(wrappedResponse);
-            if (!responseBody.isBlank()) {
-                log.info("[HTTP][RESPONSE] {} {} status={} body={}", method, endpoint, status, responseBody);
-            }
-
-            wrappedResponse.copyBodyToResponse();
+            MDC.remove(REQUEST_ID_MDC_KEY);
         }
     }
 
-    private String extractRequestBody(ContentCachingRequestWrapper request) {
-        byte[] content = request.getContentAsByteArray();
-        return isLoggableBody(request.getContentType(), content)
-                ? abbreviate(new String(content, StandardCharsets.UTF_8))
-                : "";
-    }
-
-    private String extractResponseBody(ContentCachingResponseWrapper response) {
-        byte[] content = response.getContentAsByteArray();
-        return isLoggableBody(response.getContentType(), content)
-                ? abbreviate(new String(content, StandardCharsets.UTF_8))
-                : "";
-    }
-
-    private boolean isLoggableBody(String contentType, byte[] content) {
-        if (content == null || content.length == 0 || contentType == null) {
-            return false;
+    private String resolveRequestId(HttpServletRequest request) {
+        String requestId = request.getHeader(REQUEST_ID_HEADER);
+        if (requestId == null || requestId.isBlank()) {
+            return UUID.randomUUID().toString();
         }
-        return contentType.contains(MediaType.APPLICATION_JSON_VALUE)
-                || contentType.contains(MediaType.TEXT_PLAIN_VALUE);
+        return requestId;
     }
 
-    private String abbreviate(String body) {
-        String normalized = body.replaceAll("\\s+", " ").trim();
-        if (normalized.length() <= MAX_BODY_LENGTH) {
-            return normalized;
-        }
-        return normalized.substring(0, MAX_BODY_LENGTH) + "...";
+    private String buildEndpoint(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String query = request.getQueryString();
+        return query == null ? uri : uri + "?" + query;
     }
 }

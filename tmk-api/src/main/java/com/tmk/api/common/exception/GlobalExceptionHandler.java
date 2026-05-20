@@ -3,8 +3,10 @@ package com.tmk.api.common.exception;
 import com.tmk.api.common.ApiResponse;
 import com.tmk.core.exception.BusinessException;
 import com.tmk.core.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -18,11 +20,16 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 @Slf4j
 public class GlobalExceptionHandler {
 
+    private static final String REQUEST_ID_MDC_KEY = "requestId";
+
     /** 도메인 비즈니스 예외 */
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.warn(
-                "Business exception occurred: code={}, message={}",
+                "Business exception occurred: method={}, path={}, requestId={}, code={}, message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                MDC.get(REQUEST_ID_MDC_KEY),
                 e.getErrorCode().getCode(),
                 e.getMessage(),
                 e
@@ -32,44 +39,52 @@ public class GlobalExceptionHandler {
 
     /** @RequestBody @Valid 실패 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException e,
+                                                                          HttpServletRequest request) {
         var fieldErrors = e.getBindingResult().getFieldErrors();
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
                 .orElse(ErrorCode.INVALID_INPUT.getMessage());
+        log.warn("Invalid request body: method={}, path={}, requestId={}, message={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), message);
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, message);
     }
 
     /** @ModelAttribute 바인딩 실패 */
     @ExceptionHandler(BindException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBindException(BindException e) {
+    public ResponseEntity<ApiResponse<Void>> handleBindException(BindException e, HttpServletRequest request) {
         var fieldErrors = e.getBindingResult().getFieldErrors();
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
                 .orElse(ErrorCode.INVALID_INPUT.getMessage());
+        log.warn("Invalid request binding: method={}, path={}, requestId={}, message={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), message);
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, message);
     }
 
     /** @Validated 컨트롤러에서 @RequestParam/@PathVariable 검증 실패 (Spring Boot 3.2+) */
     @ExceptionHandler(HandlerMethodValidationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
-        var validationResults = e.getAllValidationResults();
-        String message = validationResults.stream()
-                .flatMap(result -> {
-                    var resolvableErrors = result.getResolvableErrors();
-                    return resolvableErrors.stream();
-                })
+    public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidation(HandlerMethodValidationException e,
+                                                                           HttpServletRequest request) {
+        String message = e.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream())
                 .map(error -> error.getDefaultMessage())
                 .findFirst()
-                .orElse(ErrorCode.INVALID_INPUT.getMessage());
+                .orElseGet(() -> e.getCrossParameterValidationResults().stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse(ErrorCode.INVALID_INPUT.getMessage()));
+        log.warn("Invalid request parameter: method={}, path={}, requestId={}, message={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), message);
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, message);
     }
 
     /** @Validated 서비스 레이어 검증 실패 */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException e) {
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException e,
+                                                                       HttpServletRequest request) {
         var violations = e.getConstraintViolations();
         String message = violations.stream()
                 .map(v -> {
@@ -79,25 +94,34 @@ public class GlobalExceptionHandler {
                 })
                 .findFirst()
                 .orElse(ErrorCode.INVALID_INPUT.getMessage());
+        log.warn("Constraint violation: method={}, path={}, requestId={}, message={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), message);
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, message);
     }
 
     /** JSON 파싱 실패 (잘못된 타입, 필드명 오류 등) */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException e,
+                                                                          HttpServletRequest request) {
+        log.warn("Unreadable request body: method={}, path={}, requestId={}, message={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), e.getMostSpecificCause().getMessage());
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, "요청 본문을 읽을 수 없습니다.");
     }
 
     /** 필수 @RequestParam 누락 */
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameter(MissingServletRequestParameterException e) {
+    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameter(MissingServletRequestParameterException e,
+                                                                                  HttpServletRequest request) {
+        log.warn("Missing request parameter: method={}, path={}, requestId={}, parameter={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), e.getParameterName());
         return ApiResponse.fail(ErrorCode.INVALID_INPUT, e.getParameterName() + " 파라미터가 필요합니다.");
     }
 
     /** 그 외 모든 예외 */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        log.error("Unhandled exception occurred", e);
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e, HttpServletRequest request) {
+        log.error("Unhandled exception occurred: method={}, path={}, requestId={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(REQUEST_ID_MDC_KEY), e);
         return ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 }

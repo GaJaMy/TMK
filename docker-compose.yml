@@ -10,7 +10,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tmk}
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - tmk-dev-network
 
@@ -25,6 +24,46 @@ services:
     networks:
       - tmk-dev-network
 
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: tmk-dev-loki
+    command: ["-config.file=/etc/loki/config.yml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki/config.yml:/etc/loki/config.yml:ro
+      - loki-dev-data:/loki
+    networks:
+      - tmk-dev-network
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: tmk-dev-promtail
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./docker/promtail/config.yml:/etc/promtail/config.yml:ro
+      - ./logs:/workspace/logs:ro
+    depends_on:
+      - loki
+    networks:
+      - tmk-dev-network
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: tmk-dev-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-dev-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+    networks:
+      - tmk-dev-network
+
 networks:
   tmk-dev-network:
     driver: bridge
@@ -32,3 +71,5 @@ networks:
 volumes:
   postgres-dev-data:
   redis-dev-data:
+  loki-dev-data:
+  grafana-dev-data:
